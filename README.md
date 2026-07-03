@@ -6,7 +6,7 @@ The Agentic Deployment Specification (ADS) lets an application describe how it s
 
 ## Status
 
-Draft v0.1. The current work is focused on the core terminology, document model, runtime model, security requirements, and approval semantics.
+Draft v0.2 in progress. v0.1 established the core terminology, conceptual document model, runtime model, security requirements, and approval semantics. The current work turns that model into a concrete YAML authoring format.
 
 ## What ADS is
 
@@ -37,6 +37,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [SPEC.md](SPEC.md) is the normative draft specification.
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
+- [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
 
 ## Current Direction
 

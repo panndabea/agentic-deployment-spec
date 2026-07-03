@@ -9,7 +9,7 @@ This roadmap tracks the path from the current draft to a stable Agentic Deployme
 - New chapters should be added only when the existing `SPEC.md`, `README.md`, or roadmap cannot reasonably hold the material.
 - Security, approvals, secrets, and observability should stay first-class in every milestone.
 
-## v0.1 - Current Draft
+## v0.1 - Baseline Draft
 
 Goal: establish the specification shape and shared vocabulary.
 
@@ -27,7 +27,7 @@ Exit criteria:
 - SPEC contains a reusable minimal example
 - profile names are stable enough for v0.2 schema work
 
-## v0.2 - YAML Document Model
+## v0.2 - YAML Document Model (Current)
 
 Goal: turn the conceptual model into a concrete authoring format.
 
