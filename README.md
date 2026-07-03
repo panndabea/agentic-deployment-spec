@@ -1,7 +1,7 @@
 # Agentic Deployment Specification
 
 <p align="center">
-  <img src="assets/ads-hero.png" alt="Agentic Deployment Specification logo with a friendly deployment agent, layered infrastructure, and the words Deploy, Scale, Observe, Govern." width="760">
+  <img src="assets/ads-hero.png" alt="Agentic Deployment Specification logo with a friendly deployment agent, layered infrastructure, and the words Deploy, Scale, Observe, Govern.">
 </p>
 
 > A vendor-neutral deployment contract for self-hosted applications and agentic systems.
