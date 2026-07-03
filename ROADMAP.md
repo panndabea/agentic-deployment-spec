@@ -52,8 +52,8 @@ Goal: make ADS machine-validatable.
 Deliverables:
 
 - initial `schemas/ads.schema.json`
-- conformance requirements for ADS processors
-- compatibility error categories
+- initial conformance requirements for ADS processors
+- initial compatibility diagnostic categories
 - schema tests for valid and invalid documents
 - secret-reference and observability validation rules
 

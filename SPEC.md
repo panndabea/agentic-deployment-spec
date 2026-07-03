@@ -74,6 +74,9 @@ ADS processor
 Profile
 : A named compatibility target that constrains how ADS requirements map to a platform, such as `compose-single-host` or `kubernetes-production`.
 
+Target context
+: The selected deployment target and its available profile, platform capabilities, external integrations, secret bindings, approval handlers, network controls, and observability sinks.
+
 ## Document Model
 
 An ADS document MUST declare:
@@ -543,6 +546,51 @@ ADS processors MUST report:
 
 ADS processors MAY ignore unknown extension fields only when those fields are namespaced and not marked as required.
 
+### v0.3 Processor Conformance
+
+An ADS processor MUST evaluate an ADS document against a target context before deployment planning. The target context includes the selected target profile, the platform capability set, external integrations, secret bindings, approval handlers, network controls, and observability sinks available to the processor.
+
+An ADS processor MUST complete these checks before it emits a deployment plan:
+
+| Check | Requirement |
+|---|---|
+| Schema validation | The document MUST satisfy the structural requirements for its `apiVersion` and `kind`. |
+| Reference resolution | Component names MUST be unique, and every `dependsOn`, component-scoped secret, and component-scoped capability reference MUST resolve to a declared component. |
+| Capability normalization | String capability entries MUST be normalized to objects with `name` before compatibility checks. |
+| Capability support | Every required capability MUST be satisfied by the target profile, the platform capability set, or an explicitly declared external integration. |
+| Secret binding | Every `secrets.required` entry MUST have a binding in the target context before deployment. |
+| Approval handling | Every required approval MUST have the human approval and/or policy decision handlers required by its `mode`. |
+| Network feasibility | Required ingress, internal traffic, egress destinations, and default-deny outbound policies MUST be resolvable or enforceable by the target context. |
+| Security feasibility | Sandbox, tool policy, identity, hardening, and trust-boundary requirements MUST NOT be silently weakened during planning. |
+| Observability binding | Required traces, metrics, logs, and audit events MUST map to available sinks or explicitly declared external integrations. |
+| Extension handling | Unknown extension fields MAY be ignored only when they are namespaced and not marked as required. |
+
+An ADS processor MUST NOT emit a deployment plan when any required ADS behavior would be dropped, weakened, or replaced with a non-equivalent platform behavior. It MAY emit a partial diagnostic report instead.
+
+An ADS processor SHOULD surface all detected errors in one validation response when practical, rather than stopping at the first error.
+
+### Diagnostic Categories
+
+ADS processors SHOULD emit diagnostics with stable machine-readable categories. A diagnostic SHOULD include `category`, `severity`, `message`, and a document `path`. A diagnostic MAY include `requirement`, `targetProfile`, `capability`, `component`, and `remediation`.
+
+The initial diagnostic categories are:
+
+| Category | Default severity | Meaning |
+|---|---|---|
+| `schema-invalid` | error | The document violates structural schema requirements. |
+| `reference-invalid` | error | A component name, `dependsOn`, `for`, or scoped reference cannot be resolved. |
+| `capability-unsupported` | error | A required capability is not supported by the selected target context. |
+| `secret-unbound` | error | A required secret has no binding in the target context. |
+| `approval-handler-missing` | error | A required human or policy approval handler is unavailable. |
+| `network-unresolved` | error | A required network route, destination, exposure, or egress rule cannot be resolved or enforced. |
+| `security-policy-unenforceable` | error | A sandbox, identity, hardening, outbound, or tool-policy requirement cannot be enforced. |
+| `observability-sink-missing` | error | A required trace, metric, log, or audit sink is unavailable. |
+| `extension-unsupported` | error | A required extension is unknown or unsupported by the processor. |
+| `processor-limitation` | error | The processor or target platform cannot preserve the declared runtime model. |
+| `compatibility-warning` | warning | A non-blocking compatibility issue, such as an unknown non-extension root field or unsupported optional capability, was detected. |
+
+Diagnostics MUST NOT include secret values, credentials, tokens, private keys, or decrypted secret payloads.
+
 ### v0.2 Validation Rules
 
 Before deployment planning, an ADS processor MUST validate the YAML document against these rules:
@@ -573,7 +621,7 @@ Before deployment planning, an ADS processor MUST validate the YAML document aga
 
 The v0.2 milestone defines the YAML field structure. The initial v0.3 JSON Schema lives in [schemas/ads.schema.json](schemas/ads.schema.json).
 
-The schema SHOULD preserve this document's separation between intent and implementation-specific manifests. It validates structural requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility rules, including component-name uniqueness, `dependsOn` resolution, target-profile capability support, secret bindings, approval handlers, and observability sink availability, remain ADS processor conformance requirements.
+The schema SHOULD preserve this document's separation between intent and implementation-specific manifests. It validates structural requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility rules, including component-name uniqueness, `dependsOn` resolution, target-profile capability support, secret bindings, approval handlers, and observability sink availability, are defined as ADS processor conformance requirements.
 
 ## Examples
 
@@ -589,6 +637,6 @@ The extension registry format is deferred until v0.4.
 
 ## Change Log
 
-- v0.3 draft: added the initial JSON Schema and negative schema fixtures.
+- v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, and diagnostic categories.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.
 - v0.1 draft: defined problem statement, goals, non-goals, vocabulary, conceptual document model, runtime model, security model, approval model, and profile names.

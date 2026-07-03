@@ -43,7 +43,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 
 ## Validation
 
-The initial JSON Schema validates the structural v0.2 requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility checks, such as unique component names, `dependsOn` resolution, profile support, and secret binding resolution, remain ADS processor responsibilities.
+The initial JSON Schema validates the structural v0.2 requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility checks, such as unique component names, `dependsOn` resolution, profile support, and secret binding resolution, are defined as ADS processor conformance responsibilities in [SPEC.md](SPEC.md#v03-processor-conformance).
 
 Validate the canonical example with:
 
