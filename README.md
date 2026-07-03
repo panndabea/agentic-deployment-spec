@@ -1,5 +1,9 @@
 # Agentic Deployment Specification
 
+<p align="center">
+  <img src="assets/ads-hero.png" alt="Agentic Deployment Specification logo with a friendly deployment agent, layered infrastructure, and the words Deploy, Scale, Observe, Govern." width="760">
+</p>
+
 > A vendor-neutral deployment contract for self-hosted applications and agentic systems.
 
 The Agentic Deployment Specification (ADS) lets an application describe how it should be deployed, secured, observed, and governed. Instead of forcing deployment agents or platform teams to reverse-engineer a repository, ADS makes operational intent explicit and machine-readable.
