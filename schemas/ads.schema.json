@@ -1,0 +1,758 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ads.dev/schemas/ads.schema.json",
+  "title": "Agentic Deployment Specification document",
+  "description": "Initial JSON Schema for ADS AgenticDeployment documents targeting ads.dev/v0alpha1.",
+  "type": "object",
+  "$comment": "Unknown non-extension root fields are compatibility warnings in SPEC.md, so this schema allows additional root properties. ADS processors should still report them.",
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "runtime",
+    "capabilities",
+    "secrets",
+    "security",
+    "approvals",
+    "observability"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "ads.dev/v0alpha1"
+    },
+    "kind": {
+      "const": "AgenticDeployment"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "uniqueItems": true
+    },
+    "runtime": {
+      "$ref": "#/$defs/runtime"
+    },
+    "capabilities": {
+      "$ref": "#/$defs/capabilities"
+    },
+    "secrets": {
+      "$ref": "#/$defs/secrets"
+    },
+    "security": {
+      "$ref": "#/$defs/security"
+    },
+    "approvals": {
+      "$ref": "#/$defs/approvals"
+    },
+    "observability": {
+      "$ref": "#/$defs/observability"
+    },
+    "networking": {
+      "$ref": "#/$defs/networking"
+    },
+    "reliability": {
+      "$ref": "#/$defs/reliability"
+    },
+    "extensions": {
+      "$ref": "#/$defs/extensions"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "security": {
+            "properties": {
+              "outbound": {
+                "properties": {
+                  "default": {
+                    "const": "deny"
+                  }
+                },
+                "required": [
+                  "default"
+                ]
+              }
+            },
+            "required": [
+              "outbound"
+            ]
+          }
+        },
+        "required": [
+          "security"
+        ]
+      },
+      "then": {
+        "properties": {
+          "networking": {
+            "properties": {
+              "egress": {
+                "properties": {
+                  "default": {
+                    "const": "deny"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "security": {
+            "properties": {
+              "outbound": {
+                "properties": {
+                  "default": {
+                    "const": "allow"
+                  }
+                },
+                "required": [
+                  "default"
+                ]
+              }
+            },
+            "required": [
+              "outbound"
+            ]
+          }
+        },
+        "required": [
+          "security"
+        ]
+      },
+      "then": {
+        "properties": {
+          "networking": {
+            "properties": {
+              "egress": {
+                "properties": {
+                  "default": {
+                    "const": "allow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": true,
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "stringList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "stringOrStringList": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        {
+          "$ref": "#/$defs/stringList"
+        }
+      ]
+    },
+    "flexibleObject": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "namespacedName": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name",
+        "owner"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "owner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "description": {
+          "type": "string"
+        },
+        "labels": {
+          "$ref": "#/$defs/stringMap"
+        },
+        "annotations": {
+          "$ref": "#/$defs/stringMap"
+        }
+      },
+      "additionalProperties": true
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "components"
+      ],
+      "properties": {
+        "components": {
+          "type": "array",
+          "$comment": "Component name uniqueness is a processor conformance rule; standard JSON Schema cannot enforce uniqueness by a single object property.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "name",
+        "type",
+        "execution"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "image"
+          ]
+        },
+        {
+          "required": [
+            "externalRef"
+          ]
+        }
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "type": {
+          "enum": [
+            "api-service",
+            "agent-runtime",
+            "workflow-orchestrator",
+            "worker",
+            "tool-server",
+            "mcp-server",
+            "queue-consumer",
+            "state-store",
+            "vector-store",
+            "gateway",
+            "observability-collector",
+            "job",
+            "scheduled-task",
+            "custom"
+          ]
+        },
+        "image": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "externalRef": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "execution": {
+          "$ref": "#/$defs/execution"
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/port"
+          }
+        },
+        "dependsOn": {
+          "type": "array",
+          "$comment": "dependsOn target resolution is a processor conformance rule because it requires cross-referencing component names.",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        },
+        "state": {
+          "$ref": "#/$defs/componentState"
+        },
+        "resources": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "health": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "scaling": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "config": {
+          "$ref": "#/$defs/flexibleObject"
+        }
+      },
+      "additionalProperties": true
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "request-response",
+            "internal-service",
+            "async-worker",
+            "event-driven",
+            "scheduled",
+            "job",
+            "daemon",
+            "external"
+          ]
+        },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "port": {
+      "type": "object",
+      "required": [
+        "name",
+        "containerPort"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "containerPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "protocol": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "exposure": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": true
+    },
+    "componentState": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "stateless",
+            "ephemeral",
+            "checkpointed",
+            "durable-session",
+            "durable-shared"
+          ]
+        },
+        "store": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": true
+    },
+    "capabilities": {
+      "type": "object",
+      "required": [
+        "required"
+      ],
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capabilityEntry"
+          }
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capabilityEntry"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "capabilityEntry": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/capabilityName"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/capabilityName"
+            },
+            "for": {
+              "$ref": "#/$defs/stringOrStringList"
+            },
+            "level": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "reason": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "capabilityName": {
+      "oneOf": [
+        {
+          "enum": [
+            "container-runtime",
+            "secret-injection",
+            "persistent-storage",
+            "queue",
+            "vector-store",
+            "network-policy",
+            "outbound-egress-policy",
+            "trace-export",
+            "metrics-export",
+            "audit-log-export",
+            "human-approval",
+            "policy-decision",
+            "horizontal-scaling",
+            "event-driven-scaling",
+            "rollback",
+            "dead-letter-queue",
+            "image-signature-verification",
+            "gpu-scheduling"
+          ]
+        },
+        {
+          "$ref": "#/$defs/namespacedName"
+        }
+      ]
+    },
+    "secrets": {
+      "type": "object",
+      "required": [
+        "required"
+      ],
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/secret"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "secret": {
+      "type": "object",
+      "required": [
+        "name",
+        "purpose",
+        "rotation"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "purpose": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "rotation": {
+          "enum": [
+            "required",
+            "recommended",
+            "manual",
+            "not-supported"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "injection": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "reload": {
+          "enum": [
+            "hot-reload",
+            "restart-required",
+            "not-applicable"
+          ]
+        },
+        "for": {
+          "$ref": "#/$defs/stringOrStringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "security": {
+      "type": "object",
+      "required": [
+        "defaultSandbox",
+        "toolPolicy"
+      ],
+      "properties": {
+        "defaultSandbox": {
+          "enum": [
+            "restricted",
+            "baseline",
+            "privileged"
+          ]
+        },
+        "outbound": {
+          "$ref": "#/$defs/outboundPolicy"
+        },
+        "toolPolicy": {
+          "$ref": "#/$defs/toolPolicy"
+        },
+        "identity": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "trustBoundaries": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/flexibleObject"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/flexibleObject"
+              }
+            }
+          ]
+        },
+        "hardening": {
+          "$ref": "#/$defs/flexibleObject"
+        }
+      },
+      "additionalProperties": true
+    },
+    "outboundPolicy": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "enum": [
+            "deny",
+            "allow"
+          ]
+        },
+        "allow": {
+          "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "toolPolicy": {
+      "type": "object",
+      "required": [
+        "default"
+      ],
+      "properties": {
+        "default": {
+          "enum": [
+            "deny",
+            "allow"
+          ]
+        },
+        "allow": {
+          "$ref": "#/$defs/stringList"
+        },
+        "deny": {
+          "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "approvals": {
+      "type": "object",
+      "required": [
+        "required"
+      ],
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/approval"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "action",
+        "mode",
+        "reason"
+      ],
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "mode": {
+          "enum": [
+            "human",
+            "policy",
+            "policy-and-human"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "scope": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            {
+              "$ref": "#/$defs/stringList"
+            },
+            {
+              "$ref": "#/$defs/flexibleObject"
+            }
+          ]
+        },
+        "handlerRef": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "auditEvents": {
+          "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "observability": {
+      "type": "object",
+      "required": [
+        "metrics",
+        "auditEvents"
+      ],
+      "properties": {
+        "traces": {
+          "$ref": "#/$defs/traces"
+        },
+        "metrics": {
+          "$ref": "#/$defs/requiredSignals"
+        },
+        "auditEvents": {
+          "$ref": "#/$defs/requiredSignals"
+        },
+        "logs": {
+          "$ref": "#/$defs/flexibleObject"
+        }
+      },
+      "additionalProperties": true
+    },
+    "traces": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "format": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": true
+    },
+    "requiredSignals": {
+      "type": "object",
+      "required": [
+        "required"
+      ],
+      "properties": {
+        "required": {
+          "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "networking": {
+      "type": "object",
+      "properties": {
+        "ingress": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/flexibleObject"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/flexibleObject"
+              }
+            }
+          ]
+        },
+        "internal": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/flexibleObject"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/flexibleObject"
+              }
+            }
+          ]
+        },
+        "egress": {
+          "$ref": "#/$defs/outboundPolicy"
+        }
+      },
+      "additionalProperties": true
+    },
+    "reliability": {
+      "type": "object",
+      "properties": {
+        "rollout": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "rollback": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "timeouts": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "retries": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "rateLimits": {
+          "$ref": "#/$defs/flexibleObject"
+        },
+        "deadLetters": {
+          "$ref": "#/$defs/flexibleObject"
+        }
+      },
+      "additionalProperties": true
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/namespacedName"
+      },
+      "additionalProperties": true
+    }
+  }
+}

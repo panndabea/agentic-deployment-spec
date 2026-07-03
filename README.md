@@ -6,7 +6,7 @@ The Agentic Deployment Specification (ADS) lets an application describe how it s
 
 ## Status
 
-Draft v0.2 in progress. v0.1 established the core terminology, conceptual document model, runtime model, security requirements, and approval semantics. The current work turns that model into a concrete YAML authoring format.
+Draft v0.3 in progress. v0.2 established the concrete YAML authoring format. The current work makes that model machine-validatable with JSON Schema, fixtures, and processor conformance rules.
 
 ## What ADS is
 
@@ -38,6 +38,20 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
+- [schemas/ads.schema.json](schemas/ads.schema.json) is the initial JSON Schema for `ads.dev/v0alpha1`.
+- [examples/invalid/](examples/invalid/) contains negative schema fixtures.
+
+## Validation
+
+The initial JSON Schema validates the structural v0.2 requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility checks, such as unique component names, `dependsOn` resolution, profile support, and secret binding resolution, remain ADS processor responsibilities.
+
+Validate the canonical example with:
+
+```sh
+uvx check-jsonschema --schemafile schemas/ads.schema.json examples/minimal.yaml
+```
+
+The files in `examples/invalid/` are negative fixtures and should fail validation.
 
 ## Current Direction
 

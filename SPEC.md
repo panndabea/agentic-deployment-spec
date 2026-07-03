@@ -4,7 +4,7 @@ This document is the normative draft for ADS. The supporting research notes live
 
 ## Status
 
-ADS is in draft status. v0.1 defines the problem, scope, vocabulary, and the first version of the conceptual document model. v0.2 defines the concrete YAML authoring format. The JSON Schema is planned for v0.3.
+ADS is in draft status. v0.1 defines the problem, scope, vocabulary, and the first version of the conceptual document model. v0.2 defines the concrete YAML authoring format. v0.3 starts the machine-validatable schema and processor conformance work.
 
 ## Versioning Policy
 
@@ -99,7 +99,7 @@ An ADS processor MUST reject a document when it omits required fields or declare
 
 ## YAML Document Structure
 
-The v0.2 authoring format for ADS is YAML. JSON Schema validation is deferred to v0.3, but the field structure in this section is normative for `AgenticDeployment` documents.
+The v0.2 authoring format for ADS is YAML. The initial JSON Schema for this structure is tracked as v0.3 work, but the field structure in this section remains normative for `AgenticDeployment` documents.
 
 An ADS YAML document MUST be a mapping with these root fields:
 
@@ -571,13 +571,15 @@ Before deployment planning, an ADS processor MUST validate the YAML document aga
 
 ## Schema Mapping
 
-The v0.2 milestone defines the YAML field structure. The v0.3 milestone will provide a JSON Schema for validation.
+The v0.2 milestone defines the YAML field structure. The initial v0.3 JSON Schema lives in [schemas/ads.schema.json](schemas/ads.schema.json).
 
-The schema SHOULD preserve this document's separation between intent and implementation-specific manifests.
+The schema SHOULD preserve this document's separation between intent and implementation-specific manifests. It validates structural requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility rules, including component-name uniqueness, `dependsOn` resolution, target-profile capability support, secret bindings, approval handlers, and observability sink availability, remain ADS processor conformance requirements.
 
 ## Examples
 
 The minimal example in this document is the current canonical example. The standalone file [examples/minimal.yaml](examples/minimal.yaml) MUST remain equivalent to the canonical example in this section unless the example is intentionally revised. Future examples SHOULD reuse its names and structure where possible, extending it for multi-agent, stateful, GPU, and air-gapped scenarios instead of inventing unrelated examples.
+
+The files in [examples/invalid/](examples/invalid/) are negative schema fixtures. They are intentionally invalid and MUST NOT be treated as conforming ADS documents.
 
 ## Extension Registry
 
@@ -587,5 +589,6 @@ The extension registry format is deferred until v0.4.
 
 ## Change Log
 
+- v0.3 draft: added the initial JSON Schema and negative schema fixtures.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.
 - v0.1 draft: defined problem statement, goals, non-goals, vocabulary, conceptual document model, runtime model, security model, approval model, and profile names.

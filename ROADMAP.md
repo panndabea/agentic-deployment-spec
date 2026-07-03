@@ -27,7 +27,7 @@ Exit criteria:
 - SPEC contains a reusable minimal example
 - profile names are stable enough for v0.2 schema work
 
-## v0.2 - YAML Document Model (Current)
+## v0.2 - YAML Document Model
 
 Goal: turn the conceptual model into a concrete authoring format.
 
@@ -45,13 +45,13 @@ Exit criteria:
 - processors can detect missing required sections
 - examples do not duplicate unrelated sample applications
 
-## v0.3 - JSON Schema and Conformance
+## v0.3 - JSON Schema and Conformance (Current)
 
 Goal: make ADS machine-validatable.
 
 Deliverables:
 
-- `ads.schema.json`
+- initial `schemas/ads.schema.json`
 - conformance requirements for ADS processors
 - compatibility error categories
 - schema tests for valid and invalid documents
