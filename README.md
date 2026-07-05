@@ -44,18 +44,34 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
 - [schemas/ads.schema.json](schemas/ads.schema.json) is the initial JSON Schema for `ads.dev/v0alpha1`.
 - [examples/invalid/](examples/invalid/) contains negative schema fixtures.
+- [examples/conformance/invalid/](examples/conformance/invalid/) contains schema-valid documents that violate ADS processor conformance rules.
+- [scripts/ads-conformance-check.rb](scripts/ads-conformance-check.rb) is a small reference checker for document-level conformance rules.
 
 ## Validation
 
 The initial JSON Schema validates the structural v0.2 requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility checks, such as unique component names, `dependsOn` resolution, profile support, and secret binding resolution, are defined as ADS processor conformance responsibilities in [SPEC.md](SPEC.md#v03-processor-conformance).
 
-Validate the canonical example with:
+Run the schema and conformance fixture suite with:
+
+```sh
+ruby scripts/test-examples.rb
+```
+
+The suite uses `uvx check-jsonschema` for structural JSON Schema validation and the local ADS conformance checker for cross-reference and compatibility rules.
+
+Validate the canonical example against only the JSON Schema with:
 
 ```sh
 uvx check-jsonschema --schemafile schemas/ads.schema.json examples/minimal.yaml
 ```
 
-The files in `examples/invalid/` are negative fixtures and should fail validation.
+Run the document-level conformance checker directly with:
+
+```sh
+ruby scripts/ads-conformance-check.rb examples/minimal.yaml
+```
+
+The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks.
 
 ## Current Direction
 

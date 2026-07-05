@@ -629,6 +629,8 @@ The minimal example in this document is the current canonical example. The stand
 
 The files in [examples/invalid/](examples/invalid/) are negative schema fixtures. They are intentionally invalid and MUST NOT be treated as conforming ADS documents.
 
+The files in [examples/conformance/invalid/](examples/conformance/invalid/) are schema-valid negative conformance fixtures. They exercise document-level processor requirements that cannot be fully expressed in JSON Schema, such as component-name uniqueness and scoped reference resolution.
+
 ## Extension Registry
 
 Extensions MUST use a namespaced key to avoid collisions. Vendor-specific extensions MUST NOT redefine normative ADS fields.
@@ -637,6 +639,6 @@ The extension registry format is deferred until v0.4.
 
 ## Change Log
 
-- v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, and diagnostic categories.
+- v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.
 - v0.1 draft: defined problem statement, goals, non-goals, vocabulary, conceptual document model, runtime model, security model, approval model, and profile names.

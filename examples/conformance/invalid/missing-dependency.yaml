@@ -1,0 +1,35 @@
+apiVersion: ads.dev/v0alpha1
+kind: AgenticDeployment
+metadata:
+  name: missing-dependency
+  owner: platform-team
+
+runtime:
+  components:
+    - name: api
+      type: agent-runtime
+      image: ghcr.io/example/support-agent:1.0.0
+      execution:
+        mode: request-response
+      dependsOn:
+        - queue
+
+capabilities:
+  required: []
+
+secrets:
+  required: []
+
+security:
+  defaultSandbox: restricted
+  toolPolicy:
+    default: deny
+
+approvals:
+  required: []
+
+observability:
+  metrics:
+    required: []
+  auditEvents:
+    required: []
