@@ -1,0 +1,25 @@
+targetProfile: kubernetes-production
+
+capabilities:
+  supported:
+    - container-runtime
+    - secret-injection
+
+secrets:
+  bindings:
+    model-api-key:
+      source: external-secret-store
+      ref: prod/support-agent/model-api-key
+
+approvals:
+  handlers:
+    human:
+      ref: ticketing/platform-approval
+
+observability:
+  traces:
+    sinks: []
+  metrics:
+    sinks: []
+  auditEvents:
+    sinks: []

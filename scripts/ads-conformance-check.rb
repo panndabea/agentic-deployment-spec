@@ -59,6 +59,13 @@ rescue Psych::SyntaxError => e
   raise "invalid YAML in #{path}: #{e.message}"
 end
 
+def load_target_context(path)
+  context = load_yaml(path)
+  raise "target context #{path} must be a mapping." unless context.is_a?(Hash)
+
+  context
+end
+
 def string_or_list(value)
   case value
   when nil
@@ -70,6 +77,40 @@ def string_or_list(value)
   end
 end
 
+def names_from_collection(value)
+  case value
+  when nil
+    []
+  when String
+    [value]
+  when Array
+    value.each_with_object([]) do |entry, names|
+      case entry
+      when String
+        names << entry
+      when Hash
+        name = entry["name"]
+        names << name if name.is_a?(String)
+      end
+    end
+  when Hash
+    value.keys.map(&:to_s)
+  else
+    []
+  end
+end
+
+def provided?(value)
+  case value
+  when nil, false
+    false
+  when String, Array, Hash
+    !value.empty?
+  else
+    true
+  end
+end
+
 def dig_hash(value, *keys)
   keys.reduce(value) do |current, key|
     return nil unless current.is_a?(Hash)
@@ -78,18 +119,32 @@ def dig_hash(value, *keys)
   end
 end
 
-def required_capability_names(document)
+def capability_name(entry)
+  case entry
+  when String
+    entry
+  when Hash
+    entry["name"]
+  end
+end
+
+def required_capability_references(document)
   required = dig_hash(document, "capabilities", "required")
   return [] unless required.is_a?(Array)
 
-  required.map do |entry|
-    case entry
-    when String
-      entry
-    when Hash
-      entry["name"]
-    end
-  end.compact
+  required.each_with_index.each_with_object([]) do |(entry, index), references|
+    name = capability_name(entry)
+    next unless name.is_a?(String)
+
+    references << {
+      "name" => name,
+      "path" => "$.capabilities.required[#{index}]"
+    }
+  end
+end
+
+def required_capability_names(document)
+  required_capability_references(document).map { |reference| reference["name"] }
 end
 
 def component_names(document)
@@ -99,6 +154,70 @@ def component_names(document)
   components.map do |component|
     component["name"] if component.is_a?(Hash)
   end.compact
+end
+
+def target_profile(context)
+  return nil unless context.is_a?(Hash)
+
+  context["targetProfile"] || context["profile"]
+end
+
+def target_context_extra(context)
+  profile = target_profile(context)
+  return {} unless profile
+
+  { "targetProfile" => profile }
+end
+
+def context_capability_names(context)
+  (
+    names_from_collection(dig_hash(context, "capabilities", "supported")) +
+    names_from_collection(dig_hash(context, "capabilities", "external")) +
+    names_from_collection(dig_hash(context, "externalIntegrations", "capabilities"))
+  ).uniq
+end
+
+def context_secret_binding_names(context)
+  (
+    names_from_collection(dig_hash(context, "secrets", "bindings")) +
+    names_from_collection(dig_hash(context, "externalIntegrations", "secrets"))
+  ).uniq
+end
+
+def context_approval_handler_available?(context, handler)
+  handlers = dig_hash(context, "approvals", "handlers")
+
+  case handlers
+  when Array
+    handlers.include?(handler)
+  when Hash
+    provided?(handlers[handler])
+  else
+    false
+  end
+end
+
+def required_approval_handlers(mode)
+  case mode
+  when "human"
+    ["human"]
+  when "policy"
+    ["policy"]
+  when "policy-and-human"
+    %w[human policy]
+  else
+    []
+  end
+end
+
+def context_observability_sink_available?(context, signal)
+  config = dig_hash(context, "observability", signal)
+  return false if config.nil? || config == false
+  return true if config == true
+  return provided?(config) unless config.is_a?(Hash)
+  return true if config["available"] == true
+
+  provided?(config["sink"]) || provided?(config["sinks"])
 end
 
 def check_minimal_structure(document, diagnostics)
@@ -376,6 +495,122 @@ def check_network_consistency(document, diagnostics)
   )
 end
 
+def check_target_capability_support(document, context, diagnostics)
+  supported = context_capability_names(context)
+
+  required_capability_references(document).each do |capability|
+    name = capability["name"]
+    next if supported.include?(name)
+
+    add_diagnostic(
+      diagnostics,
+      category: "capability-unsupported",
+      severity: "error",
+      path: capability["path"],
+      message: "Required capability #{name.inspect} is not supported by the target context.",
+      extra: target_context_extra(context).merge("capability" => name)
+    )
+  end
+end
+
+def check_target_secret_bindings(document, context, diagnostics)
+  bound = context_secret_binding_names(context)
+  secrets = dig_hash(document, "secrets", "required")
+  return unless secrets.is_a?(Array)
+
+  secrets.each_with_index do |secret, index|
+    next unless secret.is_a?(Hash)
+
+    name = secret["name"]
+    next unless name.is_a?(String)
+    next if bound.include?(name)
+
+    add_diagnostic(
+      diagnostics,
+      category: "secret-unbound",
+      severity: "error",
+      path: "$.secrets.required[#{index}].name",
+      message: "Required secret #{name.inspect} has no binding in the target context.",
+      extra: target_context_extra(context).merge("secret" => name)
+    )
+  end
+end
+
+def check_target_approval_handlers(document, context, diagnostics)
+  approvals = dig_hash(document, "approvals", "required")
+  return unless approvals.is_a?(Array)
+
+  approvals.each_with_index do |approval, index|
+    next unless approval.is_a?(Hash)
+
+    required_approval_handlers(approval["mode"]).each do |handler|
+      next if context_approval_handler_available?(context, handler)
+
+      add_diagnostic(
+        diagnostics,
+        category: "approval-handler-missing",
+        severity: "error",
+        path: "$.approvals.required[#{index}].mode",
+        message: "Approval action #{approval["action"].inspect} requires a #{handler} handler, but the target context does not provide one.",
+        extra: target_context_extra(context).merge(
+          "approval" => approval["action"],
+          "handler" => handler
+        )
+      )
+    end
+  end
+end
+
+def check_target_observability_bindings(document, context, diagnostics)
+  if dig_hash(document, "observability", "traces", "required") == true &&
+     !context_observability_sink_available?(context, "traces")
+    add_diagnostic(
+      diagnostics,
+      category: "observability-sink-missing",
+      severity: "error",
+      path: "$.observability.traces.required",
+      message: "Required traces have no sink in the target context.",
+      extra: target_context_extra(context).merge("signal" => "traces")
+    )
+  end
+
+  metrics = dig_hash(document, "observability", "metrics", "required")
+  if metrics.is_a?(Array) && !metrics.empty? &&
+     !context_observability_sink_available?(context, "metrics")
+    add_diagnostic(
+      diagnostics,
+      category: "observability-sink-missing",
+      severity: "error",
+      path: "$.observability.metrics.required",
+      message: "Required metrics have no sink in the target context.",
+      extra: target_context_extra(context).merge("signal" => "metrics")
+    )
+  end
+
+  audit_events = dig_hash(document, "observability", "auditEvents", "required")
+  if audit_events.is_a?(Array) && !audit_events.empty? &&
+     !context_observability_sink_available?(context, "auditEvents")
+    add_diagnostic(
+      diagnostics,
+      category: "observability-sink-missing",
+      severity: "error",
+      path: "$.observability.auditEvents.required",
+      message: "Required audit events have no sink in the target context.",
+      extra: target_context_extra(context).merge("signal" => "auditEvents")
+    )
+  end
+end
+
+def check_target_context(document, context, diagnostics)
+  return unless context
+  return unless document.is_a?(Hash)
+
+  check_target_capability_support(document, context, diagnostics)
+  check_target_secret_bindings(document, context, diagnostics)
+  check_target_approval_handlers(document, context, diagnostics)
+  check_target_observability_bindings(document, context, diagnostics)
+end
+
 def check_extensions(document, diagnostics)
   extensions = document["extensions"] if document.is_a?(Hash)
   return if extensions.nil?
@@ -404,7 +639,7 @@ def check_extensions(document, diagnostics)
   end
 end
 
-def check_document(document)
+def check_document(document, context)
   diagnostics = []
 
   check_minimal_structure(document, diagnostics)
@@ -413,6 +648,7 @@ def check_document(document)
   check_scoped_component_references(document, diagnostics)
   check_capability_recommendations(document, diagnostics)
   check_network_consistency(document, diagnostics)
+  check_target_context(document, context, diagnostics)
   check_extensions(document, diagnostics)
 
   diagnostics
@@ -420,7 +656,8 @@ end
 
 options = {
   format: "text",
-  strict_warnings: false
+  strict_warnings: false,
+  context_path: nil
 }
 
 parser = OptionParser.new do |opts|
@@ -428,6 +665,10 @@ parser = OptionParser.new do |opts|
 
   opts.on("--format FORMAT", "Output format: text or json") do |format|
     options[:format] = format
+  end
+
+  opts.on("--context FILE", "Target context YAML file") do |path|
+    options[:context_path] = path
   end
 
   opts.on("--strict-warnings", "Exit non-zero when warnings are present") do
@@ -447,12 +688,22 @@ unless %w[text json].include?(options[:format])
   exit 2
 end
 
+target_context = nil
+if options[:context_path]
+  begin
+    target_context = load_target_context(options[:context_path])
+  rescue StandardError => e
+    warn e.message
+    exit 2
+  end
+end
+
 results = []
 
 ARGV.each do |path|
   begin
     document = load_yaml(path)
-    diagnostics = check_document(document)
+    diagnostics = check_document(document, target_context)
   rescue StandardError => e
     diagnostics = []
     add_diagnostic(

@@ -1,0 +1,40 @@
+targetProfile: compose-single-host
+
+capabilities:
+  supported:
+    - container-runtime
+    - secret-injection
+    - persistent-storage
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+
+secrets:
+  bindings:
+    model-api-key:
+      source: platform-secret
+      ref: env:MODEL_API_KEY
+    database-url:
+      source: platform-secret
+      ref: env:DATABASE_URL
+
+approvals:
+  handlers:
+    human:
+      ref: local-approval-runbook
+    policy:
+      ref: local-policy-check
+
+observability:
+  traces:
+    sinks:
+      - local-otel-collector
+  metrics:
+    sinks:
+      - local-prometheus
+  auditEvents:
+    sinks:
+      - local-audit-log

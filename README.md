@@ -45,6 +45,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [schemas/ads.schema.json](schemas/ads.schema.json) is the initial JSON Schema for `ads.dev/v0alpha1`.
 - [examples/invalid/](examples/invalid/) contains negative schema fixtures.
 - [examples/conformance/invalid/](examples/conformance/invalid/) contains schema-valid documents that violate ADS processor conformance rules.
+- [contexts/](contexts/) contains reference target contexts used by the conformance checker.
 - [scripts/ads-conformance-check.rb](scripts/ads-conformance-check.rb) is a small reference checker for document-level conformance rules.
 
 ## Validation
@@ -71,7 +72,15 @@ Run the document-level conformance checker directly with:
 ruby scripts/ads-conformance-check.rb examples/minimal.yaml
 ```
 
+Validate an ADS document against a target context with:
+
+```sh
+ruby scripts/ads-conformance-check.rb --context contexts/kubernetes-production.yaml examples/minimal.yaml
+```
+
 The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks.
+
+The `contexts/*.yaml` files are non-normative target-context fixtures for the reference checker. They describe available target profile capabilities, secret bindings, approval handlers, and observability sinks. The files in `contexts/invalid/` intentionally omit required target context support.
 
 ## Current Direction
 

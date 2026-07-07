@@ -22,13 +22,14 @@ def schema_command
   nil
 end
 
-def run_command(label, command, expect_success: nil, expected_exit: nil)
+def run_command(label, command, expect_success: nil, expected_exit: nil, stdout_includes: [])
   stdout, stderr, status = Open3.capture3(*command)
   success = if expected_exit.nil?
               status.success? == expect_success
             else
               status.exitstatus == expected_exit
             end
+  success &&= stdout_includes.all? { |text| stdout.include?(text) }
 
   puts "#{success ? "PASS" : "FAIL"} #{label}"
 
@@ -36,6 +37,9 @@ def run_command(label, command, expect_success: nil, expected_exit: nil)
     puts "  command: #{command.join(" ")}"
     expected = expected_exit.nil? ? (expect_success ? "success" : "failure") : "exit #{expected_exit}"
     puts "  expected: #{expected}"
+    stdout_includes.each do |text|
+      puts "  expected stdout to include: #{text.inspect}"
+    end
     puts "  exit: #{status.exitstatus}"
     puts stdout.lines.map { |line| "  stdout: #{line}" }.join unless stdout.empty?
     puts stderr.lines.map { |line| "  stderr: #{line}" }.join unless stderr.empty?
@@ -55,6 +59,8 @@ Dir.chdir(REPO_ROOT) do
   schema_negative = Dir["examples/invalid/*.yaml"].sort
   conformance_positive = ["examples/minimal.yaml"]
   conformance_negative = Dir["examples/conformance/invalid/*.yaml"].sort
+  target_context_positive = Dir["contexts/*.yaml"].sort
+  target_context_negative = Dir["contexts/invalid/*.yaml"].sort
 
   checks = []
 
@@ -87,6 +93,28 @@ Dir.chdir(REPO_ROOT) do
       "conformance rejects #{file}",
       [RUBY, "scripts/ads-conformance-check.rb", file],
       expected_exit: 1
+    )
+  end
+
+  target_context_positive.each do |context|
+    checks << run_command(
+      "target context #{context} accepts examples/minimal.yaml",
+      [RUBY, "scripts/ads-conformance-check.rb", "--context", context, "examples/minimal.yaml"],
+      expect_success: true
+    )
+  end
+
+  target_context_negative.each do |context|
+    checks << run_command(
+      "target context #{context} rejects examples/minimal.yaml",
+      [RUBY, "scripts/ads-conformance-check.rb", "--context", context, "examples/minimal.yaml"],
+      expected_exit: 1,
+      stdout_includes: %w[
+        capability-unsupported
+        secret-unbound
+        approval-handler-missing
+        observability-sink-missing
+      ]
     )
   end
 

@@ -1,0 +1,48 @@
+targetProfile: kubernetes-production
+
+capabilities:
+  supported:
+    - container-runtime
+    - secret-injection
+    - persistent-storage
+    - queue
+    - vector-store
+    - network-policy
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+    - horizontal-scaling
+    - event-driven-scaling
+    - rollback
+    - dead-letter-queue
+    - image-signature-verification
+
+secrets:
+  bindings:
+    model-api-key:
+      source: external-secret-store
+      ref: prod/support-agent/model-api-key
+    database-url:
+      source: external-secret-store
+      ref: prod/support-agent/database-url
+
+approvals:
+  handlers:
+    human:
+      ref: ticketing/platform-approval
+    policy:
+      ref: opa/agentic-deployment
+
+observability:
+  traces:
+    sinks:
+      - opentelemetry-collector
+  metrics:
+    sinks:
+      - prometheus
+  auditEvents:
+    sinks:
+      - security-audit-log
