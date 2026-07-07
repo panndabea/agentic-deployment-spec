@@ -220,6 +220,85 @@ def context_observability_sink_available?(context, signal)
   provided?(config["sink"]) || provided?(config["sinks"])
 end
 
+def context_default_deny_egress_available?(context)
+  config = dig_hash(context, "network", "egress")
+  return false if config.nil? || config == false
+  return true if config == true
+  return false unless config.is_a?(Hash)
+
+  config["defaultDeny"] == true ||
+    config["enforceDefaultDeny"] == true ||
+    config["default"] == "deny"
+end
+
+def context_egress_destinations(context)
+  (
+    names_from_collection(dig_hash(context, "network", "egress", "allow")) +
+    names_from_collection(dig_hash(context, "network", "egress", "allowedDestinations")) +
+    names_from_collection(dig_hash(context, "externalIntegrations", "egress"))
+  ).uniq
+end
+
+def context_egress_destination_available?(context, destination)
+  destinations = context_egress_destinations(context)
+  destinations.include?("*") || destinations.include?(destination)
+end
+
+def context_sandbox_level_available?(context, level)
+  config = dig_hash(context, "security", "sandbox")
+  return false if config.nil? || config == false
+  return true if config == true
+
+  case config
+  when Array
+    config.include?(level)
+  when Hash
+    supported = (
+      names_from_collection(config["levels"]) +
+      names_from_collection(config["supported"])
+    ).uniq
+
+    config["level"] == level || supported.include?(level)
+  else
+    false
+  end
+end
+
+def context_tool_policy_default_available?(context, default)
+  config = dig_hash(context, "security", "toolPolicy")
+  return false if config.nil? || config == false
+  return true if config == true
+
+  case config
+  when Array
+    config.include?(default)
+  when Hash
+    supported = (
+      names_from_collection(config["defaults"]) +
+      names_from_collection(config["supportedDefaults"]) +
+      names_from_collection(config["supported"])
+    ).uniq
+
+    config["default"] == default ||
+      (default == "deny" && config["defaultDeny"] == true) ||
+      supported.include?(default)
+  else
+    false
+  end
+end
+
+def context_tool_policy_rules_available?(context)
+  config = dig_hash(context, "security", "toolPolicy")
+  return false if config.nil? || config == false
+  return true if config == true
+  return false unless config.is_a?(Hash)
+
+  config["ruleLists"] == true ||
+    config["allowlist"] == true ||
+    config["denylist"] == true ||
+    provided?(config["rules"])
+end
+
 def check_minimal_structure(document, diagnostics)
   unless document.is_a?(Hash)
     add_diagnostic(
@@ -601,6 +680,100 @@ def check_target_observability_bindings(document, context, diagnostics)
   end
 end
 
+def egress_allow_references(document)
+  [
+    ["$.security.outbound.allow", dig_hash(document, "security", "outbound", "allow")],
+    ["$.networking.egress.allow", dig_hash(document, "networking", "egress", "allow")]
+  ].each_with_object([]) do |(base_path, value), references|
+    next if value.nil?
+
+    string_or_list(value).each_with_index do |destination, index|
+      next unless destination.is_a?(String)
+
+      path = value.is_a?(Array) ? "#{base_path}[#{index}]" : base_path
+      references << {
+        "destination" => destination,
+        "path" => path
+      }
+    end
+  end
+end
+
+def default_deny_egress_path(document)
+  return "$.security.outbound.default" if dig_hash(document, "security", "outbound", "default") == "deny"
+  return "$.networking.egress.default" if dig_hash(document, "networking", "egress", "default") == "deny"
+
+  nil
+end
+
+def check_target_network_feasibility(document, context, diagnostics)
+  default_deny_path = default_deny_egress_path(document)
+  if default_deny_path && !context_default_deny_egress_available?(context)
+    add_diagnostic(
+      diagnostics,
+      category: "network-unresolved",
+      severity: "error",
+      path: default_deny_path,
+      message: "Default-deny outbound or egress policy cannot be enforced by the target context.",
+      extra: target_context_extra(context)
+    )
+  end
+
+  egress_allow_references(document).each do |reference|
+    destination = reference["destination"]
+    next if context_egress_destination_available?(context, destination)
+
+    add_diagnostic(
+      diagnostics,
+      category: "network-unresolved",
+      severity: "error",
+      path: reference["path"],
+      message: "Egress destination #{destination.inspect} is not resolvable by the target context.",
+      extra: target_context_extra(context).merge("destination" => destination)
+    )
+  end
+end
+
+def check_target_security_feasibility(document, context, diagnostics)
+  sandbox = dig_hash(document, "security", "defaultSandbox")
+  if sandbox.is_a?(String) && !context_sandbox_level_available?(context, sandbox)
+    add_diagnostic(
+      diagnostics,
+      category: "security-policy-unenforceable",
+      severity: "error",
+      path: "$.security.defaultSandbox",
+      message: "Sandbox level #{sandbox.inspect} cannot be enforced by the target context.",
+      extra: target_context_extra(context).merge("sandbox" => sandbox)
+    )
+  end
+
+  tool_policy_default = dig_hash(document, "security", "toolPolicy", "default")
+  if tool_policy_default.is_a?(String) && !context_tool_policy_default_available?(context, tool_policy_default)
+    add_diagnostic(
+      diagnostics,
+      category: "security-policy-unenforceable",
+      severity: "error",
+      path: "$.security.toolPolicy.default",
+      message: "Tool policy default #{tool_policy_default.inspect} cannot be enforced by the target context.",
+      extra: target_context_extra(context).merge("toolPolicyDefault" => tool_policy_default)
+    )
+  end
+
+  tool_policy_allow = dig_hash(document, "security", "toolPolicy", "allow")
+  tool_policy_deny = dig_hash(document, "security", "toolPolicy", "deny")
+  return unless provided?(tool_policy_allow) || provided?(tool_policy_deny)
+  return if context_tool_policy_rules_available?(context)
+
+  add_diagnostic(
+    diagnostics,
+    category: "security-policy-unenforceable",
+    severity: "error",
+    path: "$.security.toolPolicy",
+    message: "Tool policy allow or deny rules cannot be enforced by the target context.",
+    extra: target_context_extra(context)
+  )
+end
+
 def check_target_context(document, context, diagnostics)
   return unless context
   return unless document.is_a?(Hash)
@@ -609,6 +782,8 @@ def check_target_context(document, context, diagnostics)
   check_target_secret_bindings(document, context, diagnostics)
   check_target_approval_handlers(document, context, diagnostics)
   check_target_observability_bindings(document, context, diagnostics)
+  check_target_network_feasibility(document, context, diagnostics)
+  check_target_security_feasibility(document, context, diagnostics)
 end
 
 def check_extensions(document, diagnostics)

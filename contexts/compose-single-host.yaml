@@ -38,3 +38,21 @@ observability:
   auditEvents:
     sinks:
       - local-audit-log
+
+network:
+  egress:
+    defaultDeny: true
+    allow:
+      - api.openai.com
+      - internal.crm.example
+
+security:
+  sandbox:
+    levels:
+      - restricted
+      - baseline
+  toolPolicy:
+    defaults:
+      - deny
+      - allow
+    ruleLists: true

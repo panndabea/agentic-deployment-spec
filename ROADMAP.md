@@ -56,7 +56,7 @@ Deliverables:
 - initial compatibility diagnostic categories
 - schema tests for valid and invalid documents
 - secret-reference and observability validation rules
-- target context fixtures for capability, secret, approval, and observability checks
+- target context fixtures for capability, secret, approval, observability, network, and security checks
 
 Exit criteria:
 

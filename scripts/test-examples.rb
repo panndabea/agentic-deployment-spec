@@ -114,6 +114,8 @@ Dir.chdir(REPO_ROOT) do
         secret-unbound
         approval-handler-missing
         observability-sink-missing
+        network-unresolved
+        security-policy-unenforceable
       ]
     )
   end

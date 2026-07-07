@@ -50,7 +50,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 
 ## Validation
 
-The initial JSON Schema validates the structural v0.2 requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility checks, such as unique component names, `dependsOn` resolution, profile support, and secret binding resolution, are defined as ADS processor conformance responsibilities in [SPEC.md](SPEC.md#v03-processor-conformance).
+The initial JSON Schema validates the structural v0.2 requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility checks, such as unique component names, `dependsOn` resolution, profile support, secret binding resolution, network feasibility, and security policy enforcement, are defined as ADS processor conformance responsibilities in [SPEC.md](SPEC.md#v03-processor-conformance).
 
 Run the schema and conformance fixture suite with:
 
@@ -80,7 +80,7 @@ ruby scripts/ads-conformance-check.rb --context contexts/kubernetes-production.y
 
 The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks.
 
-The `contexts/*.yaml` files are non-normative target-context fixtures for the reference checker. They describe available target profile capabilities, secret bindings, approval handlers, and observability sinks. The files in `contexts/invalid/` intentionally omit required target context support.
+The `contexts/*.yaml` files are non-normative target-context fixtures for the reference checker. They describe available target profile capabilities, secret bindings, approval handlers, observability sinks, network controls, and security policy enforcement. The files in `contexts/invalid/` intentionally omit required target context support.
 
 ## Current Direction
 
