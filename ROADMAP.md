@@ -70,20 +70,25 @@ Goal: make ADS practical across deployment targets.
 
 Deliverables:
 
-- production Kubernetes profile
-- single-host Compose profile
-- managed container runtime profile
-- profile capability matrix with positive and negative fixture expectations
-- multi-agent example
-- stateful agent example
-- approval-and-policy example
+- [x] production Kubernetes profile
+- [x] single-host Compose profile
+- [x] managed container runtime profile
+- [x] profile capability matrix with positive and negative fixture expectations
+- [x] multi-agent example
+- [x] stateful agent example
+- [ ] approval-and-policy example
 
 Exit criteria:
 
-- each profile states which ADS capabilities it can satisfy
-- examples state which target contexts they are expected to pass or fail
-- examples reuse the same naming and structure where possible
-- architecture diagrams use the same component names as `SPEC.md`
+- [x] each profile states which ADS capabilities it can satisfy
+- [x] examples state which target contexts they are expected to pass or fail
+- [x] examples reuse the same naming and structure where possible
+- [ ] architecture diagrams use the same component names as `SPEC.md`
+
+Current v0.4 focus:
+
+- add an approval-and-policy example that exercises human, policy, and policy-and-human gates
+- add or update architecture diagrams after the example set stabilizes
 
 ## v0.5 - Security, Policy, and Operations
 
