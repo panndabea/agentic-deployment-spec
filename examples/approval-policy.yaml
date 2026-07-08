@@ -1,0 +1,159 @@
+apiVersion: ads.dev/v0alpha1
+kind: AgenticDeployment
+metadata:
+  name: approval-policy-agent
+  owner: platform-team
+  description: Approval-focused deployment with human, policy, and combined approval gates.
+  labels:
+    tier: production
+    workload: approval-policy
+
+profiles:
+  - kubernetes-production
+  - compose-single-host
+  - managed-container-runtime
+
+runtime:
+  components:
+    - name: api
+      type: agent-runtime
+      image: ghcr.io/example/approval-policy-agent:1.0.0
+      execution:
+        mode: request-response
+        concurrency: 8
+      ports:
+        - name: http
+          containerPort: 8080
+          exposure: external
+      health:
+        readiness:
+          path: /ready
+          port: http
+        liveness:
+          path: /healthz
+          port: http
+
+capabilities:
+  required:
+    - container-runtime
+    - secret-injection
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+
+secrets:
+  required:
+    - name: model-api-key
+      purpose: model-provider-auth
+      rotation: required
+      source: platform-secret
+      injection: env
+      reload: restart-required
+      for:
+        - api
+
+security:
+  defaultSandbox: restricted
+  outbound:
+    default: deny
+    allow:
+      - api.openai.com
+      - internal.crm.example
+  toolPolicy:
+    default: deny
+    allow:
+      - read-ticket
+      - classify-risk
+      - draft-action-plan
+    deny:
+      - send-customer-email
+      - issue-refund
+      - export-customer-data
+
+approvals:
+  required:
+    - action: classify-risk
+      mode: policy
+      reason: policy must classify customer and business risk before action planning
+      scope:
+        component: api
+        dataClass: customer-support
+      auditEvents:
+        - policy_decision_recorded
+        - risk_classification_recorded
+    - action: send-customer-email
+      mode: human
+      reason: external customer communication requires human review
+      scope:
+        component: api
+        dataClass: customer-communication
+      auditEvents:
+        - approval_requested
+        - approval_granted
+        - approval_denied
+    - action: issue-refund
+      mode: policy-and-human
+      reason: financial side effect requires policy eligibility and human approval
+      scope:
+        component: api
+        dataClass: billing
+      auditEvents:
+        - approval_requested
+        - policy_decision_recorded
+        - approval_granted
+        - approval_denied
+    - action: export-customer-data
+      mode: policy-and-human
+      reason: customer data export requires legal basis and operator approval
+      scope:
+        component: api
+        dataClass: personal-data
+      auditEvents:
+        - approval_requested
+        - policy_decision_recorded
+        - approval_granted
+        - approval_denied
+
+observability:
+  traces:
+    required: true
+    format: opentelemetry
+  metrics:
+    required:
+      - request_latency
+      - approval_request_count
+      - approval_wait_time
+      - policy_decision_latency
+      - denied_action_count
+      - model_cost
+  auditEvents:
+    required:
+      - deployment_planned
+      - policy_decision_recorded
+      - approval_requested
+      - approval_granted
+      - approval_denied
+      - tool_call_denied
+      - action_executed
+      - secret_resolved
+  logs:
+    streams:
+      - api
+    redaction:
+      required: true
+
+networking:
+  ingress:
+    - name: public-api
+      component: api
+      port: http
+      tls: required
+      auth: required
+  egress:
+    default: deny
+    allow:
+      - api.openai.com
+      - internal.crm.example

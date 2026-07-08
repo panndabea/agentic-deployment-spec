@@ -42,6 +42,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
+- [examples/approval-policy.yaml](examples/approval-policy.yaml) is a v0.4-oriented approval and policy gate example.
 - [examples/multi-agent.yaml](examples/multi-agent.yaml) is the first v0.4-oriented multi-agent production example.
 - [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is a v0.4-oriented managed-runtime-compatible stateful agent example.
 - [schemas/ads.schema.json](schemas/ads.schema.json) is the initial JSON Schema for `ads.dev/v0alpha1`.
@@ -80,7 +81,7 @@ Validate an ADS document against a target context with:
 ruby scripts/ads-conformance-check.rb --context contexts/kubernetes-production.yaml examples/minimal.yaml
 ```
 
-The fixture suite also checks profile compatibility expectations: [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is accepted by Kubernetes production and managed container runtime target contexts, while [examples/multi-agent.yaml](examples/multi-agent.yaml) is accepted only by the Kubernetes production target context.
+The fixture suite also checks profile compatibility expectations: [examples/approval-policy.yaml](examples/approval-policy.yaml) is accepted by all current target contexts, [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is accepted by Kubernetes production and managed container runtime target contexts, and [examples/multi-agent.yaml](examples/multi-agent.yaml) is accepted only by the Kubernetes production target context.
 
 The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks.
 

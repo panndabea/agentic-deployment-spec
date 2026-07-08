@@ -60,10 +60,13 @@ Dir.chdir(REPO_ROOT) do
   conformance_positive = Dir["examples/*.yaml"].sort
   conformance_negative = Dir["examples/conformance/invalid/*.yaml"].sort
   target_context_positive = [
+    ["contexts/compose-single-host.yaml", "examples/approval-policy.yaml"],
     ["contexts/compose-single-host.yaml", "examples/minimal.yaml"],
+    ["contexts/kubernetes-production.yaml", "examples/approval-policy.yaml"],
     ["contexts/kubernetes-production.yaml", "examples/minimal.yaml"],
     ["contexts/kubernetes-production.yaml", "examples/multi-agent.yaml"],
     ["contexts/kubernetes-production.yaml", "examples/stateful-agent.yaml"],
+    ["contexts/managed-container-runtime.yaml", "examples/approval-policy.yaml"],
     ["contexts/managed-container-runtime.yaml", "examples/minimal.yaml"],
     ["contexts/managed-container-runtime.yaml", "examples/stateful-agent.yaml"]
   ]

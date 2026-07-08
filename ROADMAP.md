@@ -76,7 +76,7 @@ Deliverables:
 - [x] profile capability matrix with positive and negative fixture expectations
 - [x] multi-agent example
 - [x] stateful agent example
-- [ ] approval-and-policy example
+- [x] approval-and-policy example
 
 Exit criteria:
 
@@ -87,7 +87,6 @@ Exit criteria:
 
 Current v0.4 focus:
 
-- add an approval-and-policy example that exercises human, policy, and policy-and-human gates
 - add or update architecture diagrams after the example set stabilizes
 
 ## v0.5 - Security, Policy, and Operations
