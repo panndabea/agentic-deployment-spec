@@ -55,12 +55,38 @@ Dir.chdir(REPO_ROOT) do
     exit 2
   end
 
-  schema_positive = ["examples/minimal.yaml"] + Dir["examples/conformance/invalid/*.yaml"].sort
+  schema_positive = Dir["examples/*.yaml"].sort + Dir["examples/conformance/invalid/*.yaml"].sort
   schema_negative = Dir["examples/invalid/*.yaml"].sort
-  conformance_positive = ["examples/minimal.yaml"]
+  conformance_positive = Dir["examples/*.yaml"].sort
   conformance_negative = Dir["examples/conformance/invalid/*.yaml"].sort
-  target_context_positive = Dir["contexts/*.yaml"].sort
-  target_context_negative = Dir["contexts/invalid/*.yaml"].sort
+  target_context_positive = [
+    ["contexts/compose-single-host.yaml", "examples/minimal.yaml"],
+    ["contexts/kubernetes-production.yaml", "examples/minimal.yaml"],
+    ["contexts/kubernetes-production.yaml", "examples/multi-agent.yaml"]
+  ]
+  target_context_negative = Dir["contexts/invalid/*.yaml"].sort.map do |context|
+    [
+      context,
+      "examples/minimal.yaml",
+      %w[
+        capability-unsupported
+        secret-unbound
+        approval-handler-missing
+        observability-sink-missing
+        network-unresolved
+        security-policy-unenforceable
+      ]
+    ]
+  end
+  target_context_negative << [
+    "contexts/compose-single-host.yaml",
+    "examples/multi-agent.yaml",
+    %w[
+      capability-unsupported
+      secret-unbound
+      network-unresolved
+    ]
+  ]
 
   checks = []
 
@@ -96,27 +122,20 @@ Dir.chdir(REPO_ROOT) do
     )
   end
 
-  target_context_positive.each do |context|
+  target_context_positive.each do |context, file|
     checks << run_command(
-      "target context #{context} accepts examples/minimal.yaml",
-      [RUBY, "scripts/ads-conformance-check.rb", "--context", context, "examples/minimal.yaml"],
+      "target context #{context} accepts #{file}",
+      [RUBY, "scripts/ads-conformance-check.rb", "--context", context, file],
       expect_success: true
     )
   end
 
-  target_context_negative.each do |context|
+  target_context_negative.each do |context, file, expected_diagnostics|
     checks << run_command(
-      "target context #{context} rejects examples/minimal.yaml",
-      [RUBY, "scripts/ads-conformance-check.rb", "--context", context, "examples/minimal.yaml"],
+      "target context #{context} rejects #{file}",
+      [RUBY, "scripts/ads-conformance-check.rb", "--context", context, file],
       expected_exit: 1,
-      stdout_includes: %w[
-        capability-unsupported
-        secret-unbound
-        approval-handler-missing
-        observability-sink-missing
-        network-unresolved
-        security-policy-unenforceable
-      ]
+      stdout_includes: expected_diagnostics
     )
   end
 

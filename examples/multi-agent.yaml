@@ -1,0 +1,283 @@
+apiVersion: ads.dev/v0alpha1
+kind: AgenticDeployment
+metadata:
+  name: customer-ops-agent-suite
+  owner: platform-team
+  description: Multi-agent customer operations deployment with approval-gated side effects.
+  labels:
+    tier: production
+    workload: agentic
+
+profiles:
+  - kubernetes-production
+  - managed-container-runtime
+
+runtime:
+  components:
+    - name: api
+      type: gateway
+      image: ghcr.io/example/customer-ops-api:1.0.0
+      execution:
+        mode: request-response
+        concurrency: 16
+      ports:
+        - name: http
+          containerPort: 8080
+          exposure: external
+      dependsOn:
+        - orchestrator
+      health:
+        readiness:
+          path: /ready
+          port: http
+        liveness:
+          path: /healthz
+          port: http
+    - name: orchestrator
+      type: workflow-orchestrator
+      image: ghcr.io/example/customer-ops-orchestrator:1.0.0
+      execution:
+        mode: internal-service
+        concurrency: 32
+      dependsOn:
+        - planner-agent
+        - support-agent
+        - tool-server
+        - session-store
+        - event-queue
+      state:
+        mode: durable-session
+        store: session-store
+      scaling:
+        minReplicas: 2
+        maxReplicas: 8
+    - name: planner-agent
+      type: agent-runtime
+      image: ghcr.io/example/customer-ops-planner:1.0.0
+      execution:
+        mode: internal-service
+        concurrency: 8
+      dependsOn:
+        - session-store
+      state:
+        mode: checkpointed
+        store: session-store
+    - name: support-agent
+      type: agent-runtime
+      image: ghcr.io/example/customer-support-agent:1.0.0
+      execution:
+        mode: async-worker
+        concurrency: 12
+      dependsOn:
+        - event-queue
+        - tool-server
+        - vector-store
+    - name: tool-server
+      type: tool-server
+      image: ghcr.io/example/customer-ops-tools:1.0.0
+      execution:
+        mode: internal-service
+      dependsOn:
+        - session-store
+    - name: event-queue
+      type: queue-consumer
+      externalRef: platform://queue/customer-ops-events
+      execution:
+        mode: external
+    - name: session-store
+      type: state-store
+      externalRef: platform://postgres/customer-ops
+      execution:
+        mode: external
+    - name: vector-store
+      type: vector-store
+      externalRef: platform://vector/customer-ops-knowledge
+      execution:
+        mode: external
+
+capabilities:
+  required:
+    - container-runtime
+    - secret-injection
+    - persistent-storage
+    - queue
+    - vector-store
+    - network-policy
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+    - horizontal-scaling
+    - rollback
+    - dead-letter-queue
+  optional:
+    - name: event-driven-scaling
+      for:
+        - support-agent
+      reason: scale workers from queue depth when available
+    - name: image-signature-verification
+      reason: verify production artifacts before rollout
+
+secrets:
+  required:
+    - name: model-api-key
+      purpose: model-provider-auth
+      rotation: required
+      source: external-secret-store
+      injection: env
+      reload: restart-required
+      for:
+        - planner-agent
+        - support-agent
+    - name: database-url
+      purpose: session-state
+      rotation: required
+      source: external-secret-store
+      injection: env
+      reload: restart-required
+      for:
+        - orchestrator
+        - planner-agent
+        - tool-server
+    - name: crm-api-token
+      purpose: crm-tool-access
+      rotation: required
+      source: external-secret-store
+      injection: runtime-fetch
+      reload: hot-reload
+      for:
+        - tool-server
+
+security:
+  defaultSandbox: restricted
+  outbound:
+    default: deny
+    allow:
+      - api.openai.com
+      - crm.internal.example
+      - billing.internal.example
+  toolPolicy:
+    default: deny
+    allow:
+      - read-ticket
+      - search-knowledge-base
+      - draft-reply
+      - queue-follow-up
+    deny:
+      - send-customer-email
+      - update-billing-record
+  identity:
+    serviceAccount: customer-ops-agents
+    operatorGroup: platform-operators
+  trustBoundaries:
+    - name: external-users
+      from: api
+      to: orchestrator
+    - name: privileged-tools
+      from: orchestrator
+      to: tool-server
+  hardening:
+    runAsNonRoot: true
+    readOnlyRootFilesystem: true
+    seccompProfile: runtime-default
+
+approvals:
+  required:
+    - action: send-customer-email
+      mode: human
+      reason: external side effect
+      scope:
+        component: tool-server
+        dataClass: customer-communication
+      auditEvents:
+        - approval_requested
+        - approval_granted
+        - approval_denied
+    - action: update-billing-record
+      mode: policy-and-human
+      reason: privileged financial data mutation
+      scope:
+        component: tool-server
+        dataClass: billing
+      auditEvents:
+        - approval_requested
+        - policy_decision_recorded
+        - approval_granted
+
+observability:
+  traces:
+    required: true
+    format: opentelemetry
+  metrics:
+    required:
+      - request_latency
+      - orchestration_duration
+      - agent_handoff_count
+      - queue_depth
+      - tool_call_count
+      - approval_wait_time
+      - model_cost
+  auditEvents:
+    required:
+      - deployment_planned
+      - deployment_applied
+      - tool_call_denied
+      - approval_requested
+      - approval_granted
+      - policy_decision_recorded
+      - secret_resolved
+  logs:
+    streams:
+      - api
+      - orchestrator
+      - planner-agent
+      - support-agent
+      - tool-server
+    redaction:
+      required: true
+
+networking:
+  ingress:
+    - name: public-api
+      component: api
+      port: http
+      tls: required
+      auth: required
+  internal:
+    - from: orchestrator
+      to:
+        - planner-agent
+        - support-agent
+        - tool-server
+        - session-store
+        - event-queue
+    - from: support-agent
+      to:
+        - tool-server
+        - vector-store
+  egress:
+    default: deny
+    allow:
+      - api.openai.com
+      - crm.internal.example
+      - billing.internal.example
+
+reliability:
+  rollout:
+    strategy: canary
+    maxUnavailable: 1
+  rollback:
+    automatic: true
+    triggers:
+      - elevated_error_rate
+      - failed_readiness
+  retries:
+    default:
+      attempts: 3
+      backoff: exponential
+      jitter: true
+  deadLetters:
+    required: true
+    queue: customer-ops-dead-letter
