@@ -562,6 +562,25 @@ ADS processors MUST report:
 
 ADS processors MAY ignore unknown extension fields only when those fields are namespaced and not marked as required.
 
+## Production Readiness Checklist
+
+This checklist is initial v0.5 guidance for authors, reviewers, and ADS processors. A production ADS document SHOULD be reviewed against these expectations before deployment planning is approved.
+
+| Area | Production readiness expectation | Related fields |
+|---|---|---|
+| Ownership | The deployment has a stable name, an accountable owner, and explicit target profiles. | `metadata.name`, `metadata.owner`, `profiles` |
+| Runtime model | Runtime components, execution modes, dependencies, health checks, and externally managed components are explicit. | `runtime.components`, `execution`, `dependsOn`, `health`, `externalRef` |
+| Capability compatibility | Required capabilities are complete, normalized, and satisfiable by the selected target context. Optional capabilities do not hide required production behavior. | `capabilities.required`, `capabilities.optional`, target context |
+| Secrets | Secret values are never stored inline. Required secrets declare purpose, source class, injection method, rotation expectation, reload behavior, and consuming components when scoped. | `secrets.required` |
+| Security defaults | Production deployments default to restricted sandboxing, deny-by-default tool policy, deny-by-default outbound policy when feasible, explicit trust boundaries, and hardening expectations. | `security.defaultSandbox`, `security.toolPolicy`, `security.outbound`, `security.trustBoundaries`, `security.hardening` |
+| Approval and policy gates | Actions with external side effects, privileged data access, irreversible mutation, high cost, or compliance impact are approval-gated and mapped to available human and/or policy handlers. | `approvals.required`, target context approval handlers |
+| Observability and audit | Required metrics, traces, logs, redaction expectations, and audit events are declared and bound to available sinks. Audit events cover deployment, approval, policy, secret, and tool activity. | `observability`, target context observability sinks |
+| Networking | Ingress, internal traffic, outbound destinations, TLS/auth expectations, and default-deny egress requirements are declared and enforceable by the target context. | `networking`, `security.outbound`, target context network controls |
+| Reliability | Health, rollout, rollback, retry, timeout, rate-limit, and dead-letter expectations are declared for the components that need them. | `runtime.components[].health`, `reliability` |
+| Compatibility diagnostics | The processor reports all blocking incompatibilities without dropping, weakening, or replacing required ADS behavior with non-equivalent platform behavior. | diagnostics, target context |
+
+Production readiness is not a separate deployment mode. It is the result of an ADS document, a target context, and an ADS processor agreeing on the same required behavior.
+
 ### v0.3 Processor Conformance
 
 An ADS processor MUST evaluate an ADS document against a target context before deployment planning. The target context includes the selected target profile, the platform capability set, external integrations, secret bindings, approval handlers, network controls, and observability sinks available to the processor.

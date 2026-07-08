@@ -95,17 +95,21 @@ Goal: harden the production model.
 
 Deliverables:
 
-- threat model for agentic deployments
-- supply-chain requirements for signed artifacts and SBOMs
-- policy decision points for approvals
-- production-readiness checklist
-- audit event taxonomy
+- [ ] threat model for agentic deployments
+- [ ] supply-chain requirements for signed artifacts and SBOMs
+- [ ] policy decision points for approvals
+- [x] production-readiness checklist
+- [ ] audit event taxonomy
 
 Exit criteria:
 
 - production deployments have explicit security, secret, approval, and telemetry requirements
 - high-risk tool actions are deny-by-default unless approved
 - audit events map to deployment, policy, secret, and tool activity
+
+Current v0.5 focus:
+
+- expand the production-readiness checklist into a threat model and audit event taxonomy
 
 ## v1.0 - Stable Specification
 
