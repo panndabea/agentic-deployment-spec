@@ -73,6 +73,7 @@ Deliverables:
 - production Kubernetes profile
 - single-host Compose profile
 - managed container runtime profile
+- profile capability matrix with positive and negative fixture expectations
 - multi-agent example
 - stateful agent example
 - approval-and-policy example
@@ -80,6 +81,7 @@ Deliverables:
 Exit criteria:
 
 - each profile states which ADS capabilities it can satisfy
+- examples state which target contexts they are expected to pass or fail
 - examples reuse the same naming and structure where possible
 - architecture diagrams use the same component names as `SPEC.md`
 
