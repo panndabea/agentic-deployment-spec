@@ -643,6 +643,87 @@ The schema SHOULD preserve this document's separation between intent and impleme
 
 The minimal example in this document is the current canonical example. The standalone file [examples/minimal.yaml](examples/minimal.yaml) MUST remain equivalent to the canonical example in this section unless the example is intentionally revised. Future examples SHOULD reuse its names and structure where possible, extending it for multi-agent, stateful, GPU, and air-gapped scenarios instead of inventing unrelated examples.
 
+### Example Architecture Diagrams
+
+These diagrams are informative. Runtime component labels SHOULD match the component names used in the corresponding standalone examples.
+
+#### Minimal Support Agent
+
+This diagram summarizes the canonical minimal example in [examples/minimal.yaml](examples/minimal.yaml).
+
+```mermaid
+flowchart LR
+    user[User] --> api["api\nagent-runtime"]
+    api --> tool_server["tool-server\ntool-server"]
+    api --> postgres[(postgres\nstate store)]
+    api --> approvals{human and policy approvals}
+    api --> egress["api.openai.com\ninternal.crm.example"]
+    api --> telemetry[traces metrics auditEvents]
+    tool_server --> telemetry
+```
+
+#### Approval And Policy Agent
+
+This diagram summarizes [examples/approval-policy.yaml](examples/approval-policy.yaml), which exercises `policy`, `human`, and `policy-and-human` approval modes.
+
+```mermaid
+flowchart LR
+    user[User] --> api["api\nagent-runtime"]
+    api --> policy_gate{policy\nclassify-risk}
+    api --> human_gate{human\nsend-customer-email}
+    api --> combined_gate{policy-and-human\nissue-refund\nexport-customer-data}
+    api --> tool_policy[deny-by-default tool policy]
+    api --> egress["api.openai.com\ninternal.crm.example"]
+    policy_gate --> audit[auditEvents]
+    human_gate --> audit
+    combined_gate --> audit
+    api --> telemetry[traces metrics logs]
+```
+
+#### Stateful Agent
+
+This diagram summarizes [examples/stateful-agent.yaml](examples/stateful-agent.yaml), which adds durable session state, managed rollback, and session restore policy.
+
+```mermaid
+flowchart LR
+    user[User] --> api["api\nagent-runtime"]
+    api --> session_store["session-store\nstate-store"]
+    api --> restore_policy{policy\nrestore-session}
+    api --> human_gate{human\nsend-customer-email}
+    api --> egress["api.openai.com\ninternal.crm.example"]
+    api --> reliability[rolling rollout\nrollback\nretries]
+    api --> telemetry[traces metrics logs auditEvents]
+    session_store --> telemetry
+    restore_policy --> telemetry
+    human_gate --> telemetry
+```
+
+#### Multi-Agent Suite
+
+This diagram summarizes [examples/multi-agent.yaml](examples/multi-agent.yaml), the production-oriented multi-agent fixture.
+
+```mermaid
+flowchart LR
+    user[User] --> api["api\ngateway"]
+    api --> orchestrator["orchestrator\nworkflow-orchestrator"]
+    orchestrator --> planner_agent["planner-agent\nagent-runtime"]
+    orchestrator --> support_agent["support-agent\nagent-runtime"]
+    orchestrator --> tool_server["tool-server\ntool-server"]
+    orchestrator --> session_store["session-store\nstate-store"]
+    orchestrator --> event_queue["event-queue\nqueue-consumer"]
+    planner_agent --> session_store
+    support_agent --> event_queue
+    support_agent --> tool_server
+    support_agent --> vector_store["vector-store\nvector-store"]
+    tool_server --> session_store
+    tool_server --> approvals{human and policy approvals}
+    api --> telemetry[traces metrics logs auditEvents]
+    orchestrator --> telemetry
+    planner_agent --> telemetry
+    support_agent --> telemetry
+    tool_server --> telemetry
+```
+
 The files in [examples/invalid/](examples/invalid/) are negative schema fixtures. They are intentionally invalid and MUST NOT be treated as conforming ADS documents.
 
 The files in [examples/conformance/invalid/](examples/conformance/invalid/) are schema-valid negative conformance fixtures. They exercise document-level processor requirements that cannot be fully expressed in JSON Schema, such as component-name uniqueness and scoped reference resolution.

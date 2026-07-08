@@ -83,11 +83,11 @@ Exit criteria:
 - [x] each profile states which ADS capabilities it can satisfy
 - [x] examples state which target contexts they are expected to pass or fail
 - [x] examples reuse the same naming and structure where possible
-- [ ] architecture diagrams use the same component names as `SPEC.md`
+- [x] architecture diagrams use the same component names as `SPEC.md`
 
-Current v0.4 focus:
+Current v0.4 review focus:
 
-- add or update architecture diagrams after the example set stabilizes
+- keep profile fixtures, examples, and diagrams synchronized as v0.4 receives review
 
 ## v0.5 - Security, Policy, and Operations
 
