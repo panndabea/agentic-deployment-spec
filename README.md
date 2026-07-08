@@ -43,6 +43,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
 - [examples/multi-agent.yaml](examples/multi-agent.yaml) is the first v0.4-oriented multi-agent production example.
+- [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is a v0.4-oriented managed-runtime-compatible stateful agent example.
 - [schemas/ads.schema.json](schemas/ads.schema.json) is the initial JSON Schema for `ads.dev/v0alpha1`.
 - [examples/invalid/](examples/invalid/) contains negative schema fixtures.
 - [examples/conformance/invalid/](examples/conformance/invalid/) contains schema-valid documents that violate ADS processor conformance rules.
@@ -79,7 +80,7 @@ Validate an ADS document against a target context with:
 ruby scripts/ads-conformance-check.rb --context contexts/kubernetes-production.yaml examples/minimal.yaml
 ```
 
-The fixture suite also checks that [examples/multi-agent.yaml](examples/multi-agent.yaml) is accepted by the Kubernetes production target context and rejected by the smaller Compose single-host and managed container runtime target contexts.
+The fixture suite also checks profile compatibility expectations: [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is accepted by Kubernetes production and managed container runtime target contexts, while [examples/multi-agent.yaml](examples/multi-agent.yaml) is accepted only by the Kubernetes production target context.
 
 The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks.
 

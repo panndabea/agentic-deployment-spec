@@ -63,7 +63,9 @@ Dir.chdir(REPO_ROOT) do
     ["contexts/compose-single-host.yaml", "examples/minimal.yaml"],
     ["contexts/kubernetes-production.yaml", "examples/minimal.yaml"],
     ["contexts/kubernetes-production.yaml", "examples/multi-agent.yaml"],
-    ["contexts/managed-container-runtime.yaml", "examples/minimal.yaml"]
+    ["contexts/kubernetes-production.yaml", "examples/stateful-agent.yaml"],
+    ["contexts/managed-container-runtime.yaml", "examples/minimal.yaml"],
+    ["contexts/managed-container-runtime.yaml", "examples/stateful-agent.yaml"]
   ]
   target_context_negative = Dir["contexts/invalid/*.yaml"].sort.map do |context|
     [
@@ -86,6 +88,13 @@ Dir.chdir(REPO_ROOT) do
       capability-unsupported
       secret-unbound
       network-unresolved
+    ]
+  ]
+  target_context_negative << [
+    "contexts/compose-single-host.yaml",
+    "examples/stateful-agent.yaml",
+    %w[
+      capability-unsupported
     ]
   ]
   target_context_negative << [

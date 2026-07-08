@@ -1,0 +1,181 @@
+apiVersion: ads.dev/v0alpha1
+kind: AgenticDeployment
+metadata:
+  name: session-agent
+  owner: platform-team
+  description: Stateful support agent with durable sessions and managed rollback.
+  labels:
+    tier: production
+    workload: stateful-agent
+
+profiles:
+  - kubernetes-production
+  - managed-container-runtime
+
+runtime:
+  components:
+    - name: api
+      type: agent-runtime
+      image: ghcr.io/example/session-agent:1.0.0
+      execution:
+        mode: request-response
+        concurrency: 12
+      ports:
+        - name: http
+          containerPort: 8080
+          exposure: external
+      dependsOn:
+        - session-store
+      state:
+        mode: durable-session
+        store: session-store
+      health:
+        readiness:
+          path: /ready
+          port: http
+        liveness:
+          path: /healthz
+          port: http
+      scaling:
+        minReplicas: 2
+        maxReplicas: 6
+    - name: session-store
+      type: state-store
+      externalRef: platform://postgres/session-agent
+      execution:
+        mode: external
+
+capabilities:
+  required:
+    - container-runtime
+    - secret-injection
+    - persistent-storage
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+    - horizontal-scaling
+    - rollback
+
+secrets:
+  required:
+    - name: model-api-key
+      purpose: model-provider-auth
+      rotation: required
+      source: platform-secret
+      injection: env
+      reload: restart-required
+      for:
+        - api
+    - name: database-url
+      purpose: durable-session-store
+      rotation: required
+      source: platform-secret
+      injection: env
+      reload: restart-required
+      for:
+        - api
+        - session-store
+
+security:
+  defaultSandbox: restricted
+  outbound:
+    default: deny
+    allow:
+      - api.openai.com
+      - internal.crm.example
+  toolPolicy:
+    default: deny
+    allow:
+      - read-ticket
+      - draft-reply
+      - restore-session
+    deny:
+      - send-customer-email
+
+approvals:
+  required:
+    - action: send-customer-email
+      mode: human
+      reason: external side effect
+      scope:
+        component: api
+        dataClass: customer-communication
+      auditEvents:
+        - approval_requested
+        - approval_granted
+        - approval_denied
+    - action: restore-session
+      mode: policy
+      reason: replaying durable agent state can expose historical customer context
+      scope:
+        component: api
+        dataClass: session-state
+      auditEvents:
+        - policy_decision_recorded
+        - session_restore_started
+
+observability:
+  traces:
+    required: true
+    format: opentelemetry
+  metrics:
+    required:
+      - request_latency
+      - session_load_latency
+      - session_checkpoint_latency
+      - session_restore_count
+      - tool_call_count
+      - model_cost
+  auditEvents:
+    required:
+      - deployment_planned
+      - deployment_rolled_back
+      - secret_resolved
+      - session_checkpoint_written
+      - session_restore_started
+      - approval_requested
+      - approval_granted
+      - policy_decision_recorded
+  logs:
+    streams:
+      - api
+    redaction:
+      required: true
+
+networking:
+  ingress:
+    - name: public-api
+      component: api
+      port: http
+      tls: required
+      auth: required
+  internal:
+    - from: api
+      to:
+        - session-store
+  egress:
+    default: deny
+    allow:
+      - api.openai.com
+      - internal.crm.example
+
+reliability:
+  rollout:
+    strategy: rolling
+    maxUnavailable: 1
+  rollback:
+    automatic: true
+    triggers:
+      - failed_readiness
+      - session_restore_errors
+  retries:
+    default:
+      attempts: 3
+      backoff: exponential
+      jitter: true
+  timeouts:
+    request: 30s
+    sessionRestore: 10s
