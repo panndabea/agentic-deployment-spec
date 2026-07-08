@@ -9,6 +9,7 @@ metadata:
 profiles:
   - kubernetes-production
   - compose-single-host
+  - managed-container-runtime
 
 runtime:
   components:

@@ -79,7 +79,7 @@ Validate an ADS document against a target context with:
 ruby scripts/ads-conformance-check.rb --context contexts/kubernetes-production.yaml examples/minimal.yaml
 ```
 
-The fixture suite also checks that [examples/multi-agent.yaml](examples/multi-agent.yaml) is accepted by the Kubernetes production target context and rejected by the smaller Compose single-host target context.
+The fixture suite also checks that [examples/multi-agent.yaml](examples/multi-agent.yaml) is accepted by the Kubernetes production target context and rejected by the smaller Compose single-host and managed container runtime target contexts.
 
 The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks.
 

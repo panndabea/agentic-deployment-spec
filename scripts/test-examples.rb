@@ -62,7 +62,8 @@ Dir.chdir(REPO_ROOT) do
   target_context_positive = [
     ["contexts/compose-single-host.yaml", "examples/minimal.yaml"],
     ["contexts/kubernetes-production.yaml", "examples/minimal.yaml"],
-    ["contexts/kubernetes-production.yaml", "examples/multi-agent.yaml"]
+    ["contexts/kubernetes-production.yaml", "examples/multi-agent.yaml"],
+    ["contexts/managed-container-runtime.yaml", "examples/minimal.yaml"]
   ]
   target_context_negative = Dir["contexts/invalid/*.yaml"].sort.map do |context|
     [
@@ -80,6 +81,15 @@ Dir.chdir(REPO_ROOT) do
   end
   target_context_negative << [
     "contexts/compose-single-host.yaml",
+    "examples/multi-agent.yaml",
+    %w[
+      capability-unsupported
+      secret-unbound
+      network-unresolved
+    ]
+  ]
+  target_context_negative << [
+    "contexts/managed-container-runtime.yaml",
     "examples/multi-agent.yaml",
     %w[
       capability-unsupported

@@ -1,0 +1,60 @@
+targetProfile: managed-container-runtime
+
+capabilities:
+  supported:
+    - container-runtime
+    - secret-injection
+    - persistent-storage
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+    - horizontal-scaling
+    - rollback
+
+secrets:
+  bindings:
+    model-api-key:
+      source: platform-secret
+      ref: managed:MODEL_API_KEY
+    database-url:
+      source: platform-secret
+      ref: managed:DATABASE_URL
+
+approvals:
+  handlers:
+    human:
+      ref: managed-change-approval
+    policy:
+      ref: managed-policy-check
+
+observability:
+  traces:
+    sinks:
+      - managed-otel-export
+  metrics:
+    sinks:
+      - managed-metrics
+  auditEvents:
+    sinks:
+      - managed-audit-log
+
+network:
+  egress:
+    defaultDeny: true
+    allow:
+      - api.openai.com
+      - internal.crm.example
+
+security:
+  sandbox:
+    levels:
+      - restricted
+      - baseline
+  toolPolicy:
+    defaults:
+      - deny
+      - allow
+    ruleLists: true
