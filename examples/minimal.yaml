@@ -63,6 +63,54 @@ security:
     allow:
       - read-ticket
       - draft-reply
+  trustBoundaries:
+    - name: user-to-agent
+      from: user
+      to: api
+    - name: agent-to-tools
+      from: api
+      to: tool-server
+  threatModel:
+    assets:
+      - customer-support-data
+      - model-api-key
+      - session-state
+    actors:
+      - end-user
+      - agent-runtime
+      - platform-operator
+    threats:
+      - id: prompt-injection
+        category: prompt-injection
+        assets:
+          - customer-support-data
+        mitigations:
+          - deny-by-default-tools
+          - human-approval
+      - id: secret-exfiltration
+        category: secret-exfiltration
+        assets:
+          - model-api-key
+        mitigations:
+          - secret-injection
+          - restricted-egress
+    mitigations:
+      - id: deny-by-default-tools
+        fields:
+          - security.toolPolicy
+      - id: human-approval
+        fields:
+          - approvals.required
+      - id: secret-injection
+        fields:
+          - secrets.required
+      - id: restricted-egress
+        fields:
+          - security.outbound
+    review:
+      status: reviewed
+      reviewedBy: platform-security
+      cadence: release
 
 approvals:
   required:

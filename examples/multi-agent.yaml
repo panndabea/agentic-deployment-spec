@@ -178,6 +178,52 @@ security:
     - name: privileged-tools
       from: orchestrator
       to: tool-server
+  threatModel:
+    assets:
+      - customer-support-data
+      - billing-data
+      - session-state
+      - crm-api-token
+    actors:
+      - end-user
+      - orchestrator
+      - support-agent
+      - tool-server
+      - platform-operator
+    threats:
+      - id: agent-handoff-confusion
+        category: cross-agent-confusion
+        assets:
+          - customer-support-data
+          - session-state
+        mitigations:
+          - explicit-trust-boundaries
+          - orchestration-tracing
+      - id: privileged-tool-abuse
+        category: unsafe-external-side-effect
+        assets:
+          - billing-data
+          - crm-api-token
+        mitigations:
+          - deny-by-default-tools
+          - approval-gates
+    mitigations:
+      - id: explicit-trust-boundaries
+        fields:
+          - security.trustBoundaries
+      - id: orchestration-tracing
+        fields:
+          - observability.traces
+      - id: deny-by-default-tools
+        fields:
+          - security.toolPolicy
+      - id: approval-gates
+        fields:
+          - approvals.required
+    review:
+      status: reviewed
+      reviewedBy: platform-security
+      cadence: release
   hardening:
     runAsNonRoot: true
     readOnlyRootFilesystem: true

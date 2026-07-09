@@ -258,6 +258,7 @@ ADS documents MUST NOT include secret values, encrypted secret payloads, private
 - `outbound.allow`: list of allowed hostnames, domains, CIDR ranges, or service names.
 - `identity`: service and operator identity requirements.
 - `trustBoundaries`: named boundaries between users, agents, tools, data stores, and external services.
+- `threatModel`: production threat-model coverage for assets, actors, threats, mitigations, and review status.
 - `hardening`: runtime hardening requirements such as non-root containers, read-only filesystems, seccomp, AppArmor, SELinux, and image verification.
 
 ### `supplyChain`
@@ -407,6 +408,54 @@ security:
     allow:
       - read-ticket
       - draft-reply
+  trustBoundaries:
+    - name: user-to-agent
+      from: user
+      to: api
+    - name: agent-to-tools
+      from: api
+      to: tool-server
+  threatModel:
+    assets:
+      - customer-support-data
+      - model-api-key
+      - session-state
+    actors:
+      - end-user
+      - agent-runtime
+      - platform-operator
+    threats:
+      - id: prompt-injection
+        category: prompt-injection
+        assets:
+          - customer-support-data
+        mitigations:
+          - deny-by-default-tools
+          - human-approval
+      - id: secret-exfiltration
+        category: secret-exfiltration
+        assets:
+          - model-api-key
+        mitigations:
+          - secret-injection
+          - restricted-egress
+    mitigations:
+      - id: deny-by-default-tools
+        fields:
+          - security.toolPolicy
+      - id: human-approval
+        fields:
+          - approvals.required
+      - id: secret-injection
+        fields:
+          - secrets.required
+      - id: restricted-egress
+        fields:
+          - security.outbound
+    review:
+      status: reviewed
+      reviewedBy: platform-security
+      cadence: release
 
 approvals:
   required:
@@ -490,6 +539,31 @@ An ADS document MUST describe:
 - audit events for security-relevant actions
 
 A production profile SHOULD require non-root containers, least-privilege service accounts, restricted runtime settings, network egress controls, and signed deployment artifacts.
+
+## Threat Model
+
+ADS threat models describe the security assumptions and abuse cases that must be reviewed before a production deployment is approved. They are intentionally concise: ADS does not replace a full security assessment, but it gives processors and reviewers enough structure to detect whether the main agentic-system risks have been considered.
+
+`security.threatModel` SHOULD include:
+
+- `assets`: sensitive systems, data classes, state stores, secrets, tools, or external integrations that need protection.
+- `actors`: human, service, agent, external, or adversarial actors that can influence the deployment.
+- `threats`: identified threats with stable IDs, categories, affected assets, and mapped mitigations.
+- `mitigations`: controls or ADS fields that reduce the declared threats.
+- `review`: review status, reviewer, and review date or freshness expectation.
+
+Production ADS documents SHOULD cover at least these threat categories when applicable:
+
+- prompt injection and instruction smuggling through user, tool, model, memory, or retrieval inputs
+- tool misuse, excessive privilege, and unsafe external side effects
+- secret, credential, and private data exfiltration
+- cross-tenant, cross-session, or memory isolation failure
+- supply-chain compromise of runtime images, tools, model artifacts, or policy bundles
+- egress abuse, callback abuse, or unauthorized access to internal services
+- denial of service, runaway cost, queue exhaustion, or uncontrolled agent loops
+- audit, approval, or policy decision tampering
+
+Threat mitigations SHOULD map back to declared ADS behavior such as `security.toolPolicy`, `security.defaultSandbox`, `security.outbound`, `security.trustBoundaries`, `approvals.required`, `secrets.required`, `supplyChain`, `observability.auditEvents`, and `reliability`.
 
 ## Supply Chain Model
 
@@ -633,6 +707,7 @@ This checklist is initial v0.5 guidance for authors, reviewers, and ADS processo
 | Capability compatibility | Required capabilities are complete, normalized, and satisfiable by the selected target context. Optional capabilities do not hide required production behavior. | `capabilities.required`, `capabilities.optional`, target context |
 | Secrets | Secret values are never stored inline. Required secrets declare purpose, source class, injection method, rotation expectation, reload behavior, and consuming components when scoped. | `secrets.required` |
 | Security defaults | Production deployments default to restricted sandboxing, deny-by-default tool policy, deny-by-default outbound policy when feasible, explicit trust boundaries, and hardening expectations. | `security.defaultSandbox`, `security.toolPolicy`, `security.outbound`, `security.trustBoundaries`, `security.hardening` |
+| Threat model | Production deployments identify protected assets, actors, trust boundaries, threat categories, mitigations, and review status. Mitigations map back to declared ADS controls. | `security.trustBoundaries`, `security.threatModel` |
 | Supply chain | Deployable images are digest-pinned when required, image signatures are verified, SBOMs are available in accepted formats, and build provenance is available for review or policy evaluation. | `runtime.components[].image`, `supplyChain`, target context supply-chain controls |
 | Approval and policy gates | Actions with external side effects, privileged data access, irreversible mutation, high cost, or compliance impact are approval-gated and mapped to available human and/or policy handlers. | `approvals.required`, target context approval handlers |
 | Observability and audit | Required metrics, traces, logs, redaction expectations, and audit events are declared and bound to available sinks. Audit events cover deployment, approval, policy, secret, and tool activity. | `observability`, target context observability sinks |
@@ -684,6 +759,7 @@ The initial diagnostic categories are:
 | `supply-chain-unverified` | error | A required image digest, signature, SBOM, or provenance requirement cannot be verified or satisfied. |
 | `observability-sink-missing` | error | A required trace, metric, log, or audit sink is unavailable. |
 | `audit-event-missing` | warning | A production, secret, approval, policy, or tool-policy requirement is missing its recommended audit event coverage. |
+| `threat-model-incomplete` | warning | A production document is missing recommended threat-model coverage for assets, actors, trust boundaries, threats, mitigations, or review status. |
 | `extension-unsupported` | error | A required extension is unknown or unsupported by the processor. |
 | `processor-limitation` | error | The processor or target platform cannot preserve the declared runtime model. |
 | `compatibility-warning` | warning | A non-blocking compatibility issue, such as an unknown non-extension root field or unsupported optional capability, was detected. |
@@ -715,6 +791,7 @@ Before deployment planning, an ADS processor MUST validate the YAML document aga
 - Documents with human approval gates SHOULD include the `approval_requested`, `approval_granted`, and `approval_denied` audit events.
 - Documents with policy approval gates SHOULD include the `policy_decision_recorded` audit event.
 - Documents with deny-by-default tool policy or explicit tool deny rules SHOULD include the `tool_call_denied` audit event.
+- Production documents SHOULD declare `security.trustBoundaries` and `security.threatModel` coverage for assets, actors, threats, mitigations, and review status.
 - A document with `approvals.required` entries using `human` SHOULD include the `human-approval` required capability.
 - A document with `approvals.required` entries using `policy` or `policy-and-human` SHOULD include the `policy-decision` required capability.
 - A document with `security.outbound.default: deny` or `networking.egress.default: deny` SHOULD include the `outbound-egress-policy` required capability.
@@ -843,7 +920,7 @@ The extension registry format is deferred until v0.4.
 
 ## Change Log
 
-- v0.5 draft: added initial supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance.
+- v0.5 draft: added initial threat-model coverage and supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance.
 - v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.
 - v0.1 draft: defined problem statement, goals, non-goals, vocabulary, conceptual document model, runtime model, security model, approval model, and profile names.

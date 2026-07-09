@@ -588,6 +588,9 @@
             }
           ]
         },
+        "threatModel": {
+          "$ref": "#/$defs/threatModel"
+        },
         "hardening": {
           "$ref": "#/$defs/flexibleObject"
         }
@@ -626,6 +629,112 @@
         },
         "deny": {
           "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "threatModel": {
+      "type": "object",
+      "properties": {
+        "assets": {
+          "$ref": "#/$defs/threatModelList"
+        },
+        "actors": {
+          "$ref": "#/$defs/threatModelList"
+        },
+        "threats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/threatModelThreat"
+          }
+        },
+        "mitigations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/threatModelMitigation"
+          }
+        },
+        "review": {
+          "$ref": "#/$defs/threatModelReview"
+        }
+      },
+      "additionalProperties": true
+    },
+    "threatModelList": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          {
+            "$ref": "#/$defs/flexibleObject"
+          }
+        ]
+      }
+    },
+    "threatModelThreat": {
+      "type": "object",
+      "required": [
+        "id",
+        "category"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "category": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "assets": {
+          "$ref": "#/$defs/stringList"
+        },
+        "actors": {
+          "$ref": "#/$defs/stringList"
+        },
+        "mitigations": {
+          "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "threatModelMitigation": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fields": {
+          "$ref": "#/$defs/stringList"
+        },
+        "description": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": true
+    },
+    "threatModelReview": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "draft",
+            "reviewed",
+            "approved",
+            "expired"
+          ]
+        },
+        "reviewedBy": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "reviewedAt": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/nonEmptyString"
         }
       },
       "additionalProperties": true

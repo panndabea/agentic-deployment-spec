@@ -72,6 +72,60 @@ security:
       - send-customer-email
       - issue-refund
       - export-customer-data
+  trustBoundaries:
+    - name: user-to-agent
+      from: user
+      to: api
+    - name: agent-to-policy
+      from: api
+      to: policy-handler
+    - name: agent-to-external-actions
+      from: api
+      to: customer-and-billing-systems
+  threatModel:
+    assets:
+      - customer-support-data
+      - customer-communication
+      - billing-data
+      - personal-data
+    actors:
+      - end-user
+      - agent-runtime
+      - policy-engine
+      - human-approver
+    threats:
+      - id: approval-bypass
+        category: policy-bypass
+        assets:
+          - billing-data
+          - personal-data
+        mitigations:
+          - deny-by-default-tools
+          - combined-approval-gates
+      - id: unsafe-customer-action
+        category: unsafe-external-side-effect
+        assets:
+          - customer-communication
+        mitigations:
+          - human-approval
+          - audit-events
+    mitigations:
+      - id: deny-by-default-tools
+        fields:
+          - security.toolPolicy
+      - id: combined-approval-gates
+        fields:
+          - approvals.required
+      - id: human-approval
+        fields:
+          - approvals.required
+      - id: audit-events
+        fields:
+          - observability.auditEvents
+    review:
+      status: reviewed
+      reviewedBy: platform-security
+      cadence: release
 
 approvals:
   required:

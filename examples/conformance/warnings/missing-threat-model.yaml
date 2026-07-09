@@ -1,0 +1,62 @@
+apiVersion: ads.dev/v0alpha1
+kind: AgenticDeployment
+metadata:
+  name: missing-threat-model
+  owner: platform-team
+  labels:
+    tier: production
+
+runtime:
+  components:
+    - name: api
+      type: agent-runtime
+      image: ghcr.io/example/support-agent:1.0.0
+      execution:
+        mode: request-response
+
+capabilities:
+  required:
+    - secret-injection
+    - outbound-egress-policy
+    - audit-log-export
+    - human-approval
+    - policy-decision
+
+secrets:
+  required:
+    - name: model-api-key
+      purpose: model-provider-auth
+      rotation: required
+
+security:
+  defaultSandbox: restricted
+  outbound:
+    default: deny
+    allow:
+      - api.openai.com
+  toolPolicy:
+    default: deny
+    deny:
+      - send-customer-email
+
+approvals:
+  required:
+    - action: send-customer-email
+      mode: human
+      reason: external side effect
+    - action: classify-risk
+      mode: policy
+      reason: policy decision required before privileged action
+
+observability:
+  metrics:
+    required: []
+  auditEvents:
+    required:
+      - deployment_planned
+      - policy_decision_recorded
+      - approval_requested
+      - approval_granted
+      - approval_denied
+      - secret_resolved
+      - tool_call_denied

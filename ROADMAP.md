@@ -95,7 +95,7 @@ Goal: harden the production model.
 
 Deliverables:
 
-- [ ] threat model for agentic deployments
+- [x] threat model for agentic deployments
 - [x] supply-chain requirements for signed artifacts and SBOMs
 - [ ] policy decision points for approvals
 - [x] production-readiness checklist
@@ -109,7 +109,7 @@ Exit criteria:
 
 Current v0.5 focus:
 
-- expand the production-readiness checklist into a threat model and policy decision point requirements
+- expand the production-readiness checklist into policy decision point requirements
 
 ## v1.0 - Stable Specification
 

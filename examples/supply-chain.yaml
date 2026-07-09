@@ -75,6 +75,59 @@ security:
     allow:
       - read-ticket
       - draft-reply
+  trustBoundaries:
+    - name: user-to-agent
+      from: user
+      to: api
+    - name: agent-to-tools
+      from: api
+      to: tool-server
+    - name: registry-to-runtime
+      from: artifact-registry
+      to: runtime-components
+  threatModel:
+    assets:
+      - customer-support-data
+      - model-api-key
+      - release-artifacts
+      - build-provenance
+    actors:
+      - end-user
+      - agent-runtime
+      - release-pipeline
+      - platform-operator
+    threats:
+      - id: unsigned-image-deploy
+        category: supply-chain-compromise
+        assets:
+          - release-artifacts
+        mitigations:
+          - digest-pinning
+          - signature-verification
+      - id: prompt-injection
+        category: prompt-injection
+        assets:
+          - customer-support-data
+        mitigations:
+          - deny-by-default-tools
+          - restricted-egress
+    mitigations:
+      - id: digest-pinning
+        fields:
+          - supplyChain.images.requireDigest
+      - id: signature-verification
+        fields:
+          - supplyChain.images.signature
+      - id: deny-by-default-tools
+        fields:
+          - security.toolPolicy
+      - id: restricted-egress
+        fields:
+          - security.outbound
+    review:
+      status: reviewed
+      reviewedBy: platform-security
+      cadence: release
 
 supplyChain:
   images:

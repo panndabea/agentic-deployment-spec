@@ -87,7 +87,7 @@ ruby scripts/ads-conformance-check.rb --context contexts/kubernetes-production.y
 
 The fixture suite also checks profile compatibility expectations: [examples/approval-policy.yaml](examples/approval-policy.yaml) is accepted by all current target contexts, [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is accepted by Kubernetes production and managed container runtime target contexts, and [examples/multi-agent.yaml](examples/multi-agent.yaml) and [examples/supply-chain.yaml](examples/supply-chain.yaml) are accepted only by the Kubernetes production target context.
 
-The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks, including cross-reference and supply-chain consistency failures.
+The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks, including cross-reference and supply-chain consistency failures. The files in `examples/conformance/warnings/` exercise strict warning behavior for audit coverage and production threat-model coverage.
 
 The `contexts/*.yaml` files are non-normative target-context fixtures for the reference checker. They describe available target profile capabilities, secret bindings, approval handlers, observability sinks, network controls, security policy enforcement, and supply-chain controls. The files in `contexts/invalid/` intentionally omit required target context support.
 
@@ -98,6 +98,7 @@ ADS should become a deployment and governance standard for production agentic sy
 - the runtime components that must run
 - the platform capabilities required by those components
 - the security boundaries, secrets, and network policies that apply
+- the production threat model and mitigations reviewers need to evaluate
 - the artifact integrity, signature, SBOM, and provenance requirements that apply
 - the approval and policy gates required before risky actions
 - the observability signals needed for operations and auditability

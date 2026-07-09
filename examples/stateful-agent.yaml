@@ -94,6 +94,55 @@ security:
       - restore-session
     deny:
       - send-customer-email
+  trustBoundaries:
+    - name: user-to-agent
+      from: user
+      to: api
+    - name: agent-to-session-store
+      from: api
+      to: session-store
+  threatModel:
+    assets:
+      - customer-support-data
+      - session-state
+      - model-api-key
+    actors:
+      - end-user
+      - agent-runtime
+      - policy-engine
+      - platform-operator
+    threats:
+      - id: unsafe-session-restore
+        category: memory-isolation-failure
+        assets:
+          - session-state
+        mitigations:
+          - restore-policy-gate
+          - state-restore-audit
+      - id: prompt-injection
+        category: prompt-injection
+        assets:
+          - customer-support-data
+        mitigations:
+          - deny-by-default-tools
+          - restricted-egress
+    mitigations:
+      - id: restore-policy-gate
+        fields:
+          - approvals.required
+      - id: state-restore-audit
+        fields:
+          - observability.auditEvents
+      - id: deny-by-default-tools
+        fields:
+          - security.toolPolicy
+      - id: restricted-egress
+        fields:
+          - security.outbound
+    review:
+      status: reviewed
+      reviewedBy: platform-security
+      cadence: release
 
 approvals:
   required:

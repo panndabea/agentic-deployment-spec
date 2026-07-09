@@ -743,6 +743,17 @@ def warn_missing_audit_event(diagnostics, declared_events, event, path, message)
   )
 end
 
+def warn_missing_threat_model(diagnostics, path, requirement, message)
+  add_diagnostic(
+    diagnostics,
+    category: "threat-model-incomplete",
+    severity: "warning",
+    path: path,
+    message: message,
+    extra: { "requirement" => requirement }
+  )
+end
+
 def check_audit_event_coverage(document, diagnostics)
   declared_events = required_audit_event_names(document)
 
@@ -803,6 +814,47 @@ def check_audit_event_coverage(document, diagnostics)
       "tool_call_denied",
       "$.observability.auditEvents.required",
       "Documents with deny-by-default tool policy or explicit tool deny rules should include the tool_call_denied audit event."
+    )
+  end
+end
+
+def check_threat_model_coverage(document, diagnostics)
+  return unless production_document?(document)
+
+  unless provided?(dig_hash(document, "security", "trustBoundaries"))
+    warn_missing_threat_model(
+      diagnostics,
+      "$.security.trustBoundaries",
+      "trust-boundaries",
+      "Production documents should declare trust boundaries between users, agents, tools, data stores, and external services."
+    )
+  end
+
+  threat_model = dig_hash(document, "security", "threatModel")
+  unless threat_model.is_a?(Hash) && !threat_model.empty?
+    warn_missing_threat_model(
+      diagnostics,
+      "$.security.threatModel",
+      "threat-model",
+      "Production documents should declare security.threatModel coverage for assets, actors, threats, mitigations, and review status."
+    )
+    return
+  end
+
+  {
+    "assets" => "protected-assets",
+    "actors" => "actors",
+    "threats" => "threats",
+    "mitigations" => "mitigations",
+    "review" => "review-status"
+  }.each do |field, requirement|
+    next if provided?(threat_model[field])
+
+    warn_missing_threat_model(
+      diagnostics,
+      "$.security.threatModel.#{field}",
+      requirement,
+      "Production threat models should declare #{field}."
     )
   end
 end
@@ -1176,6 +1228,7 @@ def check_document(document, context)
   check_capability_recommendations(document, diagnostics)
   check_audit_event_names(document, diagnostics)
   check_audit_event_coverage(document, diagnostics)
+  check_threat_model_coverage(document, diagnostics)
   check_network_consistency(document, diagnostics)
   check_supply_chain_consistency(document, diagnostics)
   check_target_context(document, context, diagnostics)

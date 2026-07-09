@@ -62,6 +62,20 @@ Dir.chdir(REPO_ROOT) do
   conformance_positive = Dir["examples/*.yaml"].sort
   conformance_negative = Dir["examples/conformance/invalid/*.yaml"].sort
   conformance_warnings = Dir["examples/conformance/warnings/*.yaml"].sort
+  conformance_warning_expectations = {
+    "examples/conformance/warnings/missing-audit-coverage.yaml" => [
+      "audit-event-missing",
+      "approval_requested",
+      "policy_decision_recorded",
+      "secret_resolved",
+      "tool_call_denied"
+    ],
+    "examples/conformance/warnings/missing-threat-model.yaml" => [
+      "threat-model-incomplete",
+      "$.security.trustBoundaries",
+      "$.security.threatModel"
+    ]
+  }
   target_context_positive = [
     ["contexts/compose-single-host.yaml", "examples/approval-policy.yaml"],
     ["contexts/compose-single-host.yaml", "examples/minimal.yaml"],
@@ -169,13 +183,7 @@ Dir.chdir(REPO_ROOT) do
       "conformance warns #{file}",
       [RUBY, "scripts/ads-conformance-check.rb", "--strict-warnings", file],
       expected_exit: 1,
-      stdout_includes: [
-        "audit-event-missing",
-        "approval_requested",
-        "policy_decision_recorded",
-        "secret_resolved",
-        "tool_call_denied"
-      ]
+      stdout_includes: conformance_warning_expectations.fetch(file, [])
     )
   end
 
