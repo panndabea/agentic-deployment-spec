@@ -205,6 +205,7 @@ approvals:
         - approval_requested
         - policy_decision_recorded
         - approval_granted
+        - approval_denied
 
 observability:
   traces:
@@ -226,6 +227,7 @@ observability:
       - tool_call_denied
       - approval_requested
       - approval_granted
+      - approval_denied
       - policy_decision_recorded
       - secret_resolved
   logs:

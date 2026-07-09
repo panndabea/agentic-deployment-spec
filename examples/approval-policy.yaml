@@ -83,7 +83,7 @@ approvals:
         dataClass: customer-support
       auditEvents:
         - policy_decision_recorded
-        - risk_classification_recorded
+        - example.com/risk_classification_recorded
     - action: send-customer-email
       mode: human
       reason: external customer communication requires human review
@@ -133,11 +133,12 @@ observability:
     required:
       - deployment_planned
       - policy_decision_recorded
+      - example.com/risk_classification_recorded
+      - tool_call_denied
+      - action_executed
       - approval_requested
       - approval_granted
       - approval_denied
-      - tool_call_denied
-      - action_executed
       - secret_resolved
   logs:
     streams:

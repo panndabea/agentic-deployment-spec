@@ -163,6 +163,49 @@
         "$ref": "#/$defs/nonEmptyString"
       }
     },
+    "auditEventList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/auditEventName"
+      },
+      "uniqueItems": true
+    },
+    "auditEventName": {
+      "oneOf": [
+        {
+          "enum": [
+            "deployment_planned",
+            "deployment_applied",
+            "deployment_failed",
+            "deployment_rolled_back",
+            "approval_requested",
+            "approval_granted",
+            "approval_denied",
+            "approval_expired",
+            "policy_evaluated",
+            "policy_decision_recorded",
+            "secret_resolved",
+            "secret_rotation_due",
+            "secret_rotation_completed",
+            "secret_rotation_failed",
+            "tool_call_requested",
+            "tool_call_allowed",
+            "tool_call_denied",
+            "tool_call_executed",
+            "action_executed",
+            "egress_allowed",
+            "egress_denied",
+            "state_checkpoint_written",
+            "state_restore_started",
+            "state_restore_completed",
+            "state_restore_failed"
+          ]
+        },
+        {
+          "$ref": "#/$defs/namespacedName"
+        }
+      ]
+    },
     "stringOrStringList": {
       "oneOf": [
         {
@@ -637,7 +680,7 @@
           "$ref": "#/$defs/nonEmptyString"
         },
         "auditEvents": {
-          "$ref": "#/$defs/stringList"
+          "$ref": "#/$defs/auditEventList"
         }
       },
       "additionalProperties": true
@@ -656,7 +699,7 @@
           "$ref": "#/$defs/requiredSignals"
         },
         "auditEvents": {
-          "$ref": "#/$defs/requiredSignals"
+          "$ref": "#/$defs/auditEventSignals"
         },
         "logs": {
           "$ref": "#/$defs/flexibleObject"
@@ -684,6 +727,18 @@
       "properties": {
         "required": {
           "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "auditEventSignals": {
+      "type": "object",
+      "required": [
+        "required"
+      ],
+      "properties": {
+        "required": {
+          "$ref": "#/$defs/auditEventList"
         }
       },
       "additionalProperties": true

@@ -35,6 +35,33 @@ REQUIRED_ROOT_FIELDS = %w[
 
 NAMESPACED_NAME = /\A[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*\z/.freeze
 STATEFUL_MODES = %w[checkpointed durable-session durable-shared].freeze
+STANDARD_AUDIT_EVENTS = %w[
+  deployment_planned
+  deployment_applied
+  deployment_failed
+  deployment_rolled_back
+  approval_requested
+  approval_granted
+  approval_denied
+  approval_expired
+  policy_evaluated
+  policy_decision_recorded
+  secret_resolved
+  secret_rotation_due
+  secret_rotation_completed
+  secret_rotation_failed
+  tool_call_requested
+  tool_call_allowed
+  tool_call_denied
+  tool_call_executed
+  action_executed
+  egress_allowed
+  egress_denied
+  state_checkpoint_written
+  state_restore_started
+  state_restore_completed
+  state_restore_failed
+].freeze
 
 def add_diagnostic(diagnostics, category:, severity:, path:, message:, extra: {})
   diagnostics << {
@@ -145,6 +172,60 @@ end
 
 def required_capability_names(document)
   required_capability_references(document).map { |reference| reference["name"] }
+end
+
+def audit_event_name_valid?(name)
+  name.is_a?(String) && (STANDARD_AUDIT_EVENTS.include?(name) || name.match?(NAMESPACED_NAME))
+end
+
+def audit_event_references(document)
+  references = []
+
+  required = dig_hash(document, "observability", "auditEvents", "required")
+  if required.is_a?(Array)
+    required.each_with_index do |event, index|
+      references << {
+        "name" => event,
+        "path" => "$.observability.auditEvents.required[#{index}]"
+      }
+    end
+  end
+
+  approvals = dig_hash(document, "approvals", "required")
+  if approvals.is_a?(Array)
+    approvals.each_with_index do |approval, approval_index|
+      next unless approval.is_a?(Hash)
+
+      audit_events = approval["auditEvents"]
+      next unless audit_events.is_a?(Array)
+
+      audit_events.each_with_index do |event, event_index|
+        references << {
+          "name" => event,
+          "path" => "$.approvals.required[#{approval_index}].auditEvents[#{event_index}]"
+        }
+      end
+    end
+  end
+
+  references
+end
+
+def required_audit_event_names(document)
+  required = dig_hash(document, "observability", "auditEvents", "required")
+  return [] unless required.is_a?(Array)
+
+  required.select { |event| event.is_a?(String) }
+end
+
+def production_document?(document)
+  return false unless document.is_a?(Hash)
+
+  labels_tier = dig_hash(document, "metadata", "labels", "tier")
+  profiles = document["profiles"]
+
+  labels_tier == "production" ||
+    (profiles.is_a?(Array) && profiles.include?("kubernetes-production"))
 end
 
 def component_names(document)
@@ -560,6 +641,98 @@ def check_capability_recommendations(document, diagnostics)
   end
 end
 
+def check_audit_event_names(document, diagnostics)
+  audit_event_references(document).each do |reference|
+    name = reference["name"]
+    next if audit_event_name_valid?(name)
+
+    add_diagnostic(
+      diagnostics,
+      category: "schema-invalid",
+      severity: "error",
+      path: reference["path"],
+      message: "Audit event name #{name.inspect} must be a standard ADS audit event name or a namespaced extension name."
+    )
+  end
+end
+
+def warn_missing_audit_event(diagnostics, declared_events, event, path, message)
+  return if declared_events.include?(event)
+
+  add_diagnostic(
+    diagnostics,
+    category: "audit-event-missing",
+    severity: "warning",
+    path: path,
+    message: message,
+    extra: { "auditEvent" => event }
+  )
+end
+
+def check_audit_event_coverage(document, diagnostics)
+  declared_events = required_audit_event_names(document)
+
+  if production_document?(document)
+    warn_missing_audit_event(
+      diagnostics,
+      declared_events,
+      "deployment_planned",
+      "$.observability.auditEvents.required",
+      "Production documents should include the deployment_planned audit event."
+    )
+  end
+
+  secrets = dig_hash(document, "secrets", "required")
+  if secrets.is_a?(Array) && !secrets.empty?
+    warn_missing_audit_event(
+      diagnostics,
+      declared_events,
+      "secret_resolved",
+      "$.observability.auditEvents.required",
+      "Documents with required secrets should include the secret_resolved audit event."
+    )
+  end
+
+  approvals = dig_hash(document, "approvals", "required")
+  if approvals.is_a?(Array)
+    modes = approvals.map { |approval| approval["mode"] if approval.is_a?(Hash) }.compact
+
+    if modes.any? { |mode| %w[human policy-and-human].include?(mode) }
+      %w[approval_requested approval_granted approval_denied].each do |event|
+        warn_missing_audit_event(
+          diagnostics,
+          declared_events,
+          event,
+          "$.observability.auditEvents.required",
+          "Documents with human approval gates should include the #{event} audit event."
+        )
+      end
+    end
+
+    if modes.any? { |mode| %w[policy policy-and-human].include?(mode) }
+      warn_missing_audit_event(
+        diagnostics,
+        declared_events,
+        "policy_decision_recorded",
+        "$.observability.auditEvents.required",
+        "Documents with policy approval gates should include the policy_decision_recorded audit event."
+      )
+    end
+  end
+
+  tool_policy_default = dig_hash(document, "security", "toolPolicy", "default")
+  tool_policy_deny = dig_hash(document, "security", "toolPolicy", "deny")
+  if tool_policy_default == "deny" || provided?(tool_policy_deny)
+    warn_missing_audit_event(
+      diagnostics,
+      declared_events,
+      "tool_call_denied",
+      "$.observability.auditEvents.required",
+      "Documents with deny-by-default tool policy or explicit tool deny rules should include the tool_call_denied audit event."
+    )
+  end
+end
+
 def check_network_consistency(document, diagnostics)
   outbound_default = dig_hash(document, "security", "outbound", "default")
   egress_default = dig_hash(document, "networking", "egress", "default")
@@ -822,6 +995,8 @@ def check_document(document, context)
   check_component_references(document, diagnostics)
   check_scoped_component_references(document, diagnostics)
   check_capability_recommendations(document, diagnostics)
+  check_audit_event_names(document, diagnostics)
+  check_audit_event_coverage(document, diagnostics)
   check_network_consistency(document, diagnostics)
   check_target_context(document, context, diagnostics)
   check_extensions(document, diagnostics)

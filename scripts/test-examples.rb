@@ -55,10 +55,13 @@ Dir.chdir(REPO_ROOT) do
     exit 2
   end
 
-  schema_positive = Dir["examples/*.yaml"].sort + Dir["examples/conformance/invalid/*.yaml"].sort
+  schema_positive = Dir["examples/*.yaml"].sort +
+                    Dir["examples/conformance/invalid/*.yaml"].sort +
+                    Dir["examples/conformance/warnings/*.yaml"].sort
   schema_negative = Dir["examples/invalid/*.yaml"].sort
   conformance_positive = Dir["examples/*.yaml"].sort
   conformance_negative = Dir["examples/conformance/invalid/*.yaml"].sort
+  conformance_warnings = Dir["examples/conformance/warnings/*.yaml"].sort
   target_context_positive = [
     ["contexts/compose-single-host.yaml", "examples/approval-policy.yaml"],
     ["contexts/compose-single-host.yaml", "examples/minimal.yaml"],
@@ -141,6 +144,21 @@ Dir.chdir(REPO_ROOT) do
       "conformance rejects #{file}",
       [RUBY, "scripts/ads-conformance-check.rb", file],
       expected_exit: 1
+    )
+  end
+
+  conformance_warnings.each do |file|
+    checks << run_command(
+      "conformance warns #{file}",
+      [RUBY, "scripts/ads-conformance-check.rb", "--strict-warnings", file],
+      expected_exit: 1,
+      stdout_includes: [
+        "audit-event-missing",
+        "approval_requested",
+        "policy_decision_recorded",
+        "secret_resolved",
+        "tool_call_denied"
+      ]
     )
   end
 

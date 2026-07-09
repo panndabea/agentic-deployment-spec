@@ -99,17 +99,17 @@ Deliverables:
 - [ ] supply-chain requirements for signed artifacts and SBOMs
 - [ ] policy decision points for approvals
 - [x] production-readiness checklist
-- [ ] audit event taxonomy
+- [x] audit event taxonomy
 
 Exit criteria:
 
 - production deployments have explicit security, secret, approval, and telemetry requirements
 - high-risk tool actions are deny-by-default unless approved
-- audit events map to deployment, policy, secret, and tool activity
+- [x] audit events map to deployment, policy, secret, and tool activity
 
 Current v0.5 focus:
 
-- expand the production-readiness checklist into a threat model and audit event taxonomy
+- expand the production-readiness checklist into a threat model and policy/supply-chain requirements
 
 ## v1.0 - Stable Specification
 

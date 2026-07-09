@@ -43,6 +43,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 - [SPEC.md#example-architecture-diagrams](SPEC.md#example-architecture-diagrams) contains Mermaid diagrams for the current example set.
 - [SPEC.md#production-readiness-checklist](SPEC.md#production-readiness-checklist) is the initial v0.5 production readiness checklist.
+- [SPEC.md#audit-event-taxonomy](SPEC.md#audit-event-taxonomy) defines the initial standard audit event names and extension rule.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
 - [examples/approval-policy.yaml](examples/approval-policy.yaml) is a v0.4-oriented approval and policy gate example.
 - [examples/multi-agent.yaml](examples/multi-agent.yaml) is the first v0.4-oriented multi-agent production example.

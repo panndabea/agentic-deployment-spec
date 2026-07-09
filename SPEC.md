@@ -272,7 +272,7 @@ Each required approval MAY include:
 
 - `scope`: component, tool, environment, data class, or operation scope.
 - `handlerRef`: external approval or ticketing system reference.
-- `auditEvents`: audit events that must be emitted for this approval.
+- `auditEvents`: audit event names that must be emitted for this approval.
 
 ### `observability`
 
@@ -285,7 +285,9 @@ Each required approval MAY include:
 
 `observability.metrics.required` MUST be a list. The list MAY be empty only for non-production documents.
 
-`observability.auditEvents.required` MUST be a list. The list MAY be empty only when no security-relevant, secret, approval, deployment, or tool events are declared.
+`observability.auditEvents.required` MUST be a list of audit event names. The list MAY be empty only when no security-relevant, secret, approval, deployment, or tool events are declared.
+
+Audit event names MUST be either standard ADS audit event names from the audit event taxonomy or namespaced extension names.
 
 `observability.logs` MAY declare required log streams, retention expectations, and redaction requirements.
 
@@ -409,8 +411,11 @@ observability:
   auditEvents:
     required:
       - deployment_planned
+      - policy_decision_recorded
+      - approval_requested
       - tool_call_denied
       - approval_granted
+      - approval_denied
       - secret_resolved
 ```
 
@@ -498,6 +503,28 @@ Required observability MAY include:
 - audit events for approvals, denied actions, secret resolution, and deployment changes
 
 OpenTelemetry SHOULD be the default interchange format for traces and metrics when the target platform supports it.
+
+## Audit Event Taxonomy
+
+ADS audit events are stable machine-readable event names that describe security-relevant deployment, policy, approval, secret, tool, network, and state activity. ADS documents declare the audit events that must be emitted; target contexts declare whether an audit sink is available.
+
+Standard ADS audit event names are reserved by this specification. Event names that are not standard ADS names MUST be namespaced, using the same namespace rule as extensions, for example `example.com/risk_classification_recorded`.
+
+Standard ADS audit events are:
+
+| Category | Standard audit event names |
+|---|---|
+| Deployment | `deployment_planned`, `deployment_applied`, `deployment_failed`, `deployment_rolled_back` |
+| Approval | `approval_requested`, `approval_granted`, `approval_denied`, `approval_expired` |
+| Policy | `policy_evaluated`, `policy_decision_recorded` |
+| Secret | `secret_resolved`, `secret_rotation_due`, `secret_rotation_completed`, `secret_rotation_failed` |
+| Tool and action | `tool_call_requested`, `tool_call_allowed`, `tool_call_denied`, `tool_call_executed`, `action_executed` |
+| Network | `egress_allowed`, `egress_denied` |
+| State | `state_checkpoint_written`, `state_restore_started`, `state_restore_completed`, `state_restore_failed` |
+
+Audit event payloads SHOULD include the event name, timestamp, deployment name, component name when applicable, actor or service identity when known, action or target when applicable, decision or outcome, reason, and correlation identifier. Audit event payloads MUST NOT include secret values, credentials, tokens, private keys, or decrypted secret payloads.
+
+Production ADS documents SHOULD include `deployment_planned`. Documents with required secrets SHOULD include `secret_resolved`. Documents with human approval gates SHOULD include `approval_requested`, `approval_granted`, and `approval_denied`. Documents with policy approval gates SHOULD include `policy_decision_recorded`. Documents with deny-by-default tool policy or explicit tool deny rules SHOULD include `tool_call_denied`.
 
 ## Approval and Policy Model
 
@@ -620,6 +647,7 @@ The initial diagnostic categories are:
 | `network-unresolved` | error | A required network route, destination, exposure, or egress rule cannot be resolved or enforced. |
 | `security-policy-unenforceable` | error | A sandbox, identity, hardening, outbound, or tool-policy requirement cannot be enforced. |
 | `observability-sink-missing` | error | A required trace, metric, log, or audit sink is unavailable. |
+| `audit-event-missing` | warning | A production, secret, approval, policy, or tool-policy requirement is missing its recommended audit event coverage. |
 | `extension-unsupported` | error | A required extension is unknown or unsupported by the processor. |
 | `processor-limitation` | error | The processor or target platform cannot preserve the declared runtime model. |
 | `compatibility-warning` | warning | A non-blocking compatibility issue, such as an unknown non-extension root field or unsupported optional capability, was detected. |
@@ -645,6 +673,12 @@ Before deployment planning, an ADS processor MUST validate the YAML document aga
 - A document with `observability.traces.required: true` SHOULD include the `trace-export` required capability.
 - A document with non-empty `observability.metrics.required` SHOULD include the `metrics-export` required capability.
 - A document with required audit events SHOULD include the `audit-log-export` required capability.
+- Every audit event name MUST be a standard ADS audit event name or a namespaced extension name.
+- Production documents SHOULD include the `deployment_planned` audit event.
+- Documents with required secrets SHOULD include the `secret_resolved` audit event.
+- Documents with human approval gates SHOULD include the `approval_requested`, `approval_granted`, and `approval_denied` audit events.
+- Documents with policy approval gates SHOULD include the `policy_decision_recorded` audit event.
+- Documents with deny-by-default tool policy or explicit tool deny rules SHOULD include the `tool_call_denied` audit event.
 - A document with `approvals.required` entries using `human` SHOULD include the `human-approval` required capability.
 - A document with `approvals.required` entries using `policy` or `policy-and-human` SHOULD include the `policy-decision` required capability.
 - A document with `security.outbound.default: deny` or `networking.egress.default: deny` SHOULD include the `outbound-egress-policy` required capability.

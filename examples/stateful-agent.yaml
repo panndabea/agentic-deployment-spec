@@ -115,7 +115,7 @@ approvals:
         dataClass: session-state
       auditEvents:
         - policy_decision_recorded
-        - session_restore_started
+        - state_restore_started
 
 observability:
   traces:
@@ -134,11 +134,13 @@ observability:
       - deployment_planned
       - deployment_rolled_back
       - secret_resolved
-      - session_checkpoint_written
-      - session_restore_started
+      - state_checkpoint_written
+      - state_restore_started
       - approval_requested
       - approval_granted
+      - approval_denied
       - policy_decision_recorded
+      - tool_call_denied
   logs:
     streams:
       - api
