@@ -70,6 +70,11 @@ Dir.chdir(REPO_ROOT) do
       "secret_resolved",
       "tool_call_denied"
     ],
+    "examples/conformance/warnings/missing-policy-decision-point-ref.yaml" => [
+      "policy-decision-point-missing",
+      "$.approvals.required[1]",
+      "classify-risk"
+    ],
     "examples/conformance/warnings/missing-threat-model.yaml" => [
       "threat-model-incomplete",
       "$.security.trustBoundaries",
@@ -96,6 +101,7 @@ Dir.chdir(REPO_ROOT) do
         capability-unsupported
         secret-unbound
         approval-handler-missing
+        policy-decision-point-missing
         observability-sink-missing
         network-unresolved
         security-policy-unenforceable

@@ -145,6 +145,20 @@ security:
       cadence: release
 
 approvals:
+  policyDecisionPoints:
+    - name: session-restore-policy
+      engineRef: opa/session-state
+      appliesTo:
+        - restore-session
+      decisionInputs:
+        - actor
+        - action
+        - sessionOwner
+        - restoreAge
+      failureMode: closed
+      auditEvents:
+        - policy_decision_recorded
+        - state_restore_started
   required:
     - action: send-customer-email
       mode: human
@@ -159,6 +173,7 @@ approvals:
     - action: restore-session
       mode: policy
       reason: replaying durable agent state can expose historical customer context
+      policyDecisionPointRef: session-restore-policy
       scope:
         component: api
         dataClass: session-state

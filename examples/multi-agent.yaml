@@ -230,6 +230,20 @@ security:
     seccompProfile: runtime-default
 
 approvals:
+  policyDecisionPoints:
+    - name: billing-update-policy
+      engineRef: opa/billing-actions
+      appliesTo:
+        - update-billing-record
+      decisionInputs:
+        - actor
+        - action
+        - dataClass
+        - tenant
+        - amount
+      failureMode: closed
+      auditEvents:
+        - policy_decision_recorded
   required:
     - action: send-customer-email
       mode: human
@@ -244,6 +258,7 @@ approvals:
     - action: update-billing-record
       mode: policy-and-human
       reason: privileged financial data mutation
+      policyDecisionPointRef: billing-update-policy
       scope:
         component: tool-server
         dataClass: billing

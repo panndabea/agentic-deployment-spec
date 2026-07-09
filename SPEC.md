@@ -292,7 +292,24 @@ Each required approval MAY include:
 
 - `scope`: component, tool, environment, data class, or operation scope.
 - `handlerRef`: external approval or ticketing system reference.
+- `policyDecisionPointRef`: named policy decision point used by `policy` or `policy-and-human` approval modes.
 - `auditEvents`: audit event names that must be emitted for this approval.
+
+`approvals.policyDecisionPoints` MAY declare named policy decision points used by approval gates.
+
+Each policy decision point MUST include:
+
+- `name`: stable decision point name.
+
+Each policy decision point MAY include:
+
+- `engineRef`: policy engine, bundle, service, or rule-set reference.
+- `appliesTo`: approval action name or list of approval action names.
+- `decisionInputs`: required decision inputs, such as actor, action, scope, data class, environment, risk score, cost, or tenant.
+- `failureMode`: one of `closed`, `open`, or `manual-review`.
+- `auditEvents`: audit event names emitted for decisions.
+
+Approval entries using `policy` or `policy-and-human` SHOULD set `policyDecisionPointRef`. The reference MUST resolve to a declared `approvals.policyDecisionPoints[].name` when present. Policy decision point `appliesTo` references SHOULD resolve to declared `approvals.required[].action` values.
 
 ### `observability`
 
@@ -458,6 +475,19 @@ security:
       cadence: release
 
 approvals:
+  policyDecisionPoints:
+    - name: crm-mutation-policy
+      engineRef: opa/customer-operations
+      appliesTo:
+        - mutate-crm-record
+      decisionInputs:
+        - actor
+        - action
+        - dataClass
+        - environment
+      failureMode: closed
+      auditEvents:
+        - policy_decision_recorded
   required:
     - action: send-customer-email
       mode: human
@@ -465,6 +495,7 @@ approvals:
     - action: mutate-crm-record
       mode: policy-and-human
       reason: privileged business data
+      policyDecisionPointRef: crm-mutation-policy
 
 observability:
   traces:
@@ -643,9 +674,21 @@ Approval declarations SHOULD specify:
 - approval mode: human, policy, or policy-and-human
 - reason
 - scope
+- policy decision point reference for policy-based approvals
 - audit event requirements
 
-Policy engines MAY evaluate approval decisions, but ADS does not mandate a specific policy engine.
+Policy engines MAY evaluate approval decisions, but ADS does not mandate a specific policy engine. A policy decision point identifies the place where a policy decision is made; it does not require a particular engine implementation.
+
+Policy decision point declarations SHOULD specify:
+
+- stable decision point name
+- policy engine or rule-set reference when known
+- approval actions covered by the decision point
+- required decision inputs
+- failure behavior when the policy decision point is unavailable
+- audit events that record the decision and its outcome
+
+Production policy decision points SHOULD fail closed or escalate to manual review rather than allowing risky actions by default.
 
 ## Deployment Profiles
 
@@ -709,7 +752,7 @@ This checklist is initial v0.5 guidance for authors, reviewers, and ADS processo
 | Security defaults | Production deployments default to restricted sandboxing, deny-by-default tool policy, deny-by-default outbound policy when feasible, explicit trust boundaries, and hardening expectations. | `security.defaultSandbox`, `security.toolPolicy`, `security.outbound`, `security.trustBoundaries`, `security.hardening` |
 | Threat model | Production deployments identify protected assets, actors, trust boundaries, threat categories, mitigations, and review status. Mitigations map back to declared ADS controls. | `security.trustBoundaries`, `security.threatModel` |
 | Supply chain | Deployable images are digest-pinned when required, image signatures are verified, SBOMs are available in accepted formats, and build provenance is available for review or policy evaluation. | `runtime.components[].image`, `supplyChain`, target context supply-chain controls |
-| Approval and policy gates | Actions with external side effects, privileged data access, irreversible mutation, high cost, or compliance impact are approval-gated and mapped to available human and/or policy handlers. | `approvals.required`, target context approval handlers |
+| Approval and policy gates | Actions with external side effects, privileged data access, irreversible mutation, high cost, or compliance impact are approval-gated and mapped to available human handlers, policy decision points, and/or combined gates. | `approvals.required`, `approvals.policyDecisionPoints`, target context approval handlers |
 | Observability and audit | Required metrics, traces, logs, redaction expectations, and audit events are declared and bound to available sinks. Audit events cover deployment, approval, policy, secret, and tool activity. | `observability`, target context observability sinks |
 | Networking | Ingress, internal traffic, outbound destinations, TLS/auth expectations, and default-deny egress requirements are declared and enforceable by the target context. | `networking`, `security.outbound`, target context network controls |
 | Reliability | Health, rollout, rollback, retry, timeout, rate-limit, and dead-letter expectations are declared for the components that need them. | `runtime.components[].health`, `reliability` |
@@ -730,7 +773,7 @@ An ADS processor MUST complete these checks before it emits a deployment plan:
 | Capability normalization | String capability entries MUST be normalized to objects with `name` before compatibility checks. |
 | Capability support | Every required capability MUST be satisfied by the target profile, the platform capability set, or an explicitly declared external integration. |
 | Secret binding | Every `secrets.required` entry MUST have a binding in the target context before deployment. |
-| Approval handling | Every required approval MUST have the human approval and/or policy decision handlers required by its `mode`. |
+| Approval handling | Every required approval MUST have the human approval and/or policy decision handlers required by its `mode`; policy decision point references MUST resolve to declared and available decision points. |
 | Network feasibility | Required ingress, internal traffic, egress destinations, and default-deny outbound policies MUST be resolvable or enforceable by the target context. |
 | Security feasibility | Sandbox, tool policy, identity, hardening, and trust-boundary requirements MUST NOT be silently weakened during planning. |
 | Supply-chain feasibility | Required image signatures, SBOMs, provenance, and digest pinning MUST be preserved and verifiable in the selected target context. |
@@ -754,6 +797,7 @@ The initial diagnostic categories are:
 | `capability-unsupported` | error | A required capability is not supported by the selected target context. |
 | `secret-unbound` | error | A required secret has no binding in the target context. |
 | `approval-handler-missing` | error | A required human or policy approval handler is unavailable. |
+| `policy-decision-point-missing` | warning or error | A policy-based approval is missing a recommended decision point reference, references an undeclared decision point, or references a decision point unavailable in the target context. |
 | `network-unresolved` | error | A required network route, destination, exposure, or egress rule cannot be resolved or enforced. |
 | `security-policy-unenforceable` | error | A sandbox, identity, hardening, outbound, or tool-policy requirement cannot be enforced. |
 | `supply-chain-unverified` | error | A required image digest, signature, SBOM, or provenance requirement cannot be verified or satisfied. |
@@ -794,6 +838,9 @@ Before deployment planning, an ADS processor MUST validate the YAML document aga
 - Production documents SHOULD declare `security.trustBoundaries` and `security.threatModel` coverage for assets, actors, threats, mitigations, and review status.
 - A document with `approvals.required` entries using `human` SHOULD include the `human-approval` required capability.
 - A document with `approvals.required` entries using `policy` or `policy-and-human` SHOULD include the `policy-decision` required capability.
+- Approval entries using `policy` or `policy-and-human` SHOULD include `policyDecisionPointRef`.
+- `policyDecisionPointRef` values MUST resolve to declared `approvals.policyDecisionPoints[].name` values when present.
+- `approvals.policyDecisionPoints[].appliesTo` values SHOULD resolve to declared `approvals.required[].action` values.
 - A document with `security.outbound.default: deny` or `networking.egress.default: deny` SHOULD include the `outbound-egress-policy` required capability.
 - A document with `supplyChain.images.signature.required: true` SHOULD include the `image-signature-verification` required capability.
 - A document with `supplyChain.images.requireDigest: true` MUST pin every `runtime.components[].image` value by digest.
@@ -920,7 +967,7 @@ The extension registry format is deferred until v0.4.
 
 ## Change Log
 
-- v0.5 draft: added initial threat-model coverage and supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance.
+- v0.5 draft: added initial threat-model coverage, supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance, and policy decision points for policy-based approvals.
 - v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.
 - v0.1 draft: defined problem statement, goals, non-goals, vocabulary, conceptual document model, runtime model, security model, approval model, and profile names.

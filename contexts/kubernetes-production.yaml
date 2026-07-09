@@ -38,6 +38,19 @@ approvals:
       ref: ticketing/platform-approval
     policy:
       ref: opa/agentic-deployment
+  policyDecisionPoints:
+    crm-mutation-policy:
+      ref: opa/customer-operations
+    risk-classification-policy:
+      ref: opa/customer-risk
+    financial-action-policy:
+      ref: opa/billing-actions
+    data-export-policy:
+      ref: opa/data-export
+    session-restore-policy:
+      ref: opa/session-state
+    billing-update-policy:
+      ref: opa/billing-actions
 
 observability:
   traces:

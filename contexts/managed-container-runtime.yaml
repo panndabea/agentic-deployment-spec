@@ -29,6 +29,17 @@ approvals:
       ref: managed-change-approval
     policy:
       ref: managed-policy-check
+  policyDecisionPoints:
+    crm-mutation-policy:
+      ref: managed/customer-operations-policy
+    risk-classification-policy:
+      ref: managed/customer-risk-policy
+    financial-action-policy:
+      ref: managed/billing-actions-policy
+    data-export-policy:
+      ref: managed/data-export-policy
+    session-restore-policy:
+      ref: managed/session-state-policy
 
 observability:
   traces:

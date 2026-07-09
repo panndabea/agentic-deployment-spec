@@ -148,6 +148,19 @@ supplyChain:
         - slsa-provenance
 
 approvals:
+  policyDecisionPoints:
+    - name: crm-mutation-policy
+      engineRef: opa/customer-operations
+      appliesTo:
+        - mutate-crm-record
+      decisionInputs:
+        - actor
+        - action
+        - dataClass
+        - artifactDigest
+      failureMode: closed
+      auditEvents:
+        - policy_decision_recorded
   required:
     - action: send-customer-email
       mode: human
@@ -155,6 +168,7 @@ approvals:
     - action: mutate-crm-record
       mode: policy-and-human
       reason: privileged business data
+      policyDecisionPointRef: crm-mutation-policy
 
 observability:
   traces:

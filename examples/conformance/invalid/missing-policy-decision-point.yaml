@@ -1,7 +1,7 @@
 apiVersion: ads.dev/v0alpha1
 kind: AgenticDeployment
 metadata:
-  name: missing-threat-model
+  name: missing-policy-decision-point
   owner: platform-team
   labels:
     tier: production
@@ -17,9 +17,7 @@ runtime:
 capabilities:
   required:
     - secret-injection
-    - outbound-egress-policy
     - audit-log-export
-    - human-approval
     - policy-decision
 
 secrets:
@@ -30,36 +28,49 @@ secrets:
 
 security:
   defaultSandbox: restricted
-  outbound:
-    default: deny
-    allow:
-      - api.openai.com
   toolPolicy:
     default: deny
-    deny:
-      - send-customer-email
+  trustBoundaries:
+    - name: user-to-agent
+      from: user
+      to: api
+  threatModel:
+    assets:
+      - customer-support-data
+      - model-api-key
+    actors:
+      - end-user
+      - agent-runtime
+    threats:
+      - id: approval-bypass
+        category: policy-bypass
+        assets:
+          - customer-support-data
+        mitigations:
+          - missing-policy-gate
+    mitigations:
+      - id: missing-policy-gate
+        fields:
+          - approvals.required
+    review:
+      status: reviewed
+      reviewedBy: platform-security
 
 approvals:
   policyDecisionPoints:
-    - name: risk-classification-policy
+    - name: declared-risk-policy
       engineRef: opa/customer-risk
       appliesTo:
         - classify-risk
       decisionInputs:
         - actor
         - action
-        - dataClass
       failureMode: closed
-      auditEvents:
-        - policy_decision_recorded
   required:
-    - action: send-customer-email
-      mode: human
-      reason: external side effect
     - action: classify-risk
       mode: policy
       reason: policy decision required before privileged action
-      policyDecisionPointRef: risk-classification-policy
+      policyDecisionPointRef: undeclared-risk-policy
 
 observability:
   metrics:
@@ -68,8 +79,5 @@ observability:
     required:
       - deployment_planned
       - policy_decision_recorded
-      - approval_requested
-      - approval_granted
-      - approval_denied
       - secret_resolved
       - tool_call_denied

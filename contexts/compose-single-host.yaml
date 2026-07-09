@@ -27,6 +27,15 @@ approvals:
       ref: local-approval-runbook
     policy:
       ref: local-policy-check
+  policyDecisionPoints:
+    crm-mutation-policy:
+      ref: local/customer-operations-policy
+    risk-classification-policy:
+      ref: local/customer-risk-policy
+    financial-action-policy:
+      ref: local/billing-actions-policy
+    data-export-policy:
+      ref: local/data-export-policy
 
 observability:
   traces:

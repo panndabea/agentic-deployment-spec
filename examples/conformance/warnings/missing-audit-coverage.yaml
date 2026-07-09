@@ -35,6 +35,18 @@ security:
       - send-customer-email
 
 approvals:
+  policyDecisionPoints:
+    - name: risk-classification-policy
+      engineRef: opa/customer-risk
+      appliesTo:
+        - classify-risk
+      decisionInputs:
+        - actor
+        - action
+        - dataClass
+      failureMode: closed
+      auditEvents:
+        - policy_decision_recorded
   required:
     - action: send-customer-email
       mode: human
@@ -42,6 +54,7 @@ approvals:
     - action: classify-risk
       mode: policy
       reason: policy decision required before privileged action
+      policyDecisionPointRef: risk-classification-policy
 
 observability:
   metrics:

@@ -825,6 +825,12 @@
           "items": {
             "$ref": "#/$defs/approval"
           }
+        },
+        "policyDecisionPoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/policyDecisionPoint"
+          }
         }
       },
       "additionalProperties": true
@@ -865,6 +871,40 @@
         },
         "handlerRef": {
           "$ref": "#/$defs/nonEmptyString"
+        },
+        "policyDecisionPointRef": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "auditEvents": {
+          "$ref": "#/$defs/auditEventList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "policyDecisionPoint": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "engineRef": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "appliesTo": {
+          "$ref": "#/$defs/stringOrStringList"
+        },
+        "decisionInputs": {
+          "$ref": "#/$defs/stringList"
+        },
+        "failureMode": {
+          "enum": [
+            "closed",
+            "open",
+            "manual-review"
+          ]
         },
         "auditEvents": {
           "$ref": "#/$defs/auditEventList"

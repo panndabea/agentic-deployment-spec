@@ -97,7 +97,7 @@ Deliverables:
 
 - [x] threat model for agentic deployments
 - [x] supply-chain requirements for signed artifacts and SBOMs
-- [ ] policy decision points for approvals
+- [x] policy decision points for approvals
 - [x] production-readiness checklist
 - [x] audit event taxonomy
 
@@ -107,9 +107,9 @@ Exit criteria:
 - high-risk tool actions are deny-by-default unless approved
 - [x] audit events map to deployment, policy, secret, and tool activity
 
-Current v0.5 focus:
+Current v0.5 review focus:
 
-- expand the production-readiness checklist into policy decision point requirements
+- review the threat model, supply-chain, and policy decision point additions together before v1.0 stabilization
 
 ## v1.0 - Stable Specification
 

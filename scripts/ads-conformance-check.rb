@@ -278,6 +278,24 @@ def component_names(document)
   end.compact
 end
 
+def approval_action_names(document)
+  approvals = dig_hash(document, "approvals", "required")
+  return [] unless approvals.is_a?(Array)
+
+  approvals.map do |approval|
+    approval["action"] if approval.is_a?(Hash)
+  end.compact
+end
+
+def policy_approval_mode?(mode)
+  %w[policy policy-and-human].include?(mode)
+end
+
+def policy_decision_points(document)
+  points = dig_hash(document, "approvals", "policyDecisionPoints")
+  points.is_a?(Array) ? points : []
+end
+
 def target_profile(context)
   return nil unless context.is_a?(Hash)
 
@@ -329,6 +347,19 @@ def required_approval_handlers(mode)
     %w[human policy]
   else
     []
+  end
+end
+
+def context_policy_decision_point_available?(context, name)
+  points = dig_hash(context, "approvals", "policyDecisionPoints")
+
+  case points
+  when Array
+    names_from_collection(points).include?(name) || names_from_collection(points).include?("*")
+  when Hash
+    provided?(points[name]) || provided?(points["*"])
+  else
+    false
   end
 end
 
@@ -586,6 +617,86 @@ def check_scoped_component_references(document, diagnostics)
         )
       end
     end
+  end
+end
+
+def check_policy_decision_points(document, diagnostics)
+  declared_points = {}
+
+  policy_decision_points(document).each_with_index do |point, index|
+    next unless point.is_a?(Hash)
+
+    name = point["name"]
+    next unless name.is_a?(String)
+
+    if declared_points.key?(name)
+      add_diagnostic(
+        diagnostics,
+        category: "reference-invalid",
+        severity: "error",
+        path: "$.approvals.policyDecisionPoints[#{index}].name",
+        message: "Policy decision point name #{name.inspect} is duplicated.",
+        extra: { "policyDecisionPoint" => name }
+      )
+    else
+      declared_points[name] = index
+    end
+  end
+
+  declared_actions = approval_action_names(document)
+  policy_decision_points(document).each_with_index do |point, point_index|
+    next unless point.is_a?(Hash)
+
+    applies_to = point["appliesTo"]
+    next if applies_to.nil?
+
+    string_or_list(applies_to).each_with_index do |action, action_index|
+      next if declared_actions.include?(action)
+
+      path = applies_to.is_a?(Array) ? "$.approvals.policyDecisionPoints[#{point_index}].appliesTo[#{action_index}]" : "$.approvals.policyDecisionPoints[#{point_index}].appliesTo"
+      add_diagnostic(
+        diagnostics,
+        category: "policy-decision-point-missing",
+        severity: "warning",
+        path: path,
+        message: "Policy decision point #{point["name"].inspect} appliesTo action #{action.inspect} should reference a declared approval action.",
+        extra: { "policyDecisionPoint" => point["name"], "approval" => action }
+      )
+    end
+  end
+
+  approvals = dig_hash(document, "approvals", "required")
+  return unless approvals.is_a?(Array)
+
+  approvals.each_with_index do |approval, index|
+    next unless approval.is_a?(Hash)
+    next unless policy_approval_mode?(approval["mode"])
+
+    ref = approval["policyDecisionPointRef"]
+    if ref.nil?
+      next unless production_document?(document)
+
+      add_diagnostic(
+        diagnostics,
+        category: "policy-decision-point-missing",
+        severity: "warning",
+        path: "$.approvals.required[#{index}]",
+        message: "Policy approval action #{approval["action"].inspect} should reference a declared policy decision point.",
+        extra: { "approval" => approval["action"] }
+      )
+      next
+    end
+
+    next if declared_points.key?(ref)
+
+    add_diagnostic(
+      diagnostics,
+      category: "policy-decision-point-missing",
+      severity: "error",
+      path: "$.approvals.required[#{index}].policyDecisionPointRef",
+      message: "Policy approval action #{approval["action"].inspect} references undeclared policy decision point #{ref.inspect}.",
+      extra: { "approval" => approval["action"], "policyDecisionPoint" => ref }
+    )
   end
 end
 
@@ -957,6 +1068,32 @@ def check_target_approval_handlers(document, context, diagnostics)
   end
 end
 
+def check_target_policy_decision_points(document, context, diagnostics)
+  approvals = dig_hash(document, "approvals", "required")
+  return unless approvals.is_a?(Array)
+
+  approvals.each_with_index do |approval, index|
+    next unless approval.is_a?(Hash)
+    next unless policy_approval_mode?(approval["mode"])
+
+    ref = approval["policyDecisionPointRef"]
+    next unless ref.is_a?(String)
+    next if context_policy_decision_point_available?(context, ref)
+
+    add_diagnostic(
+      diagnostics,
+      category: "policy-decision-point-missing",
+      severity: "error",
+      path: "$.approvals.required[#{index}].policyDecisionPointRef",
+      message: "Policy decision point #{ref.inspect} is unavailable in the target context.",
+      extra: target_context_extra(context).merge(
+        "approval" => approval["action"],
+        "policyDecisionPoint" => ref
+      )
+    )
+  end
+end
+
 def check_target_observability_bindings(document, context, diagnostics)
   if dig_hash(document, "observability", "traces", "required") == true &&
      !context_observability_sink_available?(context, "traces")
@@ -1184,6 +1321,7 @@ def check_target_context(document, context, diagnostics)
   check_target_capability_support(document, context, diagnostics)
   check_target_secret_bindings(document, context, diagnostics)
   check_target_approval_handlers(document, context, diagnostics)
+  check_target_policy_decision_points(document, context, diagnostics)
   check_target_observability_bindings(document, context, diagnostics)
   check_target_network_feasibility(document, context, diagnostics)
   check_target_security_feasibility(document, context, diagnostics)
@@ -1225,6 +1363,7 @@ def check_document(document, context)
   check_unknown_root_fields(document, diagnostics)
   check_component_references(document, diagnostics)
   check_scoped_component_references(document, diagnostics)
+  check_policy_decision_points(document, diagnostics)
   check_capability_recommendations(document, diagnostics)
   check_audit_event_names(document, diagnostics)
   check_audit_event_coverage(document, diagnostics)

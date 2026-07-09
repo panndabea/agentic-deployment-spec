@@ -128,10 +128,49 @@ security:
       cadence: release
 
 approvals:
+  policyDecisionPoints:
+    - name: risk-classification-policy
+      engineRef: opa/customer-risk
+      appliesTo:
+        - classify-risk
+      decisionInputs:
+        - actor
+        - action
+        - dataClass
+        - ticketContext
+      failureMode: closed
+      auditEvents:
+        - policy_decision_recorded
+        - example.com/risk_classification_recorded
+    - name: financial-action-policy
+      engineRef: opa/billing-actions
+      appliesTo:
+        - issue-refund
+      decisionInputs:
+        - actor
+        - action
+        - refundAmount
+        - customerTier
+      failureMode: manual-review
+      auditEvents:
+        - policy_decision_recorded
+    - name: data-export-policy
+      engineRef: opa/data-export
+      appliesTo:
+        - export-customer-data
+      decisionInputs:
+        - actor
+        - action
+        - dataClass
+        - legalBasis
+      failureMode: closed
+      auditEvents:
+        - policy_decision_recorded
   required:
     - action: classify-risk
       mode: policy
       reason: policy must classify customer and business risk before action planning
+      policyDecisionPointRef: risk-classification-policy
       scope:
         component: api
         dataClass: customer-support
@@ -151,6 +190,7 @@ approvals:
     - action: issue-refund
       mode: policy-and-human
       reason: financial side effect requires policy eligibility and human approval
+      policyDecisionPointRef: financial-action-policy
       scope:
         component: api
         dataClass: billing
@@ -162,6 +202,7 @@ approvals:
     - action: export-customer-data
       mode: policy-and-human
       reason: customer data export requires legal basis and operator approval
+      policyDecisionPointRef: data-export-policy
       scope:
         component: api
         dataClass: personal-data
