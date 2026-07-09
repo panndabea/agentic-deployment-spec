@@ -14,6 +14,7 @@ KNOWN_ROOT_FIELDS = %w[
   capabilities
   secrets
   security
+  supplyChain
   approvals
   observability
   networking
@@ -34,6 +35,7 @@ REQUIRED_ROOT_FIELDS = %w[
 ].freeze
 
 NAMESPACED_NAME = /\A[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*\z/.freeze
+IMAGE_DIGEST = /@sha256:[A-Fa-f0-9]{64}\z/.freeze
 STATEFUL_MODES = %w[checkpointed durable-session durable-shared].freeze
 STANDARD_AUDIT_EVENTS = %w[
   deployment_planned
@@ -172,6 +174,45 @@ end
 
 def required_capability_names(document)
   required_capability_references(document).map { |reference| reference["name"] }
+end
+
+def runtime_image_references(document)
+  components = dig_hash(document, "runtime", "components")
+  return [] unless components.is_a?(Array)
+
+  components.each_with_index.each_with_object([]) do |(component, index), references|
+    next unless component.is_a?(Hash)
+
+    image = component["image"]
+    next unless image.is_a?(String)
+
+    references << {
+      "component" => component["name"],
+      "image" => image,
+      "path" => "$.runtime.components[#{index}].image"
+    }
+  end
+end
+
+def image_digest_pinned?(image)
+  image.is_a?(String) && image.match?(IMAGE_DIGEST)
+end
+
+def supply_chain_images(document)
+  images = dig_hash(document, "supplyChain", "images")
+  images.is_a?(Hash) ? images : {}
+end
+
+def image_signature_required?(document)
+  dig_hash(document, "supplyChain", "images", "signature", "required") == true
+end
+
+def sbom_required?(document)
+  dig_hash(document, "supplyChain", "images", "sbom", "required") == true
+end
+
+def provenance_required?(document)
+  dig_hash(document, "supplyChain", "images", "provenance", "required") == true
 end
 
 def audit_event_name_valid?(name)
@@ -378,6 +419,29 @@ def context_tool_policy_rules_available?(context)
     config["allowlist"] == true ||
     config["denylist"] == true ||
     provided?(config["rules"])
+end
+
+def context_supply_chain_control_available?(context, control)
+  config = dig_hash(context, "supplyChain", control)
+  return false if config.nil? || config == false
+  return true if config == true
+  return false unless config.is_a?(Hash)
+  return false if config["available"] == false
+  return true if config["available"] == true
+
+  provided?(config["verifiers"]) ||
+    provided?(config["formats"]) ||
+    provided?(config["predicateTypes"]) ||
+    config["enforced"] == true
+end
+
+def context_supply_chain_values(context, control, keys)
+  config = dig_hash(context, "supplyChain", control)
+  return [] unless config.is_a?(Hash)
+
+  keys.each_with_object([]) do |key, values|
+    values.concat(names_from_collection(config[key]))
+  end.uniq
 end
 
 def check_minimal_structure(document, diagnostics)
@@ -639,6 +703,16 @@ def check_capability_recommendations(document, diagnostics)
       "Default-deny outbound or egress policy should include the outbound-egress-policy required capability."
     )
   end
+
+  if image_signature_required?(document)
+    warn_missing_capability(
+      diagnostics,
+      capabilities,
+      "image-signature-verification",
+      "$.supplyChain.images.signature.required",
+      "Required image signatures should include the image-signature-verification required capability."
+    )
+  end
 end
 
 def check_audit_event_names(document, diagnostics)
@@ -745,6 +819,24 @@ def check_network_consistency(document, diagnostics)
     path: "$.networking.egress.default",
     message: "networking.egress.default #{egress_default.inspect} conflicts with security.outbound.default #{outbound_default.inspect}."
   )
+end
+
+def check_supply_chain_consistency(document, diagnostics)
+  images = supply_chain_images(document)
+  return unless images["requireDigest"] == true
+
+  runtime_image_references(document).each do |reference|
+    next if image_digest_pinned?(reference["image"])
+
+    add_diagnostic(
+      diagnostics,
+      category: "supply-chain-unverified",
+      severity: "error",
+      path: reference["path"],
+      message: "Image #{reference["image"].inspect} must be pinned by sha256 digest when supplyChain.images.requireDigest is true.",
+      extra: { "component" => reference["component"] }
+    )
+  end
 end
 
 def check_target_capability_support(document, context, diagnostics)
@@ -947,6 +1039,92 @@ def check_target_security_feasibility(document, context, diagnostics)
   )
 end
 
+def check_target_supply_chain_feasibility(document, context, diagnostics)
+  if image_signature_required?(document)
+    unless context_supply_chain_control_available?(context, "signatures")
+      add_diagnostic(
+        diagnostics,
+        category: "supply-chain-unverified",
+        severity: "error",
+        path: "$.supplyChain.images.signature.required",
+        message: "Required image signature verification is unavailable in the target context.",
+        extra: target_context_extra(context)
+      )
+    end
+
+    verifier = dig_hash(document, "supplyChain", "images", "signature", "verifier")
+    supported_verifiers = context_supply_chain_values(context, "signatures", %w[verifiers supportedVerifiers])
+    if verifier.is_a?(String) && !supported_verifiers.empty? && !supported_verifiers.include?(verifier)
+      add_diagnostic(
+        diagnostics,
+        category: "supply-chain-unverified",
+        severity: "error",
+        path: "$.supplyChain.images.signature.verifier",
+        message: "Image signature verifier #{verifier.inspect} is not supported by the target context.",
+        extra: target_context_extra(context).merge("verifier" => verifier)
+      )
+    end
+  end
+
+  if sbom_required?(document)
+    unless context_supply_chain_control_available?(context, "sbom")
+      add_diagnostic(
+        diagnostics,
+        category: "supply-chain-unverified",
+        severity: "error",
+        path: "$.supplyChain.images.sbom.required",
+        message: "Required SBOM availability is unavailable in the target context.",
+        extra: target_context_extra(context)
+      )
+    end
+
+    requested_formats = string_or_list(dig_hash(document, "supplyChain", "images", "sbom", "formats"))
+    supported_formats = context_supply_chain_values(context, "sbom", %w[formats supportedFormats])
+    unsupported_formats = requested_formats.select do |format|
+      format.is_a?(String) && !supported_formats.empty? && !supported_formats.include?(format)
+    end
+    unless unsupported_formats.empty?
+      add_diagnostic(
+        diagnostics,
+        category: "supply-chain-unverified",
+        severity: "error",
+        path: "$.supplyChain.images.sbom.formats",
+        message: "Requested SBOM formats #{unsupported_formats.inspect} are not supported by the target context.",
+        extra: target_context_extra(context).merge("formats" => unsupported_formats)
+      )
+    end
+  end
+
+  return unless provenance_required?(document)
+
+  unless context_supply_chain_control_available?(context, "provenance")
+    add_diagnostic(
+      diagnostics,
+      category: "supply-chain-unverified",
+      severity: "error",
+      path: "$.supplyChain.images.provenance.required",
+      message: "Required build provenance is unavailable in the target context.",
+      extra: target_context_extra(context)
+    )
+  end
+
+  requested_predicates = string_or_list(dig_hash(document, "supplyChain", "images", "provenance", "predicateTypes"))
+  supported_predicates = context_supply_chain_values(context, "provenance", %w[predicateTypes supportedPredicateTypes])
+  unsupported_predicates = requested_predicates.select do |predicate|
+    predicate.is_a?(String) && !supported_predicates.empty? && !supported_predicates.include?(predicate)
+  end
+  return if unsupported_predicates.empty?
+
+  add_diagnostic(
+    diagnostics,
+    category: "supply-chain-unverified",
+    severity: "error",
+    path: "$.supplyChain.images.provenance.predicateTypes",
+    message: "Requested provenance predicate types #{unsupported_predicates.inspect} are not supported by the target context.",
+    extra: target_context_extra(context).merge("predicateTypes" => unsupported_predicates)
+  )
+end
+
 def check_target_context(document, context, diagnostics)
   return unless context
   return unless document.is_a?(Hash)
@@ -957,6 +1135,7 @@ def check_target_context(document, context, diagnostics)
   check_target_observability_bindings(document, context, diagnostics)
   check_target_network_feasibility(document, context, diagnostics)
   check_target_security_feasibility(document, context, diagnostics)
+  check_target_supply_chain_feasibility(document, context, diagnostics)
 end
 
 def check_extensions(document, diagnostics)
@@ -998,6 +1177,7 @@ def check_document(document, context)
   check_audit_event_names(document, diagnostics)
   check_audit_event_coverage(document, diagnostics)
   check_network_consistency(document, diagnostics)
+  check_supply_chain_consistency(document, diagnostics)
   check_target_context(document, context, diagnostics)
   check_extensions(document, diagnostics)
 

@@ -1,0 +1,131 @@
+apiVersion: ads.dev/v0alpha1
+kind: AgenticDeployment
+metadata:
+  name: supply-chain-agent
+  owner: platform-team
+  description: Production deployment with digest-pinned and signed images.
+  labels:
+    tier: production
+    workload: supply-chain
+
+profiles:
+  - kubernetes-production
+
+runtime:
+  components:
+    - name: api
+      type: agent-runtime
+      image: ghcr.io/example/support-agent@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      execution:
+        mode: request-response
+        concurrency: 8
+      ports:
+        - name: http
+          containerPort: 8080
+      state:
+        mode: durable-session
+        store: postgres
+    - name: tool-server
+      type: tool-server
+      image: ghcr.io/example/support-tools@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      execution:
+        mode: internal-service
+
+capabilities:
+  required:
+    - container-runtime
+    - secret-injection
+    - persistent-storage
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+    - image-signature-verification
+
+secrets:
+  required:
+    - name: model-api-key
+      purpose: model-provider-auth
+      rotation: required
+      source: external-secret-store
+      injection: env
+      reload: restart-required
+      for:
+        - api
+    - name: database-url
+      purpose: session-state
+      rotation: required
+      source: external-secret-store
+      injection: env
+      reload: restart-required
+      for:
+        - api
+
+security:
+  defaultSandbox: restricted
+  outbound:
+    default: deny
+    allow:
+      - api.openai.com
+      - internal.crm.example
+  toolPolicy:
+    default: deny
+    allow:
+      - read-ticket
+      - draft-reply
+
+supplyChain:
+  images:
+    requireDigest: true
+    signature:
+      required: true
+      verifier: sigstore-cosign
+      identities:
+        - https://github.com/example/support-agent/.github/workflows/release.yaml
+    sbom:
+      required: true
+      formats:
+        - spdx-json
+        - cyclonedx-json
+    provenance:
+      required: true
+      predicateTypes:
+        - slsa-provenance
+
+approvals:
+  required:
+    - action: send-customer-email
+      mode: human
+      reason: external side effect
+    - action: mutate-crm-record
+      mode: policy-and-human
+      reason: privileged business data
+
+observability:
+  traces:
+    required: true
+    format: opentelemetry
+  metrics:
+    required:
+      - request_latency
+      - tool_call_count
+      - approval_wait_time
+      - model_cost
+  auditEvents:
+    required:
+      - deployment_planned
+      - policy_decision_recorded
+      - approval_requested
+      - tool_call_denied
+      - approval_granted
+      - approval_denied
+      - secret_resolved
+
+networking:
+  egress:
+    default: deny
+    allow:
+      - api.openai.com
+      - internal.crm.example

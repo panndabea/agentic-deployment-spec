@@ -45,6 +45,9 @@
     "security": {
       "$ref": "#/$defs/security"
     },
+    "supplyChain": {
+      "$ref": "#/$defs/supplyChain"
+    },
     "approvals": {
       "$ref": "#/$defs/approvals"
     },
@@ -623,6 +626,81 @@
         },
         "deny": {
           "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "supplyChain": {
+      "type": "object",
+      "properties": {
+        "images": {
+          "$ref": "#/$defs/supplyChainImages"
+        }
+      },
+      "additionalProperties": true
+    },
+    "supplyChainImages": {
+      "type": "object",
+      "properties": {
+        "requireDigest": {
+          "type": "boolean"
+        },
+        "signature": {
+          "$ref": "#/$defs/supplyChainSignature"
+        },
+        "sbom": {
+          "$ref": "#/$defs/supplyChainSbom"
+        },
+        "provenance": {
+          "$ref": "#/$defs/supplyChainProvenance"
+        }
+      },
+      "additionalProperties": true
+    },
+    "supplyChainSignature": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "verifier": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "identities": {
+          "$ref": "#/$defs/stringList"
+        },
+        "issuers": {
+          "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": true
+    },
+    "supplyChainSbom": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "formats": {
+          "$ref": "#/$defs/stringList"
+        },
+        "source": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": true
+    },
+    "supplyChainProvenance": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "predicateTypes": {
+          "$ref": "#/$defs/stringList"
+        },
+        "builderIdentity": {
+          "$ref": "#/$defs/nonEmptyString"
         }
       },
       "additionalProperties": true

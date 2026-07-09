@@ -10,7 +10,7 @@ The Agentic Deployment Specification (ADS) lets an application describe how it s
 
 ## Status
 
-Draft v0.3 in progress. v0.2 established the concrete YAML authoring format. The current work makes that model machine-validatable with JSON Schema, fixtures, and processor conformance rules.
+Draft v0.5 in progress. v0.3 made the model machine-validatable with JSON Schema, fixtures, and processor conformance rules. v0.4 added profile-oriented examples. The current work hardens security, supply-chain, policy, and operational readiness requirements.
 
 ## What ADS is
 
@@ -48,6 +48,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [examples/approval-policy.yaml](examples/approval-policy.yaml) is a v0.4-oriented approval and policy gate example.
 - [examples/multi-agent.yaml](examples/multi-agent.yaml) is the first v0.4-oriented multi-agent production example.
 - [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is a v0.4-oriented managed-runtime-compatible stateful agent example.
+- [examples/supply-chain.yaml](examples/supply-chain.yaml) is a v0.5-oriented signed-artifact, SBOM, and provenance example.
 - [schemas/ads.schema.json](schemas/ads.schema.json) is the initial JSON Schema for `ads.dev/v0alpha1`.
 - [examples/invalid/](examples/invalid/) contains negative schema fixtures.
 - [examples/conformance/invalid/](examples/conformance/invalid/) contains schema-valid documents that violate ADS processor conformance rules.
@@ -84,11 +85,11 @@ Validate an ADS document against a target context with:
 ruby scripts/ads-conformance-check.rb --context contexts/kubernetes-production.yaml examples/minimal.yaml
 ```
 
-The fixture suite also checks profile compatibility expectations: [examples/approval-policy.yaml](examples/approval-policy.yaml) is accepted by all current target contexts, [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is accepted by Kubernetes production and managed container runtime target contexts, and [examples/multi-agent.yaml](examples/multi-agent.yaml) is accepted only by the Kubernetes production target context.
+The fixture suite also checks profile compatibility expectations: [examples/approval-policy.yaml](examples/approval-policy.yaml) is accepted by all current target contexts, [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is accepted by Kubernetes production and managed container runtime target contexts, and [examples/multi-agent.yaml](examples/multi-agent.yaml) and [examples/supply-chain.yaml](examples/supply-chain.yaml) are accepted only by the Kubernetes production target context.
 
-The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks.
+The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks, including cross-reference and supply-chain consistency failures.
 
-The `contexts/*.yaml` files are non-normative target-context fixtures for the reference checker. They describe available target profile capabilities, secret bindings, approval handlers, observability sinks, network controls, and security policy enforcement. The files in `contexts/invalid/` intentionally omit required target context support.
+The `contexts/*.yaml` files are non-normative target-context fixtures for the reference checker. They describe available target profile capabilities, secret bindings, approval handlers, observability sinks, network controls, security policy enforcement, and supply-chain controls. The files in `contexts/invalid/` intentionally omit required target context support.
 
 ## Current Direction
 
@@ -97,6 +98,7 @@ ADS should become a deployment and governance standard for production agentic sy
 - the runtime components that must run
 - the platform capabilities required by those components
 - the security boundaries, secrets, and network policies that apply
+- the artifact integrity, signature, SBOM, and provenance requirements that apply
 - the approval and policy gates required before risky actions
 - the observability signals needed for operations and auditability
 

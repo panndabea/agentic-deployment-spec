@@ -45,7 +45,7 @@ Exit criteria:
 - processors can detect missing required sections
 - examples do not duplicate unrelated sample applications
 
-## v0.3 - JSON Schema and Conformance (Current)
+## v0.3 - JSON Schema and Conformance
 
 Goal: make ADS machine-validatable.
 
@@ -89,14 +89,14 @@ Current v0.4 review focus:
 
 - keep profile fixtures, examples, and diagrams synchronized as v0.4 receives review
 
-## v0.5 - Security, Policy, and Operations
+## v0.5 - Security, Policy, and Operations (Current)
 
 Goal: harden the production model.
 
 Deliverables:
 
 - [ ] threat model for agentic deployments
-- [ ] supply-chain requirements for signed artifacts and SBOMs
+- [x] supply-chain requirements for signed artifacts and SBOMs
 - [ ] policy decision points for approvals
 - [x] production-readiness checklist
 - [x] audit event taxonomy
@@ -109,7 +109,7 @@ Exit criteria:
 
 Current v0.5 focus:
 
-- expand the production-readiness checklist into a threat model and policy/supply-chain requirements
+- expand the production-readiness checklist into a threat model and policy decision point requirements
 
 ## v1.0 - Stable Specification
 

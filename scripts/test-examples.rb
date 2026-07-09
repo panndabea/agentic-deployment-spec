@@ -69,6 +69,7 @@ Dir.chdir(REPO_ROOT) do
     ["contexts/kubernetes-production.yaml", "examples/minimal.yaml"],
     ["contexts/kubernetes-production.yaml", "examples/multi-agent.yaml"],
     ["contexts/kubernetes-production.yaml", "examples/stateful-agent.yaml"],
+    ["contexts/kubernetes-production.yaml", "examples/supply-chain.yaml"],
     ["contexts/managed-container-runtime.yaml", "examples/approval-policy.yaml"],
     ["contexts/managed-container-runtime.yaml", "examples/minimal.yaml"],
     ["contexts/managed-container-runtime.yaml", "examples/stateful-agent.yaml"]
@@ -110,6 +111,22 @@ Dir.chdir(REPO_ROOT) do
       capability-unsupported
       secret-unbound
       network-unresolved
+    ]
+  ]
+  target_context_negative << [
+    "contexts/compose-single-host.yaml",
+    "examples/supply-chain.yaml",
+    %w[
+      capability-unsupported
+      supply-chain-unverified
+    ]
+  ]
+  target_context_negative << [
+    "contexts/managed-container-runtime.yaml",
+    "examples/supply-chain.yaml",
+    %w[
+      capability-unsupported
+      supply-chain-unverified
     ]
   ]
 

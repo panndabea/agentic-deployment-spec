@@ -69,3 +69,18 @@ security:
       - deny
       - allow
     ruleLists: true
+
+supplyChain:
+  signatures:
+    available: true
+    verifiers:
+      - sigstore-cosign
+  sbom:
+    available: true
+    formats:
+      - spdx-json
+      - cyclonedx-json
+  provenance:
+    available: true
+    predicateTypes:
+      - slsa-provenance

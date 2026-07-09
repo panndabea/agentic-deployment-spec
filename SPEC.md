@@ -4,7 +4,7 @@ This document is the normative draft for ADS. The supporting research notes live
 
 ## Status
 
-ADS is in draft status. v0.1 defines the problem, scope, vocabulary, and the first version of the conceptual document model. v0.2 defines the concrete YAML authoring format. v0.3 starts the machine-validatable schema and processor conformance work.
+ADS is in draft status. v0.1 defined the problem, scope, vocabulary, and the first version of the conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardens security, supply-chain, policy, and operational readiness requirements.
 
 ## Versioning Policy
 
@@ -94,6 +94,7 @@ An ADS document MUST declare:
 An ADS document SHOULD declare:
 
 - `profiles`: compatible target environments.
+- `supplyChain`: artifact integrity, signature, SBOM, and provenance requirements.
 - `networking`: ingress, egress, and service exposure requirements.
 - `reliability`: health checks, rollout, rollback, timeout, retry, and dead-letter behavior.
 - `extensions`: namespaced fields for experimental or vendor-specific features.
@@ -116,6 +117,7 @@ An ADS YAML document MUST be a mapping with these root fields:
 | `capabilities` | yes | object | Required and optional platform capabilities. |
 | `secrets` | yes | object | Secret references and lifecycle requirements. |
 | `security` | yes | object | Trust, sandboxing, identity, network, and tool policy requirements. |
+| `supplyChain` | no | object | Artifact digest, signature, SBOM, and provenance requirements. |
 | `approvals` | yes | object | Human or policy approval gates. |
 | `observability` | yes | object | Required telemetry and audit signals. |
 | `networking` | no | object | Ingress, internal service, and egress declarations. |
@@ -257,6 +259,23 @@ ADS documents MUST NOT include secret values, encrypted secret payloads, private
 - `identity`: service and operator identity requirements.
 - `trustBoundaries`: named boundaries between users, agents, tools, data stores, and external services.
 - `hardening`: runtime hardening requirements such as non-root containers, read-only filesystems, seccomp, AppArmor, SELinux, and image verification.
+
+### `supplyChain`
+
+`supplyChain` declares artifact integrity and provenance requirements for deployable images and related build outputs.
+
+`supplyChain.images` MAY include:
+
+- `requireDigest`: boolean requiring runtime component image references to be pinned by digest.
+- `signature.required`: boolean requiring image signature verification before deployment.
+- `signature.verifier`: verifier class or implementation, such as `sigstore-cosign`.
+- `signature.identities`: signing identities or issuer subjects that are acceptable for verification.
+- `sbom.required`: boolean requiring an SBOM to be available before deployment.
+- `sbom.formats`: accepted SBOM formats, such as `spdx-json` or `cyclonedx-json`.
+- `provenance.required`: boolean requiring build provenance or attestation metadata before deployment.
+- `provenance.predicateTypes`: accepted provenance predicate types or profiles.
+
+When `supplyChain.images.requireDigest` is `true`, every `runtime.components[].image` value MUST be pinned with a digest such as `@sha256:...`. Documents requiring image signatures SHOULD include the `image-signature-verification` required capability. ADS processors MUST report an incompatibility when required signatures, SBOMs, or provenance cannot be verified or retrieved from the selected target context.
 
 ### `approvals`
 
@@ -452,6 +471,7 @@ Core capability families are:
 - runtime: containers, jobs, scheduled tasks, concurrency, and process lifecycle.
 - state: persistent volumes, databases, vector stores, queues, and checkpointing.
 - security: identity, sandboxing, RBAC, network policy, and image verification.
+- supply chain: image digest pinning, signature verification, SBOM availability, and build provenance.
 - secrets: external secret references, injection method, and rotation behavior.
 - observability: metrics, logs, traces, audit events, and alert hooks.
 - scaling: horizontal scaling, event-driven scaling, GPU scheduling, and idle scale-down.
@@ -470,6 +490,19 @@ An ADS document MUST describe:
 - audit events for security-relevant actions
 
 A production profile SHOULD require non-root containers, least-privilege service accounts, restricted runtime settings, network egress controls, and signed deployment artifacts.
+
+## Supply Chain Model
+
+ADS supply-chain requirements describe what must be true about deployable artifacts before a processor plans or applies a deployment. They are separate from the runtime image reference so authors can state policy once while still keeping component declarations concise.
+
+A production ADS document SHOULD require:
+
+- image references pinned by digest
+- signature verification for deployable images
+- SBOM availability for deployable images
+- build provenance or equivalent attestation metadata
+
+ADS processors MUST NOT silently replace a digest-pinned or signature-verified artifact with an unpinned or unverified tag. Target contexts SHOULD declare the signature verifiers, SBOM formats, and provenance controls available to the processor.
 
 ## Secrets Model
 
@@ -567,9 +600,9 @@ The profile matrix is informative guidance for authors and processor implementer
 
 | Profile | Expected core capabilities | Common limits | Current example coverage |
 |---|---|---|---|
-| `compose-single-host` | `container-runtime`, `secret-injection`, `persistent-storage`, basic `trace-export`, `metrics-export`, `audit-log-export`, local `human-approval`, local `policy-decision` | Should not be assumed to provide native `network-policy`, `horizontal-scaling`, admission control, signed artifact enforcement, cluster RBAC, or production-grade default-deny egress without external controls. | `examples/minimal.yaml` and `examples/approval-policy.yaml` are expected to pass against `contexts/compose-single-host.yaml`; `examples/stateful-agent.yaml` and `examples/multi-agent.yaml` are expected to fail with compatibility diagnostics. |
-| `kubernetes-production` | `container-runtime`, `secret-injection`, `persistent-storage`, `queue`, `vector-store`, `network-policy`, `outbound-egress-policy`, `trace-export`, `metrics-export`, `audit-log-export`, `human-approval`, `policy-decision`, `horizontal-scaling`, `rollback` | Requires configured add-ons and integrations for external secrets, policy decisions, approval workflows, egress control, telemetry export, image verification, GPU scheduling, and event-driven scaling. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, `examples/stateful-agent.yaml`, and `examples/multi-agent.yaml` are expected to pass against `contexts/kubernetes-production.yaml`. |
-| `managed-container-runtime` | `container-runtime`, `secret-injection`, `persistent-storage`, `outbound-egress-policy`, basic service identity, observability export, managed rollout, and managed horizontal scaling | May have limited control over sidecars, native network policy, queues, vector stores, dead-letter queues, custom admission policy, background workers, and local tool-server isolation. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, and `examples/stateful-agent.yaml` are expected to pass against `contexts/managed-container-runtime.yaml`; `examples/multi-agent.yaml` is expected to fail until the target context declares additional external integrations. |
+| `compose-single-host` | `container-runtime`, `secret-injection`, `persistent-storage`, basic `trace-export`, `metrics-export`, `audit-log-export`, local `human-approval`, local `policy-decision` | Should not be assumed to provide native `network-policy`, `horizontal-scaling`, admission control, signed artifact enforcement, cluster RBAC, or production-grade default-deny egress without external controls. | `examples/minimal.yaml` and `examples/approval-policy.yaml` are expected to pass against `contexts/compose-single-host.yaml`; `examples/stateful-agent.yaml`, `examples/multi-agent.yaml`, and `examples/supply-chain.yaml` are expected to fail with compatibility diagnostics. |
+| `kubernetes-production` | `container-runtime`, `secret-injection`, `persistent-storage`, `queue`, `vector-store`, `network-policy`, `outbound-egress-policy`, `trace-export`, `metrics-export`, `audit-log-export`, `human-approval`, `policy-decision`, `horizontal-scaling`, `rollback`, `image-signature-verification` | Requires configured add-ons and integrations for external secrets, policy decisions, approval workflows, egress control, telemetry export, image verification, GPU scheduling, and event-driven scaling. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, `examples/stateful-agent.yaml`, `examples/multi-agent.yaml`, and `examples/supply-chain.yaml` are expected to pass against `contexts/kubernetes-production.yaml`. |
+| `managed-container-runtime` | `container-runtime`, `secret-injection`, `persistent-storage`, `outbound-egress-policy`, basic service identity, observability export, managed rollout, and managed horizontal scaling | May have limited control over sidecars, native network policy, queues, vector stores, dead-letter queues, custom admission policy, signed artifact enforcement, background workers, and local tool-server isolation. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, and `examples/stateful-agent.yaml` are expected to pass against `contexts/managed-container-runtime.yaml`; `examples/multi-agent.yaml` and `examples/supply-chain.yaml` are expected to fail until the target context declares additional external integrations. |
 | `serverless-auxiliary` | Scheduled jobs, event handlers, short-lived workers, secret injection, platform logs, metrics, and managed retry behavior | May not preserve long-running sessions, durable in-process memory, custom networking, local tool servers, or low-latency agent handoffs. | Planned for auxiliary hooks, scheduled tasks, and burst worker examples. |
 | `air-gapped` | Local artifact sources, internal secret stores, internal observability sinks, restricted egress controls, policy enforcement, and audit export to local systems | Cannot depend on public model APIs, public container registries, hosted approval systems, or external telemetry endpoints unless mirrored internally. | Planned for a future profile fixture after network and artifact-source rules are expanded. |
 | `gpu-serving` | `gpu-scheduling`, accelerator-aware resources, container runtime, model artifact access, metrics, traces, and workload isolation | Requires target-specific node pools, device plugins, model cache policy, quota controls, and cost governance. | Planned for a future stateful or model-serving example. |
@@ -600,6 +633,7 @@ This checklist is initial v0.5 guidance for authors, reviewers, and ADS processo
 | Capability compatibility | Required capabilities are complete, normalized, and satisfiable by the selected target context. Optional capabilities do not hide required production behavior. | `capabilities.required`, `capabilities.optional`, target context |
 | Secrets | Secret values are never stored inline. Required secrets declare purpose, source class, injection method, rotation expectation, reload behavior, and consuming components when scoped. | `secrets.required` |
 | Security defaults | Production deployments default to restricted sandboxing, deny-by-default tool policy, deny-by-default outbound policy when feasible, explicit trust boundaries, and hardening expectations. | `security.defaultSandbox`, `security.toolPolicy`, `security.outbound`, `security.trustBoundaries`, `security.hardening` |
+| Supply chain | Deployable images are digest-pinned when required, image signatures are verified, SBOMs are available in accepted formats, and build provenance is available for review or policy evaluation. | `runtime.components[].image`, `supplyChain`, target context supply-chain controls |
 | Approval and policy gates | Actions with external side effects, privileged data access, irreversible mutation, high cost, or compliance impact are approval-gated and mapped to available human and/or policy handlers. | `approvals.required`, target context approval handlers |
 | Observability and audit | Required metrics, traces, logs, redaction expectations, and audit events are declared and bound to available sinks. Audit events cover deployment, approval, policy, secret, and tool activity. | `observability`, target context observability sinks |
 | Networking | Ingress, internal traffic, outbound destinations, TLS/auth expectations, and default-deny egress requirements are declared and enforceable by the target context. | `networking`, `security.outbound`, target context network controls |
@@ -624,6 +658,7 @@ An ADS processor MUST complete these checks before it emits a deployment plan:
 | Approval handling | Every required approval MUST have the human approval and/or policy decision handlers required by its `mode`. |
 | Network feasibility | Required ingress, internal traffic, egress destinations, and default-deny outbound policies MUST be resolvable or enforceable by the target context. |
 | Security feasibility | Sandbox, tool policy, identity, hardening, and trust-boundary requirements MUST NOT be silently weakened during planning. |
+| Supply-chain feasibility | Required image signatures, SBOMs, provenance, and digest pinning MUST be preserved and verifiable in the selected target context. |
 | Observability binding | Required traces, metrics, logs, and audit events MUST map to available sinks or explicitly declared external integrations. |
 | Extension handling | Unknown extension fields MAY be ignored only when they are namespaced and not marked as required. |
 
@@ -646,6 +681,7 @@ The initial diagnostic categories are:
 | `approval-handler-missing` | error | A required human or policy approval handler is unavailable. |
 | `network-unresolved` | error | A required network route, destination, exposure, or egress rule cannot be resolved or enforced. |
 | `security-policy-unenforceable` | error | A sandbox, identity, hardening, outbound, or tool-policy requirement cannot be enforced. |
+| `supply-chain-unverified` | error | A required image digest, signature, SBOM, or provenance requirement cannot be verified or satisfied. |
 | `observability-sink-missing` | error | A required trace, metric, log, or audit sink is unavailable. |
 | `audit-event-missing` | warning | A production, secret, approval, policy, or tool-policy requirement is missing its recommended audit event coverage. |
 | `extension-unsupported` | error | A required extension is unknown or unsupported by the processor. |
@@ -682,6 +718,8 @@ Before deployment planning, an ADS processor MUST validate the YAML document aga
 - A document with `approvals.required` entries using `human` SHOULD include the `human-approval` required capability.
 - A document with `approvals.required` entries using `policy` or `policy-and-human` SHOULD include the `policy-decision` required capability.
 - A document with `security.outbound.default: deny` or `networking.egress.default: deny` SHOULD include the `outbound-egress-policy` required capability.
+- A document with `supplyChain.images.signature.required: true` SHOULD include the `image-signature-verification` required capability.
+- A document with `supplyChain.images.requireDigest: true` MUST pin every `runtime.components[].image` value by digest.
 - `security.outbound` and `networking.egress` MUST NOT declare contradictory default behavior.
 - Unknown non-extension root fields MUST be reported as compatibility warnings.
 - Unknown extension fields MAY be ignored only when their keys are namespaced.
@@ -694,7 +732,7 @@ The schema SHOULD preserve this document's separation between intent and impleme
 
 ## Examples
 
-The minimal example in this document is the current canonical example. The standalone file [examples/minimal.yaml](examples/minimal.yaml) MUST remain equivalent to the canonical example in this section unless the example is intentionally revised. Future examples SHOULD reuse its names and structure where possible, extending it for multi-agent, stateful, GPU, and air-gapped scenarios instead of inventing unrelated examples.
+The minimal example in this document is the current canonical example. The standalone file [examples/minimal.yaml](examples/minimal.yaml) MUST remain equivalent to the canonical example in this section unless the example is intentionally revised. Future examples SHOULD reuse its names and structure where possible, extending it for multi-agent, stateful, supply-chain, GPU, and air-gapped scenarios instead of inventing unrelated examples.
 
 ### Example Architecture Diagrams
 
@@ -731,6 +769,22 @@ flowchart LR
     human_gate --> audit
     combined_gate --> audit
     api --> telemetry[traces metrics logs]
+```
+
+#### Supply Chain Agent
+
+This diagram summarizes [examples/supply-chain.yaml](examples/supply-chain.yaml), which exercises digest-pinned images, signature verification, SBOM availability, and build provenance checks.
+
+```mermaid
+flowchart LR
+    registry[artifact registry] --> api["api\nagent-runtime"]
+    registry --> tool_server["tool-server\ntool-server"]
+    verifier[signature verifier] --> api
+    verifier --> tool_server
+    sbom[SBOM and provenance] --> policy[deployment policy]
+    policy --> api
+    api --> telemetry[traces metrics auditEvents]
+    tool_server --> telemetry
 ```
 
 #### Stateful Agent
@@ -789,6 +843,7 @@ The extension registry format is deferred until v0.4.
 
 ## Change Log
 
+- v0.5 draft: added initial supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance.
 - v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.
 - v0.1 draft: defined problem statement, goals, non-goals, vocabulary, conceptual document model, runtime model, security model, approval model, and profile names.

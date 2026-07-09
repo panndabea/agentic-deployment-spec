@@ -56,3 +56,11 @@ security:
       - deny
       - allow
     ruleLists: true
+
+supplyChain:
+  signatures:
+    available: false
+  sbom:
+    available: false
+  provenance:
+    available: false
