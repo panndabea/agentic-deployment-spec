@@ -70,6 +70,8 @@ ruby scripts/test-examples.rb
 
 The suite uses `uvx check-jsonschema` for structural JSON Schema validation and the local ADS conformance checker for cross-reference and compatibility rules. Fixture expectations are declared in [conformance/expectations.yaml](conformance/expectations.yaml), and the human-readable target matrix is summarized in [COMPATIBILITY.md](COMPATIBILITY.md).
 
+The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml) runs the same fixture suite on pull requests and pushes to `main`.
+
 Validate the canonical example against only the JSON Schema with:
 
 ```sh

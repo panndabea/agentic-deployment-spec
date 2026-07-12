@@ -15,6 +15,9 @@ Run all schema, conformance, warning, and target-context checks with:
 ruby scripts/test-examples.rb
 ```
 
+The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml)
+runs the same suite on pull requests and pushes to `main`.
+
 Run the document-level conformance checker directly with:
 
 ```sh
