@@ -42,6 +42,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
 - [CONTRIBUTING.md](CONTRIBUTING.md) describes the contribution workflow, fixture expectations, and governance rules.
 - [RELEASE.md](RELEASE.md) defines release readiness gates and the v1.0 stabilization checklist.
+- [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) documents the Ruby reference conformance processor.
 - [COMPATIBILITY.md](COMPATIBILITY.md) summarizes the current example-to-target-context compatibility matrix.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 - [SPEC.md#example-architecture-diagrams](SPEC.md#example-architecture-diagrams) contains Mermaid diagrams for the current example set.
@@ -69,7 +70,7 @@ Run the schema and conformance fixture suite with:
 ruby scripts/test-examples.rb
 ```
 
-The suite uses `uvx check-jsonschema` for structural JSON Schema validation and the local ADS conformance checker for cross-reference and compatibility rules. Fixture expectations are declared in [conformance/expectations.yaml](conformance/expectations.yaml), and the human-readable target matrix is summarized in [COMPATIBILITY.md](COMPATIBILITY.md).
+The suite uses `uvx check-jsonschema` for structural JSON Schema validation and the local ADS reference conformance processor for cross-reference and compatibility rules. Fixture expectations are declared in [conformance/expectations.yaml](conformance/expectations.yaml), the reference processor is documented in [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md), and the human-readable target matrix is summarized in [COMPATIBILITY.md](COMPATIBILITY.md).
 
 The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml) runs the same fixture suite on pull requests and pushes to `main`.
 

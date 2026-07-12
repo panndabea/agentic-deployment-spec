@@ -85,7 +85,8 @@ When adding or changing a target context:
 ## Schema And Conformance
 
 Use JSON Schema for structural requirements that can be validated locally within
-the document shape. Use the Ruby conformance checker for cross-reference,
+the document shape. Use the Ruby reference conformance processor documented in
+[REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) for cross-reference,
 compatibility, target-context, and policy checks that require document-wide or
 context-aware validation.
 
@@ -141,6 +142,7 @@ Before merging a contribution, reviewers should check:
 - The normative and informative sections remain clearly separated.
 - Examples do not contain real credentials or sensitive deployment details.
 - New diagnostics are stable, actionable, and mapped to documented categories.
+- Reference processor behavior remains documented when command-line behavior, output format, scope, or limitations change.
 - Compatibility expectations are explicit and tested.
 - Release-impacting changes update [RELEASE.md](RELEASE.md) expectations when needed.
 - `ruby scripts/test-examples.rb` passes.
