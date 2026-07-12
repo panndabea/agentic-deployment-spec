@@ -1,0 +1,129 @@
+schema:
+  accepts:
+    - examples/approval-policy.yaml
+    - examples/minimal.yaml
+    - examples/multi-agent.yaml
+    - examples/stateful-agent.yaml
+    - examples/supply-chain.yaml
+    - examples/conformance/invalid/duplicate-component.yaml
+    - examples/conformance/invalid/missing-dependency.yaml
+    - examples/conformance/invalid/missing-policy-decision-point.yaml
+    - examples/conformance/invalid/scoped-capability-missing-component.yaml
+    - examples/conformance/invalid/scoped-secret-missing-component.yaml
+    - examples/conformance/invalid/supply-chain-image-missing-digest.yaml
+    - examples/conformance/warnings/missing-audit-coverage.yaml
+    - examples/conformance/warnings/missing-policy-decision-point-ref.yaml
+    - examples/conformance/warnings/missing-threat-model.yaml
+  rejects:
+    - examples/invalid/conflicting-egress-default.yaml
+    - examples/invalid/invalid-kind.yaml
+    - examples/invalid/missing-owner.yaml
+    - examples/invalid/missing-runtime.yaml
+    - examples/invalid/unknown-audit-event.yaml
+
+conformance:
+  accepts:
+    - examples/approval-policy.yaml
+    - examples/minimal.yaml
+    - examples/multi-agent.yaml
+    - examples/stateful-agent.yaml
+    - examples/supply-chain.yaml
+  rejects:
+    - file: examples/conformance/invalid/duplicate-component.yaml
+    - file: examples/conformance/invalid/missing-dependency.yaml
+    - file: examples/conformance/invalid/missing-policy-decision-point.yaml
+    - file: examples/conformance/invalid/scoped-capability-missing-component.yaml
+    - file: examples/conformance/invalid/scoped-secret-missing-component.yaml
+    - file: examples/conformance/invalid/supply-chain-image-missing-digest.yaml
+  warns:
+    - file: examples/conformance/warnings/missing-audit-coverage.yaml
+      expectedDiagnostics:
+        - audit-event-missing
+        - approval_requested
+        - policy_decision_recorded
+        - secret_resolved
+        - tool_call_denied
+    - file: examples/conformance/warnings/missing-policy-decision-point-ref.yaml
+      expectedDiagnostics:
+        - policy-decision-point-missing
+        - $.approvals.required[1]
+        - classify-risk
+    - file: examples/conformance/warnings/missing-threat-model.yaml
+      expectedDiagnostics:
+        - threat-model-incomplete
+        - $.security.trustBoundaries
+        - $.security.threatModel
+
+targetContexts:
+  - context: contexts/compose-single-host.yaml
+    example: examples/approval-policy.yaml
+    result: accepts
+  - context: contexts/compose-single-host.yaml
+    example: examples/minimal.yaml
+    result: accepts
+  - context: contexts/kubernetes-production.yaml
+    example: examples/approval-policy.yaml
+    result: accepts
+  - context: contexts/kubernetes-production.yaml
+    example: examples/minimal.yaml
+    result: accepts
+  - context: contexts/kubernetes-production.yaml
+    example: examples/multi-agent.yaml
+    result: accepts
+  - context: contexts/kubernetes-production.yaml
+    example: examples/stateful-agent.yaml
+    result: accepts
+  - context: contexts/kubernetes-production.yaml
+    example: examples/supply-chain.yaml
+    result: accepts
+  - context: contexts/managed-container-runtime.yaml
+    example: examples/approval-policy.yaml
+    result: accepts
+  - context: contexts/managed-container-runtime.yaml
+    example: examples/minimal.yaml
+    result: accepts
+  - context: contexts/managed-container-runtime.yaml
+    example: examples/stateful-agent.yaml
+    result: accepts
+  - context: contexts/invalid/incomplete-target.yaml
+    example: examples/minimal.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - secret-unbound
+      - approval-handler-missing
+      - policy-decision-point-missing
+      - observability-sink-missing
+      - network-unresolved
+      - security-policy-unenforceable
+  - context: contexts/compose-single-host.yaml
+    example: examples/multi-agent.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - secret-unbound
+      - network-unresolved
+  - context: contexts/compose-single-host.yaml
+    example: examples/stateful-agent.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+  - context: contexts/managed-container-runtime.yaml
+    example: examples/multi-agent.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - secret-unbound
+      - network-unresolved
+  - context: contexts/compose-single-host.yaml
+    example: examples/supply-chain.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - supply-chain-unverified
+  - context: contexts/managed-container-runtime.yaml
+    example: examples/supply-chain.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - supply-chain-unverified

@@ -129,3 +129,8 @@ Exit criteria:
 - breaking changes require a new major version
 - at least two different deployment targets are covered by examples
 - at least one independent ADS processor can validate the examples
+
+Current v1.0 preparation focus:
+
+- keep [COMPATIBILITY.md](COMPATIBILITY.md) and [conformance/expectations.yaml](conformance/expectations.yaml) synchronized as examples and target contexts evolve
+- grow the conformance expectation manifest before adding new profile-specific examples

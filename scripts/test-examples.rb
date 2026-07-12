@@ -3,10 +3,12 @@
 
 require "open3"
 require "rbconfig"
+require "yaml"
 
 REPO_ROOT = File.expand_path("..", __dir__)
 RUBY = RbConfig.ruby
 SCHEMA_FILE = "schemas/ads.schema.json"
+EXPECTATIONS_FILE = "conformance/expectations.yaml"
 
 def executable?(name)
   ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |directory|
@@ -48,6 +50,51 @@ def run_command(label, command, expect_success: nil, expected_exit: nil, stdout_
   success
 end
 
+def load_expectations
+  YAML.safe_load(
+    File.read(EXPECTATIONS_FILE),
+    permitted_classes: [],
+    permitted_symbols: [],
+    aliases: false,
+    filename: EXPECTATIONS_FILE
+  ) || {}
+rescue Errno::ENOENT => e
+  warn "Missing fixture expectations file #{EXPECTATIONS_FILE}: #{e.message}"
+  exit 2
+rescue Psych::SyntaxError => e
+  warn "Invalid YAML in #{EXPECTATIONS_FILE}: #{e.message}"
+  exit 2
+end
+
+def expectation_list(expectations, *keys)
+  value = keys.reduce(expectations) do |current, key|
+    current.is_a?(Hash) ? current[key] : nil
+  end
+
+  return value if value.is_a?(Array)
+
+  warn "Expected #{keys.join(".")} in #{EXPECTATIONS_FILE} to be a list."
+  exit 2
+end
+
+def expectation_file(entry, key = "file")
+  return entry if entry.is_a?(String)
+  return entry[key] if entry.is_a?(Hash) && entry[key].is_a?(String)
+
+  warn "Expected fixture entry in #{EXPECTATIONS_FILE} to include #{key.inspect}: #{entry.inspect}"
+  exit 2
+end
+
+def expected_diagnostics(entry)
+  return [] unless entry.is_a?(Hash)
+
+  diagnostics = entry.fetch("expectedDiagnostics", [])
+  return diagnostics if diagnostics.is_a?(Array)
+
+  warn "Expected expectedDiagnostics in #{EXPECTATIONS_FILE} to be a list: #{entry.inspect}"
+  exit 2
+end
+
 Dir.chdir(REPO_ROOT) do
   schema = schema_command
   unless schema
@@ -55,104 +102,11 @@ Dir.chdir(REPO_ROOT) do
     exit 2
   end
 
-  schema_positive = Dir["examples/*.yaml"].sort +
-                    Dir["examples/conformance/invalid/*.yaml"].sort +
-                    Dir["examples/conformance/warnings/*.yaml"].sort
-  schema_negative = Dir["examples/invalid/*.yaml"].sort
-  conformance_positive = Dir["examples/*.yaml"].sort
-  conformance_negative = Dir["examples/conformance/invalid/*.yaml"].sort
-  conformance_warnings = Dir["examples/conformance/warnings/*.yaml"].sort
-  conformance_warning_expectations = {
-    "examples/conformance/warnings/missing-audit-coverage.yaml" => [
-      "audit-event-missing",
-      "approval_requested",
-      "policy_decision_recorded",
-      "secret_resolved",
-      "tool_call_denied"
-    ],
-    "examples/conformance/warnings/missing-policy-decision-point-ref.yaml" => [
-      "policy-decision-point-missing",
-      "$.approvals.required[1]",
-      "classify-risk"
-    ],
-    "examples/conformance/warnings/missing-threat-model.yaml" => [
-      "threat-model-incomplete",
-      "$.security.trustBoundaries",
-      "$.security.threatModel"
-    ]
-  }
-  target_context_positive = [
-    ["contexts/compose-single-host.yaml", "examples/approval-policy.yaml"],
-    ["contexts/compose-single-host.yaml", "examples/minimal.yaml"],
-    ["contexts/kubernetes-production.yaml", "examples/approval-policy.yaml"],
-    ["contexts/kubernetes-production.yaml", "examples/minimal.yaml"],
-    ["contexts/kubernetes-production.yaml", "examples/multi-agent.yaml"],
-    ["contexts/kubernetes-production.yaml", "examples/stateful-agent.yaml"],
-    ["contexts/kubernetes-production.yaml", "examples/supply-chain.yaml"],
-    ["contexts/managed-container-runtime.yaml", "examples/approval-policy.yaml"],
-    ["contexts/managed-container-runtime.yaml", "examples/minimal.yaml"],
-    ["contexts/managed-container-runtime.yaml", "examples/stateful-agent.yaml"]
-  ]
-  target_context_negative = Dir["contexts/invalid/*.yaml"].sort.map do |context|
-    [
-      context,
-      "examples/minimal.yaml",
-      %w[
-        capability-unsupported
-        secret-unbound
-        approval-handler-missing
-        policy-decision-point-missing
-        observability-sink-missing
-        network-unresolved
-        security-policy-unenforceable
-      ]
-    ]
-  end
-  target_context_negative << [
-    "contexts/compose-single-host.yaml",
-    "examples/multi-agent.yaml",
-    %w[
-      capability-unsupported
-      secret-unbound
-      network-unresolved
-    ]
-  ]
-  target_context_negative << [
-    "contexts/compose-single-host.yaml",
-    "examples/stateful-agent.yaml",
-    %w[
-      capability-unsupported
-    ]
-  ]
-  target_context_negative << [
-    "contexts/managed-container-runtime.yaml",
-    "examples/multi-agent.yaml",
-    %w[
-      capability-unsupported
-      secret-unbound
-      network-unresolved
-    ]
-  ]
-  target_context_negative << [
-    "contexts/compose-single-host.yaml",
-    "examples/supply-chain.yaml",
-    %w[
-      capability-unsupported
-      supply-chain-unverified
-    ]
-  ]
-  target_context_negative << [
-    "contexts/managed-container-runtime.yaml",
-    "examples/supply-chain.yaml",
-    %w[
-      capability-unsupported
-      supply-chain-unverified
-    ]
-  ]
+  expectations = load_expectations
 
   checks = []
 
-  schema_positive.each do |file|
+  expectation_list(expectations, "schema", "accepts").each do |file|
     checks << run_command(
       "schema accepts #{file}",
       schema + ["--schemafile", SCHEMA_FILE, file],
@@ -160,7 +114,7 @@ Dir.chdir(REPO_ROOT) do
     )
   end
 
-  schema_negative.each do |file|
+  expectation_list(expectations, "schema", "rejects").each do |file|
     checks << run_command(
       "schema rejects #{file}",
       schema + ["--schemafile", SCHEMA_FILE, file],
@@ -168,7 +122,7 @@ Dir.chdir(REPO_ROOT) do
     )
   end
 
-  conformance_positive.each do |file|
+  expectation_list(expectations, "conformance", "accepts").each do |file|
     checks << run_command(
       "conformance accepts #{file}",
       [RUBY, "scripts/ads-conformance-check.rb", file],
@@ -176,38 +130,53 @@ Dir.chdir(REPO_ROOT) do
     )
   end
 
-  conformance_negative.each do |file|
+  expectation_list(expectations, "conformance", "rejects").each do |entry|
+    file = expectation_file(entry)
     checks << run_command(
       "conformance rejects #{file}",
       [RUBY, "scripts/ads-conformance-check.rb", file],
-      expected_exit: 1
+      expected_exit: 1,
+      stdout_includes: expected_diagnostics(entry)
     )
   end
 
-  conformance_warnings.each do |file|
+  expectation_list(expectations, "conformance", "warns").each do |entry|
+    file = expectation_file(entry)
     checks << run_command(
       "conformance warns #{file}",
       [RUBY, "scripts/ads-conformance-check.rb", "--strict-warnings", file],
       expected_exit: 1,
-      stdout_includes: conformance_warning_expectations.fetch(file, [])
+      stdout_includes: expected_diagnostics(entry)
     )
   end
 
-  target_context_positive.each do |context, file|
-    checks << run_command(
-      "target context #{context} accepts #{file}",
-      [RUBY, "scripts/ads-conformance-check.rb", "--context", context, file],
-      expect_success: true
-    )
-  end
+  expectation_list(expectations, "targetContexts").each do |entry|
+    unless entry.is_a?(Hash)
+      warn "Expected targetContexts entries in #{EXPECTATIONS_FILE} to be mappings."
+      exit 2
+    end
 
-  target_context_negative.each do |context, file, expected_diagnostics|
-    checks << run_command(
-      "target context #{context} rejects #{file}",
-      [RUBY, "scripts/ads-conformance-check.rb", "--context", context, file],
-      expected_exit: 1,
-      stdout_includes: expected_diagnostics
-    )
+    context = expectation_file(entry, "context")
+    file = expectation_file(entry, "example")
+
+    case entry["result"]
+    when "accepts"
+      checks << run_command(
+        "target context #{context} accepts #{file}",
+        [RUBY, "scripts/ads-conformance-check.rb", "--context", context, file],
+        expect_success: true
+      )
+    when "rejects"
+      checks << run_command(
+        "target context #{context} rejects #{file}",
+        [RUBY, "scripts/ads-conformance-check.rb", "--context", context, file],
+        expected_exit: 1,
+        stdout_includes: expected_diagnostics(entry)
+      )
+    else
+      warn "Expected target context result to be accepts or rejects: #{entry.inspect}"
+      exit 2
+    end
   end
 
   exit(checks.all? ? 0 : 1)

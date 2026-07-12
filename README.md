@@ -40,6 +40,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 
 - [SPEC.md](SPEC.md) is the normative draft specification.
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
+- [COMPATIBILITY.md](COMPATIBILITY.md) summarizes the current example-to-target-context compatibility matrix.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 - [SPEC.md#example-architecture-diagrams](SPEC.md#example-architecture-diagrams) contains Mermaid diagrams for the current example set.
 - [SPEC.md#production-readiness-checklist](SPEC.md#production-readiness-checklist) is the initial v0.5 production readiness checklist.
@@ -52,6 +53,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [schemas/ads.schema.json](schemas/ads.schema.json) is the initial JSON Schema for `ads.dev/v0alpha1`.
 - [examples/invalid/](examples/invalid/) contains negative schema fixtures.
 - [examples/conformance/invalid/](examples/conformance/invalid/) contains schema-valid documents that violate ADS processor conformance rules.
+- [conformance/expectations.yaml](conformance/expectations.yaml) is the machine-readable fixture expectation manifest used by the test suite.
 - [contexts/](contexts/) contains reference target contexts used by the conformance checker.
 - [scripts/ads-conformance-check.rb](scripts/ads-conformance-check.rb) is a small reference checker for document-level conformance rules.
 
@@ -65,7 +67,7 @@ Run the schema and conformance fixture suite with:
 ruby scripts/test-examples.rb
 ```
 
-The suite uses `uvx check-jsonschema` for structural JSON Schema validation and the local ADS conformance checker for cross-reference and compatibility rules.
+The suite uses `uvx check-jsonschema` for structural JSON Schema validation and the local ADS conformance checker for cross-reference and compatibility rules. Fixture expectations are declared in [conformance/expectations.yaml](conformance/expectations.yaml), and the human-readable target matrix is summarized in [COMPATIBILITY.md](COMPATIBILITY.md).
 
 Validate the canonical example against only the JSON Schema with:
 
