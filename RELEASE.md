@@ -31,7 +31,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Confirm that all required fields and conformance requirements are intentional.
 - [x] Confirm that every diagnostic category in [SPEC.md](SPEC.md#diagnostic-categories) is stable enough for processors to depend on.
 - [x] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.
-- [ ] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
+- [x] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
 - [ ] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
 - [ ] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
 - [ ] Confirm that at least one independent ADS processor can validate the reference examples.
@@ -91,6 +91,21 @@ covered by [examples/invalid/unknown-audit-event.yaml](examples/invalid/unknown-
 Some standard events are not emitted by current reference examples; they remain
 reserved for deployment, secret-rotation, network, tool, and state lifecycle
 events that production processors and operators need to model consistently.
+
+## v1.0 Target Coverage Review
+
+ADS v1.0 covers three reference deployment targets with target-context fixtures:
+`compose-single-host`, `managed-container-runtime`, and
+`kubernetes-production`. These exceed the v1.0 requirement for at least two
+deployment targets.
+
+[COMPATIBILITY.md](COMPATIBILITY.md) is the human-readable compatibility matrix,
+and [conformance/expectations.yaml](conformance/expectations.yaml) is the
+machine-readable source of truth. The fixture suite verifies positive
+compatibility for the minimal and approval-policy examples across all three
+targets, richer examples against the targets that claim their required
+capabilities, and negative compatibility outcomes when smaller targets cannot
+satisfy multi-agent, stateful, or supply-chain requirements.
 
 ## Pre-Release Checklist
 
