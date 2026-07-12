@@ -32,7 +32,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Confirm that every diagnostic category in [SPEC.md](SPEC.md#diagnostic-categories) is stable enough for processors to depend on.
 - [x] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.
 - [x] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
-- [ ] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
+- [x] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
 - [ ] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
 - [ ] Confirm that at least one independent ADS processor can validate the reference examples.
 - [ ] Confirm that breaking changes after v1.0 require a new major version unless a field has been explicitly deprecated first.
@@ -106,6 +106,21 @@ compatibility for the minimal and approval-policy examples across all three
 targets, richer examples against the targets that claim their required
 capabilities, and negative compatibility outcomes when smaller targets cannot
 satisfy multi-agent, stateful, or supply-chain requirements.
+
+## v1.0 Implementer Fixture Review
+
+[IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent ADS processors
+should validate the repository fixtures. It identifies the schema-positive,
+schema-negative, conformance-positive, conformance-negative, strict-warning, and
+target-context fixture groups in [conformance/expectations.yaml](conformance/expectations.yaml),
+and it describes the expected comparison contract for pass/fail outcomes,
+compatible diagnostic categories, document paths, and `expectedDiagnostics`
+substrings.
+
+The guide also makes clear that exact diagnostic wording, language, and internal
+architecture do not need to match the Ruby reference processor. Independent
+processors must match ADS semantics and fixture outcomes, preserve required ADS
+behavior during planning, or decline to plan.
 
 ## Pre-Release Checklist
 

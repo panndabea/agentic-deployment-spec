@@ -140,15 +140,31 @@ machine-readable fixture expectation manifest. It defines expected behavior for:
 - warning fixtures under strict warning behavior
 - target-context compatibility outcomes
 
+Independent processors should validate the fixture groups in the same order as
+the repository suite:
+
+1. Accept every file in `schema.accepts` under JSON Schema validation.
+2. Reject every file in `schema.rejects` before deployment planning.
+3. Accept every file in `conformance.accepts` under document-level checks.
+4. Reject every file in `conformance.rejects` with compatible diagnostics.
+5. Surface every file in `conformance.warns` when warnings are treated as
+   failures.
+6. Evaluate each `targetContexts` entry against its declared context and match
+   the expected accept or reject outcome.
+
 Independent processors should be able to reproduce equivalent pass/fail outcomes
 and compatible diagnostic categories for the reference fixtures. Exact wording
 does not need to match the Ruby reference processor, but diagnostics should be
-specific enough for authors and tools to locate and fix the issue.
+specific enough for authors and tools to locate and fix the issue. For fixture
+entries with `expectedDiagnostics`, processors should emit diagnostics that
+contain equivalent categories and point to equivalent document paths or target
+requirements, even when message text differs.
 
-Rejecting conformance fixtures and strict-warning fixtures declare
-`expectedDiagnostics` substrings that the repository test suite checks. Treat
-those substrings as the stable compatibility contract for fixture reasons,
-especially diagnostic categories and document paths.
+Rejecting conformance fixtures, strict-warning fixtures, and rejecting
+target-context expectations declare `expectedDiagnostics` substrings that the
+repository test suite checks. Treat those substrings as the stable compatibility
+contract for fixture reasons, especially diagnostic categories and document
+paths.
 
 ## Compatibility Matrix
 
