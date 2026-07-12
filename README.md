@@ -42,6 +42,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
 - [CONTRIBUTING.md](CONTRIBUTING.md) describes the contribution workflow, fixture expectations, and governance rules.
 - [RELEASE.md](RELEASE.md) defines release readiness gates and the v1.0 stabilization checklist.
+- [IMPLEMENTERS.md](IMPLEMENTERS.md) is a practical guide for independent ADS processor implementers.
 - [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) documents the Ruby reference conformance processor.
 - [COMPATIBILITY.md](COMPATIBILITY.md) summarizes the current example-to-target-context compatibility matrix.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.

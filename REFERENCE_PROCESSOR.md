@@ -8,6 +8,7 @@ and independent implementers to compare results.
 The normative processor requirements remain in [SPEC.md](SPEC.md#processor-conformance).
 This reference processor is not an independent implementation for v1.0 release
 purposes; it is the in-repository executable reference for conformance fixtures.
+Guidance for independent implementations lives in [IMPLEMENTERS.md](IMPLEMENTERS.md).
 
 ## Scope
 

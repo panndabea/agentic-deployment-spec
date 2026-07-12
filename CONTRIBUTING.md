@@ -111,6 +111,9 @@ Stable versions must preserve backward compatibility within the same major
 version. After v1.0, breaking changes require a new major version unless a field
 was explicitly deprecated and removed in a later major version.
 
+Independent processor implementation guidance is tracked in
+[IMPLEMENTERS.md](IMPLEMENTERS.md).
+
 Release readiness gates and release-candidate checklists are tracked in
 [RELEASE.md](RELEASE.md).
 
@@ -142,6 +145,7 @@ Before merging a contribution, reviewers should check:
 - The normative and informative sections remain clearly separated.
 - Examples do not contain real credentials or sensitive deployment details.
 - New diagnostics are stable, actionable, and mapped to documented categories.
+- Independent processor guidance remains accurate when conformance requirements change.
 - Reference processor behavior remains documented when command-line behavior, output format, scope, or limitations change.
 - Compatibility expectations are explicit and tested.
 - Release-impacting changes update [RELEASE.md](RELEASE.md) expectations when needed.

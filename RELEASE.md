@@ -14,6 +14,7 @@ A release is ready only when all of these gates are satisfied:
 - [ ] Target contexts in [contexts/](contexts/) match the supported compatibility profiles.
 - [ ] [conformance/expectations.yaml](conformance/expectations.yaml) captures all expected schema, conformance, warning, and target-context outcomes.
 - [ ] [COMPATIBILITY.md](COMPATIBILITY.md) matches the public example-to-target-context expectations.
+- [ ] [IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current conformance model for independent processors.
 - [ ] [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the behavior and limitations of the Ruby reference processor.
 - [ ] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
 - [ ] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
@@ -31,6 +32,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [ ] Confirm that every diagnostic category in [SPEC.md](SPEC.md#diagnostic-categories) is stable enough for processors to depend on.
 - [ ] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.
 - [ ] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
+- [ ] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
 - [ ] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
 - [ ] Confirm that at least one independent ADS processor can validate the reference examples.
 - [ ] Confirm that breaking changes after v1.0 require a new major version unless a field has been explicitly deprecated first.

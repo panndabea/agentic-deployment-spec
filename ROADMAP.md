@@ -120,6 +120,7 @@ Deliverables:
 - stable specification text
 - stable schema
 - reference examples
+- implementer guidance in [IMPLEMENTERS.md](IMPLEMENTERS.md)
 - reference processor documentation in [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md)
 - compatibility matrix
 - conformance test suite with CI coverage
@@ -137,6 +138,7 @@ Current v1.0 preparation focus:
 - apply the contribution and governance process in [CONTRIBUTING.md](CONTRIBUTING.md) during review
 - use [RELEASE.md](RELEASE.md) to track v1.0 stabilization and release-candidate readiness
 - keep [SPEC.md](SPEC.md) free of stale draft-only language that conflicts with v1.0 stability
+- keep [IMPLEMENTERS.md](IMPLEMENTERS.md) aligned with processor conformance requirements
 - keep [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) aligned with the Ruby checker and fixture expectations
 - keep the conformance workflow green for changes to examples, schema, contexts, and processor rules
 - keep [COMPATIBILITY.md](COMPATIBILITY.md) and [conformance/expectations.yaml](conformance/expectations.yaml) synchronized as examples and target contexts evolve
