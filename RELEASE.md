@@ -14,10 +14,10 @@ A release is ready only when all of these gates are satisfied:
 - [x] Target contexts in [contexts/](contexts/) match the supported compatibility profiles.
 - [x] [conformance/expectations.yaml](conformance/expectations.yaml) captures all expected schema, conformance, warning, and target-context outcomes.
 - [x] [COMPATIBILITY.md](COMPATIBILITY.md) matches the public example-to-target-context expectations.
-- [ ] [IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current conformance model for independent processors.
-- [ ] [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the behavior and limitations of the Ruby reference processor.
-- [ ] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
-- [ ] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
+- [x] [IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current conformance model for independent processors.
+- [x] [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the behavior and limitations of the Ruby reference processor.
+- [x] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
+- [x] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
 - [x] `ruby scripts/test-examples.rb` passes locally.
 - [ ] The Conformance GitHub Actions workflow passes for the release branch or tag.
 
@@ -175,6 +175,31 @@ strict-warning fixtures, and target-context matrix. This satisfies the v1.0
 release criterion for at least one independent ADS processor validating the
 reference fixtures. External processors remain valuable follow-up evidence after
 the v1.0 release.
+
+## v1.0 Processor And Contributor Documentation Review
+
+[IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current independent processor
+conformance model. It describes safe parsing, schema validation, normalization,
+document-level checks, target-context checks, diagnostics, planning boundaries,
+fixture comparison against [conformance/expectations.yaml](conformance/expectations.yaml),
+and the second Go validation path.
+
+[REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the Ruby reference
+processor's current behavior and limitations: command-line options, exit codes,
+text and JSON diagnostic formats, strict-warning behavior, target-context
+evidence, fixture expectations, and the fact that it does not emit deployment
+plans or call external platform, policy, observability, registry, or signature
+verification APIs.
+
+[CONTRIBUTING.md](CONTRIBUTING.md) now describes the current contribution and
+governance process for v1.0 stabilization, including synchronized updates across
+the spec, schema, examples, contexts, expectations, compatibility matrix, Ruby
+fixture suite, and independent Go fixture validator when conformance behavior or
+release-readiness evidence changes. The [SPEC.md change log](SPEC.md#change-log)
+summarizes the release-impacting v1.0 changes, including stable API selection,
+reference example and schema updates, diagnostic and audit taxonomy
+stabilization, profile fixture coverage, processor conformance terminology,
+extension expectations, and independent fixture validation guidance.
 
 ## v1.0 Breaking Change Review
 

@@ -973,7 +973,7 @@ The v1.0 extension registry is decentralized: ADS documents, processors, and ven
 
 ## Change Log
 
-- v1.0 release candidate: selected `ads.dev/v1` as the stable ADS v1 API version, updated reference examples and schema, and clarified profile fixture coverage, processor conformance terminology, and extension registry expectations before stable release.
+- v1.0 release candidate: selected `ads.dev/v1` as the stable ADS v1 API version, updated reference examples and schema, stabilized diagnostic categories and the audit event taxonomy, clarified profile fixture coverage, processor conformance terminology, extension registry expectations, and independent fixture validation guidance before stable release.
 - v0.5 draft: added initial threat-model coverage, supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance, and policy decision points for policy-based approvals.
 - v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.

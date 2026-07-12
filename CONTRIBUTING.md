@@ -19,6 +19,14 @@ ruby scripts/test-examples.rb
 The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml)
 runs the same suite on pull requests and pushes to `main`.
 
+Run the independent Go fixture validator when changing fixture expectations,
+processor conformance behavior, target contexts, or release-readiness evidence:
+
+```sh
+go test ./...
+go run ./cmd/ads-fixture-validator
+```
+
 Run the document-level conformance checker directly with:
 
 ```sh
@@ -45,6 +53,7 @@ Use this checklist when changing ADS behavior:
 - Update [conformance/expectations.yaml](conformance/expectations.yaml) when schema, conformance, warning, or target-context outcomes change.
 - Update [COMPATIBILITY.md](COMPATIBILITY.md) when example-to-target-context compatibility changes in a user-visible way.
 - Run `ruby scripts/test-examples.rb`.
+- Run `go test ./...` and `go run ./cmd/ads-fixture-validator` when processor conformance behavior, fixture expectations, or release-readiness evidence changes.
 
 ## Examples And Fixtures
 
