@@ -122,7 +122,7 @@ Deliverables:
 - reference examples
 - compatibility matrix
 - conformance test suite
-- contribution and governance process
+- contribution and governance process in [CONTRIBUTING.md](CONTRIBUTING.md)
 
 Exit criteria:
 
@@ -132,5 +132,6 @@ Exit criteria:
 
 Current v1.0 preparation focus:
 
+- apply the contribution and governance process in [CONTRIBUTING.md](CONTRIBUTING.md) during review
 - keep [COMPATIBILITY.md](COMPATIBILITY.md) and [conformance/expectations.yaml](conformance/expectations.yaml) synchronized as examples and target contexts evolve
 - grow the conformance expectation manifest before adding new profile-specific examples

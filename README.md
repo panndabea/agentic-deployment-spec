@@ -40,6 +40,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 
 - [SPEC.md](SPEC.md) is the normative draft specification.
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
+- [CONTRIBUTING.md](CONTRIBUTING.md) describes the contribution workflow, fixture expectations, and governance rules.
 - [COMPATIBILITY.md](COMPATIBILITY.md) summarizes the current example-to-target-context compatibility matrix.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 - [SPEC.md#example-architecture-diagrams](SPEC.md#example-architecture-diagrams) contains Mermaid diagrams for the current example set.
