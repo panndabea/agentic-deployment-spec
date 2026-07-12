@@ -18,6 +18,15 @@ processor before deployment planning.
 | [contexts/managed-container-runtime.yaml](contexts/managed-container-runtime.yaml) | `managed-container-runtime` | Managed runtime deployment with stateful session support, approvals, secrets, telemetry, and outbound controls. |
 | [contexts/kubernetes-production.yaml](contexts/kubernetes-production.yaml) | `kubernetes-production` | Production-oriented Kubernetes deployment with multi-agent, policy, stateful, observability, and supply-chain support. |
 
+## Recognized Profiles Without Fixtures
+
+ADS v1.0 intentionally recognizes `serverless-auxiliary`, `air-gapped`, and
+`gpu-serving` as profile names without publishing reference target context
+fixtures for them. These names reserve stable vocabulary for common deployment
+targets, but they do not imply compatibility by themselves. A processor must
+still validate against a concrete target context before planning for one of
+these profiles.
+
 ## Example Compatibility
 
 | Example | compose-single-host | managed-container-runtime | kubernetes-production |
