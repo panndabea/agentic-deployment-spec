@@ -260,6 +260,9 @@ workflow passed for commit `95e69ac` on July 12, 2026 in run `29208435207`,
 covering the Ruby fixture suite, Go tests, and the independent Go fixture
 validator.
 
+The final `v1.0.0` tag passed the same Conformance workflow on July 12, 2026 in
+run `29208566123`.
+
 ## Version And Change Log
 
 Every release should make version intent explicit:
@@ -306,6 +309,6 @@ For a final release:
 
 - [x] Confirm all release gates are satisfied.
 - [x] Confirm no release-candidate-only language remains unless intentionally retained.
-- [ ] Tag the release with the project version.
-- [ ] Publish release notes from the spec change log and compatibility summary.
-- [ ] Keep the release tag immutable.
+- [x] Tag the release with the project version.
+- [x] Publish release notes from the spec change log and compatibility summary.
+- [x] Keep the release tag immutable.
