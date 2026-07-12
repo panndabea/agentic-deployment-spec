@@ -85,14 +85,42 @@ def expectation_file(entry, key = "file")
   exit 2
 end
 
-def expected_diagnostics(entry)
-  return [] unless entry.is_a?(Hash)
+def expected_diagnostics(entry, required: false)
+  unless entry.is_a?(Hash)
+    if required
+      warn "Expected fixture entry in #{EXPECTATIONS_FILE} to be a mapping with expectedDiagnostics: #{entry.inspect}"
+      exit 2
+    end
 
-  diagnostics = entry.fetch("expectedDiagnostics", [])
-  return diagnostics if diagnostics.is_a?(Array)
+    return []
+  end
 
-  warn "Expected expectedDiagnostics in #{EXPECTATIONS_FILE} to be a list: #{entry.inspect}"
-  exit 2
+  unless entry.key?("expectedDiagnostics")
+    if required
+      warn "Expected fixture entry in #{EXPECTATIONS_FILE} to include expectedDiagnostics: #{entry.inspect}"
+      exit 2
+    end
+
+    return []
+  end
+
+  diagnostics = entry["expectedDiagnostics"]
+  unless diagnostics.is_a?(Array)
+    warn "Expected expectedDiagnostics in #{EXPECTATIONS_FILE} to be a list: #{entry.inspect}"
+    exit 2
+  end
+
+  if required && diagnostics.empty?
+    warn "Expected expectedDiagnostics in #{EXPECTATIONS_FILE} to include at least one substring: #{entry.inspect}"
+    exit 2
+  end
+
+  unless diagnostics.all? { |diagnostic| diagnostic.is_a?(String) }
+    warn "Expected expectedDiagnostics in #{EXPECTATIONS_FILE} to contain only strings: #{entry.inspect}"
+    exit 2
+  end
+
+  diagnostics
 end
 
 Dir.chdir(REPO_ROOT) do
@@ -136,7 +164,7 @@ Dir.chdir(REPO_ROOT) do
       "conformance rejects #{file}",
       [RUBY, "scripts/ads-conformance-check.rb", file],
       expected_exit: 1,
-      stdout_includes: expected_diagnostics(entry)
+      stdout_includes: expected_diagnostics(entry, required: true)
     )
   end
 
@@ -146,7 +174,7 @@ Dir.chdir(REPO_ROOT) do
       "conformance warns #{file}",
       [RUBY, "scripts/ads-conformance-check.rb", "--strict-warnings", file],
       expected_exit: 1,
-      stdout_includes: expected_diagnostics(entry)
+      stdout_includes: expected_diagnostics(entry, required: true)
     )
   end
 
@@ -171,7 +199,7 @@ Dir.chdir(REPO_ROOT) do
         "target context #{context} rejects #{file}",
         [RUBY, "scripts/ads-conformance-check.rb", "--context", context, file],
         expected_exit: 1,
-        stdout_includes: expected_diagnostics(entry)
+        stdout_includes: expected_diagnostics(entry, required: true)
       )
     else
       warn "Expected target context result to be accepts or rejects: #{entry.inspect}"

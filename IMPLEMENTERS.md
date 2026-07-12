@@ -145,6 +145,11 @@ and compatible diagnostic categories for the reference fixtures. Exact wording
 does not need to match the Ruby reference processor, but diagnostics should be
 specific enough for authors and tools to locate and fix the issue.
 
+Rejecting conformance fixtures and strict-warning fixtures declare
+`expectedDiagnostics` substrings that the repository test suite checks. Treat
+those substrings as the stable compatibility contract for fixture reasons,
+especially diagnostic categories and document paths.
+
 ## Compatibility Matrix
 
 [COMPATIBILITY.md](COMPATIBILITY.md) summarizes the public target-context matrix.

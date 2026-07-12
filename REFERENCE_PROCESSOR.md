@@ -127,6 +127,11 @@ suite uses that manifest to verify:
 - warning fixtures under `--strict-warnings`
 - target-context compatibility expectations
 
+Rejecting conformance fixtures, strict-warning fixtures, and rejecting target
+context expectations must declare `expectedDiagnostics` substrings. The suite
+checks those substrings so fixture failures remain tied to stable diagnostic
+categories and paths instead of exit status alone.
+
 Independent ADS processors should be able to reproduce equivalent pass/fail
 outcomes and compatible diagnostic categories for the same fixtures, even when
 their messages or internal implementation differ.
@@ -152,7 +157,7 @@ safe decisions.
 When changing reference processor behavior:
 
 - Update [SPEC.md](SPEC.md) when normative conformance behavior changes.
-- Update [conformance/expectations.yaml](conformance/expectations.yaml) when fixture outcomes or expected diagnostics change.
+- Update [conformance/expectations.yaml](conformance/expectations.yaml) when fixture outcomes or expected diagnostics change, and include `expectedDiagnostics` for rejecting or strict-warning fixtures.
 - Update [COMPATIBILITY.md](COMPATIBILITY.md) when public target compatibility changes.
 - Update this document when command-line behavior, output format, scope, or limitations change.
 - Run `ruby scripts/test-examples.rb`.

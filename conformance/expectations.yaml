@@ -30,11 +30,35 @@ conformance:
     - examples/supply-chain.yaml
   rejects:
     - file: examples/conformance/invalid/duplicate-component.yaml
+      expectedDiagnostics:
+        - reference-invalid
+        - $.runtime.components[1].name
+        - duplicated
     - file: examples/conformance/invalid/missing-dependency.yaml
+      expectedDiagnostics:
+        - reference-invalid
+        - $.runtime.components[0].dependsOn[0]
+        - queue
     - file: examples/conformance/invalid/missing-policy-decision-point.yaml
+      expectedDiagnostics:
+        - policy-decision-point-missing
+        - $.approvals.required[0].policyDecisionPointRef
+        - undeclared-risk-policy
     - file: examples/conformance/invalid/scoped-capability-missing-component.yaml
+      expectedDiagnostics:
+        - reference-invalid
+        - $.capabilities.required[0].for[0]
+        - worker
     - file: examples/conformance/invalid/scoped-secret-missing-component.yaml
+      expectedDiagnostics:
+        - reference-invalid
+        - $.secrets.required[0].for[0]
+        - model-api-key
     - file: examples/conformance/invalid/supply-chain-image-missing-digest.yaml
+      expectedDiagnostics:
+        - supply-chain-unverified
+        - $.runtime.components[0].image
+        - sha256 digest
   warns:
     - file: examples/conformance/warnings/missing-audit-coverage.yaml
       expectedDiagnostics:
