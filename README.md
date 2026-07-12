@@ -36,30 +36,30 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - AI-native: agents, tools, memory, policy, and observability are first-class concerns.
 - Open standard: the specification should be readable by humans and enforceable by machines.
 
-## Repository Navigation
+## Documentation Map
+
+For ADS authors:
 
 - [SPEC.md](SPEC.md) is the normative draft specification.
+- [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
+- [examples/approval-policy.yaml](examples/approval-policy.yaml), [examples/multi-agent.yaml](examples/multi-agent.yaml), [examples/stateful-agent.yaml](examples/stateful-agent.yaml), and [examples/supply-chain.yaml](examples/supply-chain.yaml) show production-oriented patterns.
+- [COMPATIBILITY.md](COMPATIBILITY.md) summarizes which examples are expected to pass against the current target contexts.
+- [SPEC.md#production-readiness-checklist](SPEC.md#production-readiness-checklist), [SPEC.md#audit-event-taxonomy](SPEC.md#audit-event-taxonomy), and [SPEC.md#example-architecture-diagrams](SPEC.md#example-architecture-diagrams) collect the main review aids inside the spec.
+
+For processor implementers:
+
+- [IMPLEMENTERS.md](IMPLEMENTERS.md) is a practical guide for independent ADS processor implementers.
+- [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) documents the Ruby reference conformance processor.
+- [schemas/ads.schema.json](schemas/ads.schema.json) is the JSON Schema for `ads.dev/v0alpha1`.
+- [conformance/expectations.yaml](conformance/expectations.yaml) is the machine-readable fixture expectation manifest used by the test suite.
+- [contexts/](contexts/) contains reference target contexts used by the reference processor.
+
+For maintainers:
+
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
 - [CONTRIBUTING.md](CONTRIBUTING.md) describes the contribution workflow, fixture expectations, and governance rules.
 - [RELEASE.md](RELEASE.md) defines release readiness gates and the v1.0 stabilization checklist.
-- [IMPLEMENTERS.md](IMPLEMENTERS.md) is a practical guide for independent ADS processor implementers.
-- [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) documents the Ruby reference conformance processor.
-- [COMPATIBILITY.md](COMPATIBILITY.md) summarizes the current example-to-target-context compatibility matrix.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
-- [SPEC.md#example-architecture-diagrams](SPEC.md#example-architecture-diagrams) contains Mermaid diagrams for the current example set.
-- [SPEC.md#production-readiness-checklist](SPEC.md#production-readiness-checklist) is the production readiness checklist.
-- [SPEC.md#audit-event-taxonomy](SPEC.md#audit-event-taxonomy) defines the standard audit event names and extension rule.
-- [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
-- [examples/approval-policy.yaml](examples/approval-policy.yaml) is an approval and policy gate example.
-- [examples/multi-agent.yaml](examples/multi-agent.yaml) is a multi-agent production example.
-- [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is a managed-runtime-compatible stateful agent example.
-- [examples/supply-chain.yaml](examples/supply-chain.yaml) is a signed-artifact, SBOM, and provenance example.
-- [schemas/ads.schema.json](schemas/ads.schema.json) is the JSON Schema for `ads.dev/v0alpha1`.
-- [examples/invalid/](examples/invalid/) contains negative schema fixtures.
-- [examples/conformance/invalid/](examples/conformance/invalid/) contains schema-valid documents that violate ADS processor conformance rules.
-- [conformance/expectations.yaml](conformance/expectations.yaml) is the machine-readable fixture expectation manifest used by the test suite.
-- [contexts/](contexts/) contains reference target contexts used by the conformance checker.
-- [scripts/ads-conformance-check.rb](scripts/ads-conformance-check.rb) is a small reference checker for document-level conformance rules.
 
 ## Validation
 
@@ -81,7 +81,7 @@ Validate the canonical example against only the JSON Schema with:
 uvx check-jsonschema --schemafile schemas/ads.schema.json examples/minimal.yaml
 ```
 
-Run the document-level conformance checker directly with:
+Run the reference processor directly with:
 
 ```sh
 ruby scripts/ads-conformance-check.rb examples/minimal.yaml
@@ -97,7 +97,7 @@ The fixture suite also checks profile compatibility expectations: [examples/appr
 
 The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks, including cross-reference and supply-chain consistency failures. The files in `examples/conformance/warnings/` exercise strict warning behavior for audit coverage, production threat-model coverage, and policy decision point coverage.
 
-The `contexts/*.yaml` files are non-normative target-context fixtures for the reference checker. They describe available target profile capabilities, secret bindings, approval handlers, observability sinks, network controls, security policy enforcement, and supply-chain controls. The files in `contexts/invalid/` intentionally omit required target context support.
+The `contexts/*.yaml` files are non-normative target-context fixtures for the reference processor. They describe available target profile capabilities, secret bindings, approval handlers, observability sinks, network controls, security policy enforcement, and supply-chain controls. The files in `contexts/invalid/` intentionally omit required target context support.
 
 ## Current Direction
 
