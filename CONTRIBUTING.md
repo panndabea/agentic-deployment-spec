@@ -110,6 +110,9 @@ Stable versions must preserve backward compatibility within the same major
 version. After v1.0, breaking changes require a new major version unless a field
 was explicitly deprecated and removed in a later major version.
 
+Release readiness gates and release-candidate checklists are tracked in
+[RELEASE.md](RELEASE.md).
+
 New normative fields should be accepted only when they meet all of these
 criteria:
 
@@ -139,4 +142,5 @@ Before merging a contribution, reviewers should check:
 - Examples do not contain real credentials or sensitive deployment details.
 - New diagnostics are stable, actionable, and mapped to documented categories.
 - Compatibility expectations are explicit and tested.
+- Release-impacting changes update [RELEASE.md](RELEASE.md) expectations when needed.
 - `ruby scripts/test-examples.rb` passes.

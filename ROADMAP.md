@@ -123,6 +123,7 @@ Deliverables:
 - compatibility matrix
 - conformance test suite with CI coverage
 - contribution and governance process in [CONTRIBUTING.md](CONTRIBUTING.md)
+- release readiness gates in [RELEASE.md](RELEASE.md)
 
 Exit criteria:
 
@@ -133,6 +134,7 @@ Exit criteria:
 Current v1.0 preparation focus:
 
 - apply the contribution and governance process in [CONTRIBUTING.md](CONTRIBUTING.md) during review
+- use [RELEASE.md](RELEASE.md) to track v1.0 stabilization and release-candidate readiness
 - keep the conformance workflow green for changes to examples, schema, contexts, and processor rules
 - keep [COMPATIBILITY.md](COMPATIBILITY.md) and [conformance/expectations.yaml](conformance/expectations.yaml) synchronized as examples and target contexts evolve
 - grow the conformance expectation manifest before adding new profile-specific examples
