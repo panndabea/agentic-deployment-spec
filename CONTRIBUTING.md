@@ -17,7 +17,8 @@ ruby scripts/test-examples.rb
 ```
 
 The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml)
-runs the same suite on pull requests and pushes to `main`.
+runs the Ruby fixture suite, Go tests, and independent Go fixture validator on
+pull requests, pushes to `main`, release branches, and version tags.
 
 Run the independent Go fixture validator when changing fixture expectations,
 processor conformance behavior, target contexts, or release-readiness evidence:
