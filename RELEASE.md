@@ -30,7 +30,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Confirm that recognized profile names without current target context fixtures are intentionally retained.
 - [x] Confirm that all required fields and conformance requirements are intentional.
 - [x] Confirm that every diagnostic category in [SPEC.md](SPEC.md#diagnostic-categories) is stable enough for processors to depend on.
-- [ ] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.
+- [x] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.
 - [ ] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
 - [ ] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
 - [ ] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
@@ -77,6 +77,20 @@ before deployment planning.
 platforms that cannot preserve a required runtime model during planning. The
 in-repository Ruby reference processor does not currently emit it because it
 does not emit deployment plans.
+
+## v1.0 Audit Event Taxonomy Review
+
+The standard audit event taxonomy in [SPEC.md](SPEC.md#audit-event-taxonomy) is
+stable for v1.0. The 25 standard event names in the specification match
+[schemas/ads.schema.json](schemas/ads.schema.json) and the Ruby reference
+processor's `STANDARD_AUDIT_EVENTS` list exactly.
+
+ADS documents may use standard event names or namespaced custom event names.
+Unqualified custom event names are intentionally rejected by the schema, as
+covered by [examples/invalid/unknown-audit-event.yaml](examples/invalid/unknown-audit-event.yaml).
+Some standard events are not emitted by current reference examples; they remain
+reserved for deployment, secret-rotation, network, tool, and state lifecycle
+events that production processors and operators need to model consistently.
 
 ## Pre-Release Checklist
 
