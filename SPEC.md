@@ -16,6 +16,8 @@ Draft API versions use the `ads.dev/v0alphaN` form. Drafts MAY increment the API
 
 Draft versions MAY introduce breaking changes. Stable versions MUST preserve backward compatibility within the same major version unless a field is explicitly marked as deprecated and removed in a later major version.
 
+After v1.0, breaking changes to `ads.dev/v1` documents require a new stable major API version unless the affected field or behavior was deprecated first and removed in a later major version.
+
 ## Conformance Language
 
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are to be interpreted as normative requirement levels.

@@ -35,7 +35,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
 - [x] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
 - [ ] Confirm that at least one independent ADS processor can validate the reference examples.
-- [ ] Confirm that breaking changes after v1.0 require a new major version unless a field has been explicitly deprecated first.
+- [x] Confirm that breaking changes after v1.0 require a new major version unless a field has been explicitly deprecated first.
 
 ## v1.0 Required Surface Review
 
@@ -134,6 +134,22 @@ purposes.
 processor should demonstrate for v1.0. The Ruby reference processor can help
 other implementations compare fixture behavior, but it does not satisfy the
 independent processor release criterion by itself.
+
+## v1.0 Breaking Change Review
+
+[SPEC.md](SPEC.md#versioning-policy), [CONTRIBUTING.md](CONTRIBUTING.md#governance),
+and this release checklist agree on the v1 compatibility rule: after v1.0,
+breaking changes to `ads.dev/v1` documents require a new stable major API
+version unless the affected field or behavior was explicitly deprecated first
+and removed in a later major version.
+
+Breaking changes include removing or renaming normative fields, changing field
+semantics in a non-compatible way, making optional fields required, removing
+standard capabilities, profiles, diagnostic categories, or audit events, or
+changing fixture expectations in a way that invalidates supported target
+behavior. Release-blocking changes before final v1.0 must update the change log,
+schema, examples, conformance expectations, and compatibility documentation
+together.
 
 ## Pre-Release Checklist
 
