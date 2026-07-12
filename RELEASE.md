@@ -28,7 +28,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Decide and document the stable ADS API version for v1.0 according to [SPEC.md](SPEC.md#versioning-policy).
 - [x] Remove or resolve stale draft-only language that conflicts with v1.0 stability.
 - [x] Confirm that recognized profile names without current target context fixtures are intentionally retained.
-- [ ] Confirm that all required fields and conformance requirements are intentional.
+- [x] Confirm that all required fields and conformance requirements are intentional.
 - [ ] Confirm that every diagnostic category in [SPEC.md](SPEC.md#diagnostic-categories) is stable enough for processors to depend on.
 - [ ] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.
 - [ ] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
@@ -36,6 +36,28 @@ Before publishing v1.0, complete this stabilization pass:
 - [ ] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
 - [ ] Confirm that at least one independent ADS processor can validate the reference examples.
 - [ ] Confirm that breaking changes after v1.0 require a new major version unless a field has been explicitly deprecated first.
+
+## v1.0 Required Surface Review
+
+The v1.0 required field set is intentional. Required root fields are
+`apiVersion`, `kind`, `metadata`, `runtime`, `capabilities`, `secrets`,
+`security`, `approvals`, and `observability`. They match
+[SPEC.md](SPEC.md#document-model), [schemas/ads.schema.json](schemas/ads.schema.json),
+and the Ruby reference processor's minimal structure checks.
+
+The required nested minima are also intentional: ownership metadata, at least
+one runtime component, capability and secret lists, sandbox and tool-policy
+defaults, approval and observability lists, and the per-entry fields needed to
+make secrets, approvals, components, and policy decision points reviewable. The
+schema validates structural requirements; processor conformance covers
+cross-reference checks, target-context compatibility, security and network
+feasibility, supply-chain checks, observability binding, extension handling, and
+diagnostics before planning.
+
+The Ruby reference processor remains a fixture reference rather than a complete
+deployment planner. Its documented limitations are acceptable for v1.0 because
+independent processors must still preserve or reject required ADS behavior
+against their concrete target contexts.
 
 ## Pre-Release Checklist
 

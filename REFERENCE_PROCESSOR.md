@@ -145,6 +145,7 @@ The reference processor is intentionally small. It does not:
 - verify real image signatures, SBOM documents, or provenance attestations
 - evaluate policy logic
 - prove runtime security isolation
+- fully model ingress routes, internal service traffic, identity, hardening, or trust-boundary enforcement
 - replace a full production security review
 
 Those behaviors belong to deployment agents, platform controllers, or
