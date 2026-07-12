@@ -254,10 +254,11 @@ validator diagnostics were checked for secret-payload exposure paths.
 
 ## v1.0 Release Branch CI Review
 
-The `release/v1.0-rc1` branch was created from commit `eaa825c`. The
-Conformance GitHub Actions workflow passed for that branch on July 12, 2026 in
-run `29207643956`, covering the Ruby fixture suite, Go tests, and the
-independent Go fixture validator.
+The `release/v1.0-rc1` branch was created for the v1.0 release candidate. After
+the final v1.0 status-language updates landed, the Conformance GitHub Actions
+workflow passed for commit `95e69ac` on July 12, 2026 in run `29208435207`,
+covering the Ruby fixture suite, Go tests, and the independent Go fixture
+validator.
 
 ## Version And Change Log
 
@@ -303,7 +304,7 @@ For a release candidate:
 
 For a final release:
 
-- [ ] Confirm all release gates are satisfied.
+- [x] Confirm all release gates are satisfied.
 - [x] Confirm no release-candidate-only language remains unless intentionally retained.
 - [ ] Tag the release with the project version.
 - [ ] Publish release notes from the spec change log and compatibility summary.
