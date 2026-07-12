@@ -99,9 +99,9 @@ The top-level files in `examples/*.yaml` are positive examples and should pass s
 
 The `contexts/*.yaml` files are non-normative target-context fixtures for the reference processor. They describe available target profile capabilities, secret bindings, approval handlers, observability sinks, network controls, security policy enforcement, and supply-chain controls. The files in `contexts/invalid/` intentionally omit required target context support.
 
-## Current Direction
+## v1.0 Direction
 
-ADS should become a deployment and governance standard for production agentic systems, not another wrapper around `docker-compose.yml`. A conforming ADS document should describe:
+ADS is intended to be a deployment and governance standard for production agentic systems, not another wrapper around `docker-compose.yml`. A conforming ADS document should describe:
 
 - the runtime components that must run
 - the platform capabilities required by those components

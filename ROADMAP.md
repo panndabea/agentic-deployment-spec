@@ -85,11 +85,11 @@ Exit criteria:
 - [x] examples reuse the same naming and structure where possible
 - [x] architecture diagrams use the same component names as `SPEC.md`
 
-Current v0.4 review focus:
+v0.4 maintenance note:
 
-- keep profile fixtures, examples, and diagrams synchronized as v0.4 receives review
+- keep profile fixtures, examples, and diagrams synchronized during maintenance
 
-## v0.5 - Security, Policy, and Operations (Current)
+## v0.5 - Security, Policy, and Operations
 
 Goal: harden the production model.
 
@@ -133,7 +133,7 @@ Exit criteria:
 - at least two different deployment targets are covered by examples
 - at least one independent ADS processor can validate the examples
 
-Current v1.0 preparation focus:
+v1.0 preparation focus:
 
 - apply the contribution and governance process in [CONTRIBUTING.md](CONTRIBUTING.md) during review
 - use [RELEASE.md](RELEASE.md) to track v1.0 stabilization and release-candidate readiness

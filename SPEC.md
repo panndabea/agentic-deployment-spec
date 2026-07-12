@@ -717,7 +717,7 @@ Profiles MUST NOT weaken required security, approval, or observability declarati
 
 The profile matrix is informative guidance for authors and processor implementers. A profile describes a deployment target class; it does not by itself prove that a specific target environment can satisfy a requirement. ADS processors MUST use the selected target context to confirm the concrete capability set, secret bindings, approval handlers, observability sinks, network controls, and security controls available for deployment planning.
 
-| Profile | Expected core capabilities | Common limits | Current example coverage |
+| Profile | Expected core capabilities | Common limits | Reference example coverage |
 |---|---|---|---|
 | `compose-single-host` | `container-runtime`, `secret-injection`, `persistent-storage`, basic `trace-export`, `metrics-export`, `audit-log-export`, local `human-approval`, local `policy-decision` | Should not be assumed to provide native `network-policy`, `horizontal-scaling`, admission control, signed artifact enforcement, cluster RBAC, or production-grade default-deny egress without external controls. | `examples/minimal.yaml` and `examples/approval-policy.yaml` are expected to pass against `contexts/compose-single-host.yaml`; `examples/stateful-agent.yaml`, `examples/multi-agent.yaml`, and `examples/supply-chain.yaml` are expected to fail with compatibility diagnostics. |
 | `kubernetes-production` | `container-runtime`, `secret-injection`, `persistent-storage`, `queue`, `vector-store`, `network-policy`, `outbound-egress-policy`, `trace-export`, `metrics-export`, `audit-log-export`, `human-approval`, `policy-decision`, `horizontal-scaling`, `rollback`, `image-signature-verification` | Requires configured add-ons and integrations for external secrets, policy decisions, approval workflows, egress control, telemetry export, image verification, GPU scheduling, and event-driven scaling. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, `examples/stateful-agent.yaml`, `examples/multi-agent.yaml`, and `examples/supply-chain.yaml` are expected to pass against `contexts/kubernetes-production.yaml`. |
@@ -965,7 +965,7 @@ The files in [examples/conformance/invalid/](examples/conformance/invalid/) are 
 
 Extensions MUST use a namespaced key to avoid collisions. Vendor-specific extensions MUST NOT redefine normative ADS fields.
 
-The current extension registry is decentralized: ADS documents, processors, and vendors declare support for namespaced extension keys outside the standard field set. A centralized extension registry MAY be added later, but it is not required for v1.0 stabilization.
+The v1.0 extension registry is decentralized: ADS documents, processors, and vendors declare support for namespaced extension keys outside the standard field set. A centralized extension registry is outside the v1.0 release scope and would require a later compatible extension process.
 
 ## Change Log
 
