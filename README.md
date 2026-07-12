@@ -10,7 +10,7 @@ The Agentic Deployment Specification (ADS) lets an application describe how it s
 
 ## Status
 
-ADS is in v1.0 release-candidate stabilization. The stable ADS v1 API version is `ads.dev/v1`; the reference examples and JSON Schema target that version. v0.3 made the model machine-validatable with JSON Schema, fixtures, and processor conformance rules. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
+ADS v1.0 is stable. The stable ADS v1 API version is `ads.dev/v1`; the reference examples and JSON Schema target that version. v0.3 made the model machine-validatable with JSON Schema, fixtures, and processor conformance rules. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
 
 ## What ADS is
 
@@ -40,7 +40,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 
 For ADS authors:
 
-- [SPEC.md](SPEC.md) is the normative release-candidate specification.
+- [SPEC.md](SPEC.md) is the normative v1.0 specification.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
 - [examples/approval-policy.yaml](examples/approval-policy.yaml), [examples/multi-agent.yaml](examples/multi-agent.yaml), [examples/stateful-agent.yaml](examples/stateful-agent.yaml), and [examples/supply-chain.yaml](examples/supply-chain.yaml) show production-oriented patterns.
 - [COMPATIBILITY.md](COMPATIBILITY.md) summarizes which examples are expected to pass against the current target contexts.
@@ -58,7 +58,7 @@ For maintainers:
 
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
 - [CONTRIBUTING.md](CONTRIBUTING.md) describes the contribution workflow, fixture expectations, and governance rules.
-- [RELEASE.md](RELEASE.md) defines release readiness gates and the v1.0 stabilization checklist.
+- [RELEASE.md](RELEASE.md) defines release readiness gates and the v1.0 release record.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 
 ## Validation

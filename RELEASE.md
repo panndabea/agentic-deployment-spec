@@ -23,7 +23,7 @@ A release is ready only when all of these gates are satisfied:
 
 ## v1.0 Readiness Checklist
 
-Before publishing v1.0, complete this stabilization pass:
+The v1.0 stabilization pass is complete:
 
 - [x] Decide and document the stable ADS API version for v1.0 according to [SPEC.md](SPEC.md#versioning-policy).
 - [x] Remove or resolve stale draft-only language that conflicts with v1.0 stability.
@@ -41,7 +41,7 @@ Before publishing v1.0, complete this stabilization pass:
 
 [SPEC.md](SPEC.md), [schemas/ads.schema.json](schemas/ads.schema.json), the
 reference examples, target contexts, conformance expectations, and public
-compatibility matrix are aligned for the v1.0 release-candidate surface.
+compatibility matrix are aligned for the v1.0 release surface.
 
 The review checked the normative document model, YAML structure, validation
 rules, processor conformance rules, diagnostic categories, audit event taxonomy,
@@ -192,7 +192,7 @@ plans or call external platform, policy, observability, registry, or signature
 verification APIs.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) now describes the current contribution and
-governance process for v1.0 stabilization, including synchronized updates across
+governance process for v1.0 maintenance, including synchronized updates across
 the spec, schema, examples, contexts, expectations, compatibility matrix, Ruby
 fixture suite, and independent Go fixture validator when conformance behavior or
 release-readiness evidence changes. The [SPEC.md change log](SPEC.md#change-log)
@@ -232,16 +232,16 @@ Use this checklist before cutting any release:
 
 ## v1.0 Pre-Release Local Review
 
-The local pre-release checklist is complete for the current v1.0
-release-candidate state. The working diff was reviewed for unrelated changes,
+The local pre-release checklist is complete for the current v1.0 release state.
+The working diff was reviewed for unrelated changes,
 and whitespace checks passed with `git diff --check`.
 
-[README.md](README.md) status language matches the v1.0 release-candidate state,
+[README.md](README.md) status language matches the v1.0 release state,
 its local documentation links and checked anchors resolve, and its validation
 commands match the current Ruby fixture suite and independent Go fixture
-validator. [ROADMAP.md](ROADMAP.md) matches the completed v1.0 stabilization
-criteria and keeps the remaining release focus on readiness, documentation
-alignment, and a green conformance workflow.
+validator. [ROADMAP.md](ROADMAP.md) matches the completed v1.0 criteria and
+keeps the maintenance focus on compatibility, documentation alignment, and a
+green conformance workflow.
 
 [COMPATIBILITY.md](COMPATIBILITY.md) was checked against
 [conformance/expectations.yaml](conformance/expectations.yaml): the public target
@@ -295,16 +295,16 @@ For a release candidate:
 
 - [x] Create a release branch or release-candidate tag.
 - [x] Verify the Conformance workflow passes.
-- [ ] Freeze normative field additions except for release-blocking fixes.
-- [ ] Review [SPEC.md](SPEC.md), [README.md](README.md), [COMPATIBILITY.md](COMPATIBILITY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and this file together.
-- [ ] Collect release-blocking issues in [ROADMAP.md](ROADMAP.md) or the project tracker.
+- [x] Freeze normative field additions except for release-blocking fixes.
+- [x] Review [SPEC.md](SPEC.md), [README.md](README.md), [COMPATIBILITY.md](COMPATIBILITY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and this file together.
+- [x] Collect release-blocking issues in [ROADMAP.md](ROADMAP.md) or the project tracker.
 
 ## Final Release Flow
 
 For a final release:
 
 - [ ] Confirm all release gates are satisfied.
-- [ ] Confirm no release-candidate-only language remains unless intentionally retained.
+- [x] Confirm no release-candidate-only language remains unless intentionally retained.
 - [ ] Tag the release with the project version.
 - [ ] Publish release notes from the spec change log and compatibility summary.
 - [ ] Keep the release tag immutable.

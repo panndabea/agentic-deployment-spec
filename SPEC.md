@@ -1,10 +1,10 @@
 # Agentic Deployment Specification
 
-This document is the normative release-candidate specification for ADS v1.0. The supporting research notes live in [deployment-research.md](deployment-research.md); they are informative, not normative.
+This document is the normative specification for ADS v1.0. The supporting research notes live in [deployment-research.md](deployment-research.md); they are informative, not normative.
 
 ## Status
 
-ADS is in v1.0 release-candidate stabilization. The stable ADS v1 API version is `ads.dev/v1`; the reference examples and JSON Schema target that version. v0.1 defined the problem, scope, vocabulary, and the first conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
+ADS v1.0 is stable. The stable ADS v1 API version is `ads.dev/v1`; the reference examples and JSON Schema target that version. v0.1 defined the problem, scope, vocabulary, and the first conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
 
 ## Versioning Policy
 
@@ -973,7 +973,7 @@ The v1.0 extension registry is decentralized: ADS documents, processors, and ven
 
 ## Change Log
 
-- v1.0 release candidate: selected `ads.dev/v1` as the stable ADS v1 API version, updated reference examples and schema, stabilized diagnostic categories and the audit event taxonomy, clarified profile fixture coverage, processor conformance terminology, extension registry expectations, and independent fixture validation guidance before stable release.
+- v1.0: selected `ads.dev/v1` as the stable ADS v1 API version, updated reference examples and schema, stabilized diagnostic categories and the audit event taxonomy, clarified profile fixture coverage, processor conformance terminology, extension registry expectations, and independent fixture validation guidance.
 - v0.5 draft: added initial threat-model coverage, supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance, and policy decision points for policy-based approvals.
 - v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.

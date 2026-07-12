@@ -1,8 +1,8 @@
 # Contributing
 
-ADS is in v1.0 release-candidate stabilization, so useful contributions should
-make the standard clearer, more implementable, or easier to validate without
-destabilizing the v1 surface. Prefer improving the existing specification,
+ADS v1.0 is stable, so useful contributions should make the standard clearer,
+more implementable, or easier to validate without destabilizing the v1 surface.
+Prefer improving the existing specification,
 examples, schema, conformance fixtures, and target contexts before adding
 parallel documents.
 
@@ -114,21 +114,18 @@ or decrypted secret payloads.
 ADS uses the versioning policy in [SPEC.md](SPEC.md#versioning-policy).
 
 Draft versions may introduce breaking changes, but incompatible
-authoring-format changes should increment the draft API version. During v1.0
-release-candidate stabilization, breaking changes should be accepted only for
-release-blocking issues. Breaking changes must update the change log, schema
-expectations, reference examples, compatibility matrix, and conformance fixtures
-together.
+authoring-format changes should increment the draft API version.
 
 Stable versions must preserve backward compatibility within the same major
-version. After v1.0, breaking changes require a new major version unless a field
-was explicitly deprecated and removed in a later major version.
+version. Breaking changes to `ads.dev/v1` require a new major version unless a
+field was explicitly deprecated and removed in a later major version. Breaking
+changes must update the change log, schema expectations, reference examples,
+compatibility matrix, and conformance fixtures together.
 
 Independent processor implementation guidance is tracked in
 [IMPLEMENTERS.md](IMPLEMENTERS.md).
 
-Release readiness gates and release-candidate checklists are tracked in
-[RELEASE.md](RELEASE.md).
+Release readiness gates and release records are tracked in [RELEASE.md](RELEASE.md).
 
 New normative fields should be accepted only when they meet all of these
 criteria:

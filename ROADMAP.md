@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap tracks the path from the current release candidate to a stable Agentic Deployment Specification. The normative release-candidate specification lives in [SPEC.md](SPEC.md), and the technical research reference lives in [deployment-research.md](deployment-research.md).
+This roadmap tracks released ADS milestones and future maintenance for the stable Agentic Deployment Specification. The normative v1.0 specification lives in [SPEC.md](SPEC.md), and the technical research reference lives in [deployment-research.md](deployment-research.md).
 
 ## Release Principles
 
@@ -109,7 +109,7 @@ Exit criteria:
 
 v0.5 stabilization note:
 
-- threat model, supply-chain, and policy decision point additions are carried into the v1.0 release-candidate stabilization pass
+- threat model, supply-chain, and policy decision point additions were carried into the v1.0 stabilization pass
 
 ## v1.0 - Stable Specification
 
@@ -133,12 +133,12 @@ Exit criteria:
 - at least two different deployment targets are covered by examples
 - at least one independent ADS processor can validate the examples
 
-v1.0 preparation focus:
+v1.0 maintenance focus:
 
 - apply the contribution and governance process in [CONTRIBUTING.md](CONTRIBUTING.md) during review
-- use [RELEASE.md](RELEASE.md) to track v1.0 stabilization and release-candidate readiness
-- keep `ads.dev/v1` as the stable ADS v1 API version unless a release-blocking issue requires a new candidate
-- keep [SPEC.md](SPEC.md) free of stale draft-only language that conflicts with v1.0 stability
+- use [RELEASE.md](RELEASE.md) to track release readiness and release evidence
+- keep `ads.dev/v1` as the stable ADS v1 API version; use compatible additions for v1.x and a new major version for breaking changes
+- keep [SPEC.md](SPEC.md) free of stale draft-only language that conflicts with stable v1 behavior
 - keep [IMPLEMENTERS.md](IMPLEMENTERS.md) aligned with processor conformance requirements
 - keep [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) aligned with the Ruby checker and fixture expectations
 - keep the conformance workflow green for changes to examples, schema, contexts, and processor rules
