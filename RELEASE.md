@@ -221,14 +221,36 @@ together.
 
 Use this checklist before cutting any release:
 
-- [ ] Review `git diff` for unrelated changes.
-- [ ] Run `git diff --check`.
-- [ ] Run `ruby scripts/test-examples.rb`.
-- [ ] Review [COMPATIBILITY.md](COMPATIBILITY.md) against [conformance/expectations.yaml](conformance/expectations.yaml).
-- [ ] Review [README.md](README.md) links and status language.
-- [ ] Review [ROADMAP.md](ROADMAP.md) for completed and remaining milestone criteria.
-- [ ] Confirm that examples and contexts contain no real secrets, credentials, tokens, private keys, or production-only endpoint details.
-- [ ] Confirm that new diagnostics do not expose secret values or decrypted secret payloads.
+- [x] Review `git diff` for unrelated changes.
+- [x] Run `git diff --check`.
+- [x] Run `ruby scripts/test-examples.rb`.
+- [x] Review [COMPATIBILITY.md](COMPATIBILITY.md) against [conformance/expectations.yaml](conformance/expectations.yaml).
+- [x] Review [README.md](README.md) links and status language.
+- [x] Review [ROADMAP.md](ROADMAP.md) for completed and remaining milestone criteria.
+- [x] Confirm that examples and contexts contain no real secrets, credentials, tokens, private keys, or production-only endpoint details.
+- [x] Confirm that new diagnostics do not expose secret values or decrypted secret payloads.
+
+## v1.0 Pre-Release Local Review
+
+The local pre-release checklist is complete for the current v1.0
+release-candidate state. The working diff was reviewed for unrelated changes,
+and whitespace checks passed with `git diff --check`.
+
+[README.md](README.md) status language matches the v1.0 release-candidate state,
+its local documentation links and checked anchors resolve, and its validation
+commands match the current Ruby fixture suite and independent Go fixture
+validator. [ROADMAP.md](ROADMAP.md) matches the completed v1.0 stabilization
+criteria and keeps the remaining release focus on readiness, documentation
+alignment, and a green conformance workflow.
+
+[COMPATIBILITY.md](COMPATIBILITY.md) was checked against
+[conformance/expectations.yaml](conformance/expectations.yaml): the public target
+matrix covers all current top-level example and target-context combinations,
+plus the intentionally incomplete negative target context. A focused scan of
+[examples/](examples/) and [contexts/](contexts/) found placeholder secret
+references only, not real credentials, tokens, private keys, or
+production-only endpoint details. The Ruby reference processor and Go fixture
+validator diagnostics were checked for secret-payload exposure paths.
 
 ## Version And Change Log
 
