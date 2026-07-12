@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap tracks the path from the current draft to a stable Agentic Deployment Specification. The normative draft lives in [SPEC.md](SPEC.md), and the technical research reference lives in [deployment-research.md](deployment-research.md).
+This roadmap tracks the path from the current release candidate to a stable Agentic Deployment Specification. The normative release-candidate specification lives in [SPEC.md](SPEC.md), and the technical research reference lives in [deployment-research.md](deployment-research.md).
 
 ## Release Principles
 
@@ -107,9 +107,9 @@ Exit criteria:
 - high-risk tool actions are deny-by-default unless approved
 - [x] audit events map to deployment, policy, secret, and tool activity
 
-Current v0.5 review focus:
+v0.5 stabilization note:
 
-- review the threat model, supply-chain, and policy decision point additions together before v1.0 stabilization
+- threat model, supply-chain, and policy decision point additions are carried into the v1.0 release-candidate stabilization pass
 
 ## v1.0 - Stable Specification
 
@@ -137,6 +137,7 @@ Current v1.0 preparation focus:
 
 - apply the contribution and governance process in [CONTRIBUTING.md](CONTRIBUTING.md) during review
 - use [RELEASE.md](RELEASE.md) to track v1.0 stabilization and release-candidate readiness
+- keep `ads.dev/v1` as the stable ADS v1 API version unless a release-blocking issue requires a new candidate
 - keep [SPEC.md](SPEC.md) free of stale draft-only language that conflicts with v1.0 stability
 - keep [IMPLEMENTERS.md](IMPLEMENTERS.md) aligned with processor conformance requirements
 - keep [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) aligned with the Ruby checker and fixture expectations

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ads.dev/schemas/ads.schema.json",
   "title": "Agentic Deployment Specification document",
-  "description": "Initial JSON Schema for ADS AgenticDeployment documents targeting ads.dev/v0alpha1.",
+  "description": "JSON Schema for ADS AgenticDeployment documents targeting ads.dev/v1.",
   "type": "object",
   "$comment": "Unknown non-extension root fields are compatibility warnings in SPEC.md, so this schema allows additional root properties. ADS processors should still report them.",
   "required": [
@@ -18,7 +18,7 @@
   ],
   "properties": {
     "apiVersion": {
-      "const": "ads.dev/v0alpha1"
+      "const": "ads.dev/v1"
     },
     "kind": {
       "const": "AgenticDeployment"

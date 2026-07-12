@@ -1,6 +1,6 @@
 # Deployment Research Reference for agentic-deployment-spec
 
-> Non-normative technical research reference. This report describes the repository state at the time of research and was used to shape the current draft. The normative draft specification lives in [SPEC.md](SPEC.md), and the repository entry point lives in [README.md](README.md).
+> Non-normative technical research reference. This report describes the repository state at the time of research and was used to shape the ADS specification. The normative release-candidate specification lives in [SPEC.md](SPEC.md), and the repository entry point lives in [README.md](README.md).
 
 ## Executive Summary und Diagnose
 

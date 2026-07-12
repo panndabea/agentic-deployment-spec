@@ -10,7 +10,7 @@ The Agentic Deployment Specification (ADS) lets an application describe how it s
 
 ## Status
 
-Draft v0.5 is in v1.0 stabilization. v0.3 made the model machine-validatable with JSON Schema, fixtures, and processor conformance rules. v0.4 added profile-oriented examples. v0.5 hardens security, supply-chain, policy, and operational readiness requirements.
+ADS is in v1.0 release-candidate stabilization. The stable ADS v1 API version is `ads.dev/v1`; the reference examples and JSON Schema target that version. v0.3 made the model machine-validatable with JSON Schema, fixtures, and processor conformance rules. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
 
 ## What ADS is
 
@@ -40,7 +40,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 
 For ADS authors:
 
-- [SPEC.md](SPEC.md) is the normative draft specification.
+- [SPEC.md](SPEC.md) is the normative release-candidate specification.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
 - [examples/approval-policy.yaml](examples/approval-policy.yaml), [examples/multi-agent.yaml](examples/multi-agent.yaml), [examples/stateful-agent.yaml](examples/stateful-agent.yaml), and [examples/supply-chain.yaml](examples/supply-chain.yaml) show production-oriented patterns.
 - [COMPATIBILITY.md](COMPATIBILITY.md) summarizes which examples are expected to pass against the current target contexts.
@@ -50,7 +50,7 @@ For processor implementers:
 
 - [IMPLEMENTERS.md](IMPLEMENTERS.md) is a practical guide for independent ADS processor implementers.
 - [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) documents the Ruby reference conformance processor.
-- [schemas/ads.schema.json](schemas/ads.schema.json) is the JSON Schema for `ads.dev/v0alpha1`.
+- [schemas/ads.schema.json](schemas/ads.schema.json) is the JSON Schema for `ads.dev/v1`.
 - [conformance/expectations.yaml](conformance/expectations.yaml) is the machine-readable fixture expectation manifest used by the test suite.
 - [contexts/](contexts/) contains reference target contexts used by the reference processor.
 
@@ -111,4 +111,4 @@ ADS should become a deployment and governance standard for production agentic sy
 - the approval gates and policy decision points required before risky actions
 - the observability signals needed for operations and auditability
 
-See [SPEC.md](SPEC.md) for the current draft model.
+See [SPEC.md](SPEC.md) for the current ADS model.

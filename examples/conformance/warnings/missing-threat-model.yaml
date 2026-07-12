@@ -1,4 +1,4 @@
-apiVersion: ads.dev/v0alpha1
+apiVersion: ads.dev/v1
 kind: AgenticDeployment
 metadata:
   name: missing-threat-model

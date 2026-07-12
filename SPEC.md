@@ -1,16 +1,18 @@
 # Agentic Deployment Specification
 
-This document is the normative draft for ADS. The supporting research notes live in [deployment-research.md](deployment-research.md); they are informative, not normative.
+This document is the normative release-candidate specification for ADS v1.0. The supporting research notes live in [deployment-research.md](deployment-research.md); they are informative, not normative.
 
 ## Status
 
-ADS is in draft status and preparing for v1.0 stabilization. v0.1 defined the problem, scope, vocabulary, and the first version of the conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardens security, supply-chain, policy, and operational readiness requirements.
+ADS is in v1.0 release-candidate stabilization. The stable ADS v1 API version is `ads.dev/v1`; the reference examples and JSON Schema target that version. v0.1 defined the problem, scope, vocabulary, and the first conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
 
 ## Versioning Policy
 
 ADS documents MUST declare the ADS API version they target.
 
-Draft API versions use the `ads.dev/v0alphaN` form. The current draft examples use `ads.dev/v0alpha1`. Drafts MAY increment the API version when the authoring format changes incompatibly.
+The stable v1.0 API version is `ads.dev/v1`.
+
+Draft API versions use the `ads.dev/v0alphaN` form. Drafts MAY increment the API version when the authoring format changes incompatibly.
 
 Draft versions MAY introduce breaking changes. Stable versions MUST preserve backward compatibility within the same major version unless a field is explicitly marked as deprecated and removed in a later major version.
 
@@ -82,7 +84,7 @@ Target context
 An ADS document MUST declare:
 
 - `apiVersion`: the ADS API version.
-- `kind`: the document kind. This draft defines `AgenticDeployment`.
+- `kind`: the document kind. This specification defines `AgenticDeployment`.
 - `metadata`: name, owner, and optional labels.
 - `runtime`: deployable components and execution modes.
 - `capabilities`: platform capabilities required to satisfy the deployment.
@@ -109,8 +111,8 @@ An ADS YAML document MUST be a mapping with these root fields:
 
 | Field | Required | Type | Description |
 |---|---:|---|---|
-| `apiVersion` | yes | string | ADS API version. The current examples use `ads.dev/v0alpha1`. |
-| `kind` | yes | string | Document kind. This draft defines `AgenticDeployment`. |
+| `apiVersion` | yes | string | ADS API version. The v1.0 examples use `ads.dev/v1`. |
+| `kind` | yes | string | Document kind. This specification defines `AgenticDeployment`. |
 | `metadata` | yes | object | Human and machine metadata for the deployment contract. |
 | `profiles` | no | list of strings | Target compatibility profiles the author expects to support. |
 | `runtime` | yes | object | Runtime components and execution modes. |
@@ -148,7 +150,7 @@ An ADS YAML document MUST be a mapping with these root fields:
 - `execution.mode`: execution mode.
 - `image` or `externalRef`: the deployable image or externally managed component reference.
 
-Component `type` values defined by this draft are:
+Component `type` values defined by this specification are:
 
 - `api-service`
 - `agent-runtime`
@@ -165,7 +167,7 @@ Component `type` values defined by this draft are:
 - `scheduled-task`
 - `custom`
 
-`execution.mode` values defined by this draft are:
+`execution.mode` values defined by this specification are:
 
 - `request-response`
 - `internal-service`
@@ -186,7 +188,7 @@ Components MAY include:
 - `scaling`: replica and scaling trigger declarations.
 - `config`: non-secret configuration values.
 
-`state.mode` values defined by this draft are `stateless`, `ephemeral`, `checkpointed`, `durable-session`, and `durable-shared`. Components that maintain state SHOULD declare `state.mode`. Components using `checkpointed`, `durable-session`, or `durable-shared` state SHOULD declare `state.store`.
+`state.mode` values defined by this specification are `stateless`, `ephemeral`, `checkpointed`, `durable-session`, and `durable-shared`. Components that maintain state SHOULD declare `state.mode`. Components using `checkpointed`, `durable-session`, or `durable-shared` state SHOULD declare `state.store`.
 
 ### `capabilities`
 
@@ -199,7 +201,7 @@ Each capability entry MAY be either:
 
 Processors MUST normalize string entries to objects with the same `name`. `capabilities.optional` MAY use the same entry format.
 
-This draft reserves these capability names:
+This specification reserves these capability names:
 
 - `container-runtime`
 - `secret-injection`
@@ -248,7 +250,7 @@ ADS documents MUST NOT include secret values, encrypted secret payloads, private
 - `defaultSandbox`: default sandbox level.
 - `toolPolicy.default`: default tool decision.
 
-`defaultSandbox` values defined by this draft are `restricted`, `baseline`, and `privileged`. Production deployments SHOULD use `restricted`.
+`defaultSandbox` values defined by this specification are `restricted`, `baseline`, and `privileged`. Production deployments SHOULD use `restricted`.
 
 `toolPolicy.default` MUST be `deny` or `allow`. Production deployments SHOULD use `deny`. `toolPolicy.allow` and `toolPolicy.deny` MAY list tool names or action names. Tool names SHOULD be stable identifiers, not human prose.
 
@@ -360,7 +362,7 @@ Extension keys MUST be namespaced, for example `example.com/feature` or `x-examp
 This example is intentionally small and should be reused as the baseline for future standalone examples.
 
 ```yaml
-apiVersion: ads.dev/v0alpha1
+apiVersion: ads.dev/v1
 kind: AgenticDeployment
 metadata:
   name: support-agent
@@ -544,7 +546,7 @@ flowchart LR
 
 ## Capability Model
 
-Capabilities describe what the target platform must provide. This draft defines standard capability names for YAML authors while retaining the capability families below as the conceptual grouping.
+Capabilities describe what the target platform must provide. This specification defines standard capability names for YAML authors while retaining the capability families below as the conceptual grouping.
 
 Core capability families are:
 
@@ -694,7 +696,7 @@ Production policy decision points SHOULD fail closed or escalate to manual revie
 
 Profiles constrain the mapping from ADS requirements to a target environment.
 
-This draft recognizes these profile names:
+This specification recognizes these profile names:
 
 - `compose-single-host`: local, development, or small single-host deployment.
 - `kubernetes-production`: production deployment on Kubernetes-compatible platforms.
@@ -967,7 +969,7 @@ The current extension registry is decentralized: ADS documents, processors, and 
 
 ## Change Log
 
-- v1.0 stabilization: clarified current draft surfaces, profile fixture coverage, processor conformance terminology, and extension registry expectations before stable release.
+- v1.0 release candidate: selected `ads.dev/v1` as the stable ADS v1 API version, updated reference examples and schema, and clarified profile fixture coverage, processor conformance terminology, and extension registry expectations before stable release.
 - v0.5 draft: added initial threat-model coverage, supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance, and policy decision points for policy-based approvals.
 - v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.
