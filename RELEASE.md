@@ -8,17 +8,17 @@ and governance process lives in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 A release is ready only when all of these gates are satisfied:
 
-- [ ] [SPEC.md](SPEC.md) reflects the intended normative behavior for the release.
-- [ ] [schemas/ads.schema.json](schemas/ads.schema.json) matches the structural requirements in the spec.
-- [ ] Reference examples in [examples/](examples/) match the current authoring guidance.
-- [ ] Target contexts in [contexts/](contexts/) match the supported compatibility profiles.
-- [ ] [conformance/expectations.yaml](conformance/expectations.yaml) captures all expected schema, conformance, warning, and target-context outcomes.
-- [ ] [COMPATIBILITY.md](COMPATIBILITY.md) matches the public example-to-target-context expectations.
+- [x] [SPEC.md](SPEC.md) reflects the intended normative behavior for the release.
+- [x] [schemas/ads.schema.json](schemas/ads.schema.json) matches the structural requirements in the spec.
+- [x] Reference examples in [examples/](examples/) match the current authoring guidance.
+- [x] Target contexts in [contexts/](contexts/) match the supported compatibility profiles.
+- [x] [conformance/expectations.yaml](conformance/expectations.yaml) captures all expected schema, conformance, warning, and target-context outcomes.
+- [x] [COMPATIBILITY.md](COMPATIBILITY.md) matches the public example-to-target-context expectations.
 - [ ] [IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current conformance model for independent processors.
 - [ ] [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the behavior and limitations of the Ruby reference processor.
 - [ ] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
 - [ ] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
-- [ ] `ruby scripts/test-examples.rb` passes locally.
+- [x] `ruby scripts/test-examples.rb` passes locally.
 - [ ] The Conformance GitHub Actions workflow passes for the release branch or tag.
 
 ## v1.0 Readiness Checklist
@@ -36,6 +36,30 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
 - [x] Confirm that at least one independent ADS processor can validate the reference examples.
 - [x] Confirm that breaking changes after v1.0 require a new major version unless a field has been explicitly deprecated first.
+
+## v1.0 Spec/Schema/Fixtures Alignment Review
+
+[SPEC.md](SPEC.md), [schemas/ads.schema.json](schemas/ads.schema.json), the
+reference examples, target contexts, conformance expectations, and public
+compatibility matrix are aligned for the v1.0 release-candidate surface.
+
+The review checked the normative document model, YAML structure, validation
+rules, processor conformance rules, diagnostic categories, audit event taxonomy,
+deployment profile matrix, and canonical minimal example against the schema and
+fixtures. The JSON Schema covers the structural requirements that are expressible
+locally, including required root fields, required nested minima, standard enum
+values, audit event names, namespaced extension keys, and the schema-detectable
+egress default conflict. Cross-reference, warning, and target-context rules
+remain processor conformance responsibilities as described in the spec.
+
+The canonical minimal example in [SPEC.md](SPEC.md#minimal-example) matches
+[examples/minimal.yaml](examples/minimal.yaml). All 21 example fixtures are
+listed in [conformance/expectations.yaml](conformance/expectations.yaml) under
+schema accept or reject expectations. The target-context expectations cover all
+15 combinations of the five top-level reference examples and the three current
+target contexts, plus the intentionally incomplete negative target context.
+[COMPATIBILITY.md](COMPATIBILITY.md) matches those public example-to-target
+expectations.
 
 ## v1.0 Required Surface Review
 
