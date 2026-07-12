@@ -25,6 +25,7 @@ Before publishing v1.0, complete this stabilization pass:
 
 - [ ] Decide and document the stable ADS API version for v1.0 according to [SPEC.md](SPEC.md#versioning-policy).
 - [ ] Remove or resolve stale draft-only language that conflicts with v1.0 stability.
+- [ ] Confirm that recognized profile names without current target context fixtures are intentionally retained.
 - [ ] Confirm that all required fields and conformance requirements are intentional.
 - [ ] Confirm that every diagnostic category in [SPEC.md](SPEC.md#diagnostic-categories) is stable enough for processors to depend on.
 - [ ] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.

@@ -10,7 +10,7 @@ The Agentic Deployment Specification (ADS) lets an application describe how it s
 
 ## Status
 
-Draft v0.5 in progress. v0.3 made the model machine-validatable with JSON Schema, fixtures, and processor conformance rules. v0.4 added profile-oriented examples. The current work hardens security, supply-chain, policy, and operational readiness requirements.
+Draft v0.5 is in v1.0 stabilization. v0.3 made the model machine-validatable with JSON Schema, fixtures, and processor conformance rules. v0.4 added profile-oriented examples. v0.5 hardens security, supply-chain, policy, and operational readiness requirements.
 
 ## What ADS is
 
@@ -45,14 +45,14 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 - [COMPATIBILITY.md](COMPATIBILITY.md) summarizes the current example-to-target-context compatibility matrix.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 - [SPEC.md#example-architecture-diagrams](SPEC.md#example-architecture-diagrams) contains Mermaid diagrams for the current example set.
-- [SPEC.md#production-readiness-checklist](SPEC.md#production-readiness-checklist) is the initial v0.5 production readiness checklist.
-- [SPEC.md#audit-event-taxonomy](SPEC.md#audit-event-taxonomy) defines the initial standard audit event names and extension rule.
+- [SPEC.md#production-readiness-checklist](SPEC.md#production-readiness-checklist) is the production readiness checklist.
+- [SPEC.md#audit-event-taxonomy](SPEC.md#audit-event-taxonomy) defines the standard audit event names and extension rule.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
-- [examples/approval-policy.yaml](examples/approval-policy.yaml) is a v0.4-oriented approval and policy gate example.
-- [examples/multi-agent.yaml](examples/multi-agent.yaml) is the first v0.4-oriented multi-agent production example.
-- [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is a v0.4-oriented managed-runtime-compatible stateful agent example.
-- [examples/supply-chain.yaml](examples/supply-chain.yaml) is a v0.5-oriented signed-artifact, SBOM, and provenance example.
-- [schemas/ads.schema.json](schemas/ads.schema.json) is the initial JSON Schema for `ads.dev/v0alpha1`.
+- [examples/approval-policy.yaml](examples/approval-policy.yaml) is an approval and policy gate example.
+- [examples/multi-agent.yaml](examples/multi-agent.yaml) is a multi-agent production example.
+- [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is a managed-runtime-compatible stateful agent example.
+- [examples/supply-chain.yaml](examples/supply-chain.yaml) is a signed-artifact, SBOM, and provenance example.
+- [schemas/ads.schema.json](schemas/ads.schema.json) is the JSON Schema for `ads.dev/v0alpha1`.
 - [examples/invalid/](examples/invalid/) contains negative schema fixtures.
 - [examples/conformance/invalid/](examples/conformance/invalid/) contains schema-valid documents that violate ADS processor conformance rules.
 - [conformance/expectations.yaml](conformance/expectations.yaml) is the machine-readable fixture expectation manifest used by the test suite.
@@ -61,7 +61,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 
 ## Validation
 
-The initial JSON Schema validates the structural v0.2 requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility checks, such as unique component names, `dependsOn` resolution, profile support, secret binding resolution, network feasibility, and security policy enforcement, are defined as ADS processor conformance responsibilities in [SPEC.md](SPEC.md#v03-processor-conformance).
+The JSON Schema validates the structural requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility checks, such as unique component names, `dependsOn` resolution, profile support, secret binding resolution, network feasibility, and security policy enforcement, are defined as ADS processor conformance responsibilities in [SPEC.md](SPEC.md#processor-conformance).
 
 Run the schema and conformance fixture suite with:
 

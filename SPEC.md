@@ -4,13 +4,13 @@ This document is the normative draft for ADS. The supporting research notes live
 
 ## Status
 
-ADS is in draft status. v0.1 defined the problem, scope, vocabulary, and the first version of the conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardens security, supply-chain, policy, and operational readiness requirements.
+ADS is in draft status and preparing for v1.0 stabilization. v0.1 defined the problem, scope, vocabulary, and the first version of the conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardens security, supply-chain, policy, and operational readiness requirements.
 
 ## Versioning Policy
 
 ADS documents MUST declare the ADS API version they target.
 
-Draft API versions use the `ads.dev/v0alphaN` form. The v0.2 YAML authoring draft uses `ads.dev/v0alpha1`; future drafts MAY increment the API version when the authoring format changes incompatibly.
+Draft API versions use the `ads.dev/v0alphaN` form. The current draft examples use `ads.dev/v0alpha1`. Drafts MAY increment the API version when the authoring format changes incompatibly.
 
 Draft versions MAY introduce breaking changes. Stable versions MUST preserve backward compatibility within the same major version unless a field is explicitly marked as deprecated and removed in a later major version.
 
@@ -82,7 +82,7 @@ Target context
 An ADS document MUST declare:
 
 - `apiVersion`: the ADS API version.
-- `kind`: the document kind. v0.2 defines `AgenticDeployment`.
+- `kind`: the document kind. This draft defines `AgenticDeployment`.
 - `metadata`: name, owner, and optional labels.
 - `runtime`: deployable components and execution modes.
 - `capabilities`: platform capabilities required to satisfy the deployment.
@@ -103,14 +103,14 @@ An ADS processor MUST reject a document when it omits required fields or declare
 
 ## YAML Document Structure
 
-The v0.2 authoring format for ADS is YAML. The initial JSON Schema for this structure is tracked as v0.3 work, but the field structure in this section remains normative for `AgenticDeployment` documents.
+The authoring format for ADS is YAML. The JSON Schema for this structure lives in [schemas/ads.schema.json](schemas/ads.schema.json), but the field structure in this section remains normative for `AgenticDeployment` documents.
 
 An ADS YAML document MUST be a mapping with these root fields:
 
 | Field | Required | Type | Description |
 |---|---:|---|---|
-| `apiVersion` | yes | string | ADS API version. The current draft examples use `ads.dev/v0alpha1`. |
-| `kind` | yes | string | Document kind. v0.2 defines `AgenticDeployment`. |
+| `apiVersion` | yes | string | ADS API version. The current examples use `ads.dev/v0alpha1`. |
+| `kind` | yes | string | Document kind. This draft defines `AgenticDeployment`. |
 | `metadata` | yes | object | Human and machine metadata for the deployment contract. |
 | `profiles` | no | list of strings | Target compatibility profiles the author expects to support. |
 | `runtime` | yes | object | Runtime components and execution modes. |
@@ -148,7 +148,7 @@ An ADS YAML document MUST be a mapping with these root fields:
 - `execution.mode`: execution mode.
 - `image` or `externalRef`: the deployable image or externally managed component reference.
 
-Component `type` values defined by v0.2 are:
+Component `type` values defined by this draft are:
 
 - `api-service`
 - `agent-runtime`
@@ -165,7 +165,7 @@ Component `type` values defined by v0.2 are:
 - `scheduled-task`
 - `custom`
 
-`execution.mode` values defined by v0.2 are:
+`execution.mode` values defined by this draft are:
 
 - `request-response`
 - `internal-service`
@@ -186,7 +186,7 @@ Components MAY include:
 - `scaling`: replica and scaling trigger declarations.
 - `config`: non-secret configuration values.
 
-`state.mode` values defined by v0.2 are `stateless`, `ephemeral`, `checkpointed`, `durable-session`, and `durable-shared`. Components that maintain state SHOULD declare `state.mode`. Components using `checkpointed`, `durable-session`, or `durable-shared` state SHOULD declare `state.store`.
+`state.mode` values defined by this draft are `stateless`, `ephemeral`, `checkpointed`, `durable-session`, and `durable-shared`. Components that maintain state SHOULD declare `state.mode`. Components using `checkpointed`, `durable-session`, or `durable-shared` state SHOULD declare `state.store`.
 
 ### `capabilities`
 
@@ -199,7 +199,7 @@ Each capability entry MAY be either:
 
 Processors MUST normalize string entries to objects with the same `name`. `capabilities.optional` MAY use the same entry format.
 
-v0.2 reserves these capability names:
+This draft reserves these capability names:
 
 - `container-runtime`
 - `secret-injection`
@@ -220,7 +220,7 @@ v0.2 reserves these capability names:
 - `image-signature-verification`
 - `gpu-scheduling`
 
-Future drafts MAY add capability names. Vendor-specific capability names MUST be namespaced.
+New standard capability names require a specification update. Vendor-specific capability names MUST be namespaced.
 
 ### `secrets`
 
@@ -248,7 +248,7 @@ ADS documents MUST NOT include secret values, encrypted secret payloads, private
 - `defaultSandbox`: default sandbox level.
 - `toolPolicy.default`: default tool decision.
 
-`defaultSandbox` values defined by v0.2 are `restricted`, `baseline`, and `privileged`. Production deployments SHOULD use `restricted`.
+`defaultSandbox` values defined by this draft are `restricted`, `baseline`, and `privileged`. Production deployments SHOULD use `restricted`.
 
 `toolPolicy.default` MUST be `deny` or `allow`. Production deployments SHOULD use `deny`. `toolPolicy.allow` and `toolPolicy.deny` MAY list tool names or action names. Tool names SHOULD be stable identifiers, not human prose.
 
@@ -544,7 +544,7 @@ flowchart LR
 
 ## Capability Model
 
-Capabilities describe what the target platform must provide. v0.2 defines initial capability names for YAML authors while retaining the capability families below as the conceptual grouping.
+Capabilities describe what the target platform must provide. This draft defines standard capability names for YAML authors while retaining the capability families below as the conceptual grouping.
 
 Core capability families are:
 
@@ -694,7 +694,7 @@ Production policy decision points SHOULD fail closed or escalate to manual revie
 
 Profiles constrain the mapping from ADS requirements to a target environment.
 
-v0.2 recognizes these draft profile names:
+This draft recognizes these profile names:
 
 - `compose-single-host`: local, development, or small single-host deployment.
 - `kubernetes-production`: production deployment on Kubernetes-compatible platforms.
@@ -705,13 +705,13 @@ v0.2 recognizes these draft profile names:
 
 Profiles MUST NOT weaken required security, approval, or observability declarations. If a profile cannot satisfy a requirement, the ADS processor MUST report an incompatibility.
 
-### Initial Profile Compatibility Notes
+### Profile Compatibility Notes
 
 `compose-single-host` is intended for local, development, or small single-host deployments. It SHOULD be able to satisfy basic container runtime, port exposure, environment-based secret injection, bind or volume storage, and simple restart behavior. It SHOULD NOT be assumed to satisfy cluster scheduling, service-account RBAC, admission control, horizontal autoscaling, native network policy, signed-artifact enforcement, or default-deny egress without additional external controls.
 
 `kubernetes-production` is intended for production Kubernetes-compatible environments. It SHOULD be able to satisfy container runtime, probes, rollouts, rollback, service discovery, service identity, RBAC, secret delivery, persistent volumes, network policy, horizontal scaling, and workload isolation when the cluster is configured with the required controllers and policies. It MUST report an incompatibility when required add-ons or integrations are absent, including trace export, external secret stores, policy decision points, approval handlers, GPU scheduling, signed-artifact verification, or egress controls.
 
-### Draft Profile Capability Matrix
+### Profile Capability Matrix
 
 The profile matrix is informative guidance for authors and processor implementers. A profile describes a deployment target class; it does not by itself prove that a specific target environment can satisfy a requirement. ADS processors MUST use the selected target context to confirm the concrete capability set, secret bindings, approval handlers, observability sinks, network controls, and security controls available for deployment planning.
 
@@ -720,9 +720,9 @@ The profile matrix is informative guidance for authors and processor implementer
 | `compose-single-host` | `container-runtime`, `secret-injection`, `persistent-storage`, basic `trace-export`, `metrics-export`, `audit-log-export`, local `human-approval`, local `policy-decision` | Should not be assumed to provide native `network-policy`, `horizontal-scaling`, admission control, signed artifact enforcement, cluster RBAC, or production-grade default-deny egress without external controls. | `examples/minimal.yaml` and `examples/approval-policy.yaml` are expected to pass against `contexts/compose-single-host.yaml`; `examples/stateful-agent.yaml`, `examples/multi-agent.yaml`, and `examples/supply-chain.yaml` are expected to fail with compatibility diagnostics. |
 | `kubernetes-production` | `container-runtime`, `secret-injection`, `persistent-storage`, `queue`, `vector-store`, `network-policy`, `outbound-egress-policy`, `trace-export`, `metrics-export`, `audit-log-export`, `human-approval`, `policy-decision`, `horizontal-scaling`, `rollback`, `image-signature-verification` | Requires configured add-ons and integrations for external secrets, policy decisions, approval workflows, egress control, telemetry export, image verification, GPU scheduling, and event-driven scaling. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, `examples/stateful-agent.yaml`, `examples/multi-agent.yaml`, and `examples/supply-chain.yaml` are expected to pass against `contexts/kubernetes-production.yaml`. |
 | `managed-container-runtime` | `container-runtime`, `secret-injection`, `persistent-storage`, `outbound-egress-policy`, basic service identity, observability export, managed rollout, and managed horizontal scaling | May have limited control over sidecars, native network policy, queues, vector stores, dead-letter queues, custom admission policy, signed artifact enforcement, background workers, and local tool-server isolation. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, and `examples/stateful-agent.yaml` are expected to pass against `contexts/managed-container-runtime.yaml`; `examples/multi-agent.yaml` and `examples/supply-chain.yaml` are expected to fail until the target context declares additional external integrations. |
-| `serverless-auxiliary` | Scheduled jobs, event handlers, short-lived workers, secret injection, platform logs, metrics, and managed retry behavior | May not preserve long-running sessions, durable in-process memory, custom networking, local tool servers, or low-latency agent handoffs. | Planned for auxiliary hooks, scheduled tasks, and burst worker examples. |
-| `air-gapped` | Local artifact sources, internal secret stores, internal observability sinks, restricted egress controls, policy enforcement, and audit export to local systems | Cannot depend on public model APIs, public container registries, hosted approval systems, or external telemetry endpoints unless mirrored internally. | Planned for a future profile fixture after network and artifact-source rules are expanded. |
-| `gpu-serving` | `gpu-scheduling`, accelerator-aware resources, container runtime, model artifact access, metrics, traces, and workload isolation | Requires target-specific node pools, device plugins, model cache policy, quota controls, and cost governance. | Planned for a future stateful or model-serving example. |
+| `serverless-auxiliary` | Scheduled jobs, event handlers, short-lived workers, secret injection, platform logs, metrics, and managed retry behavior | May not preserve long-running sessions, durable in-process memory, custom networking, local tool servers, or low-latency agent handoffs. | Recognized profile name without a current target context fixture. |
+| `air-gapped` | Local artifact sources, internal secret stores, internal observability sinks, restricted egress controls, policy enforcement, and audit export to local systems | Cannot depend on public model APIs, public container registries, hosted approval systems, or external telemetry endpoints unless mirrored internally. | Recognized profile name without a current target context fixture. |
+| `gpu-serving` | `gpu-scheduling`, accelerator-aware resources, container runtime, model artifact access, metrics, traces, and workload isolation | Requires target-specific node pools, device plugins, model cache policy, quota controls, and cost governance. | Recognized profile name without a current target context fixture. |
 
 Conformance fixtures SHOULD encode both positive and negative profile expectations. A richer example SHOULD pass against at least one production-capable target context and fail against at least one smaller target context when it requires capabilities that the smaller context does not claim to provide.
 
@@ -741,7 +741,7 @@ ADS processors MAY ignore unknown extension fields only when those fields are na
 
 ## Production Readiness Checklist
 
-This checklist is initial v0.5 guidance for authors, reviewers, and ADS processors. A production ADS document SHOULD be reviewed against these expectations before deployment planning is approved.
+This checklist defines production-readiness guidance for authors, reviewers, and ADS processors. A production ADS document SHOULD be reviewed against these expectations before deployment planning is approved.
 
 | Area | Production readiness expectation | Related fields |
 |---|---|---|
@@ -760,7 +760,7 @@ This checklist is initial v0.5 guidance for authors, reviewers, and ADS processo
 
 Production readiness is not a separate deployment mode. It is the result of an ADS document, a target context, and an ADS processor agreeing on the same required behavior.
 
-### v0.3 Processor Conformance
+### Processor Conformance
 
 An ADS processor MUST evaluate an ADS document against a target context before deployment planning. The target context includes the selected target profile, the platform capability set, external integrations, secret bindings, approval handlers, network controls, and observability sinks available to the processor.
 
@@ -788,7 +788,7 @@ An ADS processor SHOULD surface all detected errors in one validation response w
 
 ADS processors SHOULD emit diagnostics with stable machine-readable categories. A diagnostic SHOULD include `category`, `severity`, `message`, and a document `path`. A diagnostic MAY include `requirement`, `targetProfile`, `capability`, `component`, and `remediation`.
 
-The initial diagnostic categories are:
+The standard diagnostic categories are:
 
 | Category | Default severity | Meaning |
 |---|---|---|
@@ -810,7 +810,7 @@ The initial diagnostic categories are:
 
 Diagnostics MUST NOT include secret values, credentials, tokens, private keys, or decrypted secret payloads.
 
-### v0.2 Validation Rules
+### Validation Rules
 
 Before deployment planning, an ADS processor MUST validate the YAML document against these rules:
 
@@ -850,13 +850,13 @@ Before deployment planning, an ADS processor MUST validate the YAML document aga
 
 ## Schema Mapping
 
-The v0.2 milestone defines the YAML field structure. The initial v0.3 JSON Schema lives in [schemas/ads.schema.json](schemas/ads.schema.json).
+The YAML field structure is defined by this specification. The JSON Schema lives in [schemas/ads.schema.json](schemas/ads.schema.json).
 
 The schema SHOULD preserve this document's separation between intent and implementation-specific manifests. It validates structural requirements that can be expressed directly in JSON Schema. Cross-reference and compatibility rules, including component-name uniqueness, `dependsOn` resolution, target-profile capability support, secret bindings, approval handlers, and observability sink availability, are defined as ADS processor conformance requirements.
 
 ## Examples
 
-The minimal example in this document is the current canonical example. The standalone file [examples/minimal.yaml](examples/minimal.yaml) MUST remain equivalent to the canonical example in this section unless the example is intentionally revised. Future examples SHOULD reuse its names and structure where possible, extending it for multi-agent, stateful, supply-chain, GPU, and air-gapped scenarios instead of inventing unrelated examples.
+The minimal example in this document is the current canonical example. The standalone file [examples/minimal.yaml](examples/minimal.yaml) MUST remain equivalent to the canonical example in this section unless the example is intentionally revised. Additional examples SHOULD reuse its names and structure where possible, extending it for multi-agent, stateful, supply-chain, GPU, and air-gapped scenarios instead of inventing unrelated examples.
 
 ### Example Architecture Diagrams
 
@@ -963,10 +963,11 @@ The files in [examples/conformance/invalid/](examples/conformance/invalid/) are 
 
 Extensions MUST use a namespaced key to avoid collisions. Vendor-specific extensions MUST NOT redefine normative ADS fields.
 
-The extension registry format is deferred until v0.4.
+The current extension registry is decentralized: ADS documents, processors, and vendors declare support for namespaced extension keys outside the standard field set. A centralized extension registry MAY be added later, but it is not required for v1.0 stabilization.
 
 ## Change Log
 
+- v1.0 stabilization: clarified current draft surfaces, profile fixture coverage, processor conformance terminology, and extension registry expectations before stable release.
 - v0.5 draft: added initial threat-model coverage, supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance, and policy decision points for policy-based approvals.
 - v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.
 - v0.2 draft: defined the YAML authoring structure, initial validation rules, and first profile compatibility notes.
