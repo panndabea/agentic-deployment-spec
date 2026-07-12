@@ -33,7 +33,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.
 - [x] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
 - [x] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
-- [ ] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
+- [x] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
 - [ ] Confirm that at least one independent ADS processor can validate the reference examples.
 - [ ] Confirm that breaking changes after v1.0 require a new major version unless a field has been explicitly deprecated first.
 
@@ -121,6 +121,19 @@ The guide also makes clear that exact diagnostic wording, language, and internal
 architecture do not need to match the Ruby reference processor. Independent
 processors must match ADS semantics and fixture outcomes, preserve required ADS
 behavior during planning, or decline to plan.
+
+## v1.0 Reference Processor Independence Review
+
+The in-repository Ruby reference processor is documented in
+[REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) as the executable reference for
+repository conformance fixtures. It is intentionally small, does not emit
+deployment plans, and is not an independent ADS implementation for v1.0 release
+purposes.
+
+[IMPLEMENTERS.md](IMPLEMENTERS.md) separately defines what an independent
+processor should demonstrate for v1.0. The Ruby reference processor can help
+other implementations compare fixture behavior, but it does not satisfy the
+independent processor release criterion by itself.
 
 ## Pre-Release Checklist
 
