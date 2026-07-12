@@ -217,6 +217,18 @@ For local comparison:
 ruby scripts/test-examples.rb
 ```
 
+For a second, non-Ruby implementation path over the same fixture expectations:
+
+```sh
+go run ./cmd/ads-fixture-validator
+```
+
+The Go fixture validator is intentionally small and dependency-free. It parses
+the repository fixture YAML, applies ADS v1.0 structural and semantic checks,
+evaluates target contexts, and compares diagnostics against
+[conformance/expectations.yaml](conformance/expectations.yaml) without invoking
+the Ruby reference processor.
+
 For a single document:
 
 ```sh

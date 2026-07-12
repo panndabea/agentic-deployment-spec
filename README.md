@@ -73,6 +73,17 @@ ruby scripts/test-examples.rb
 
 The suite uses `uvx check-jsonschema` for structural JSON Schema validation and the local ADS reference conformance processor for cross-reference and compatibility rules. Fixture expectations are declared in [conformance/expectations.yaml](conformance/expectations.yaml), the reference processor is documented in [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md), and the human-readable target matrix is summarized in [COMPATIBILITY.md](COMPATIBILITY.md).
 
+Run the independent Go fixture validator with:
+
+```sh
+go run ./cmd/ads-fixture-validator
+```
+
+The Go validator is a second implementation path for the repository fixtures. It
+does not call the Ruby reference processor or `check-jsonschema`; it reads the
+same fixture expectations and checks schema-negative, conformance-negative,
+strict-warning, and target-context outcomes independently.
+
 The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml) runs the same fixture suite on pull requests and pushes to `main`.
 
 Validate the canonical example against only the JSON Schema with:

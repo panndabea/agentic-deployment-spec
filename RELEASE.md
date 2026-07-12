@@ -34,7 +34,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
 - [x] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
 - [x] Confirm that the in-repository reference processor is documented but not counted as the independent ADS processor.
-- [ ] Confirm that at least one independent ADS processor can validate the reference examples.
+- [x] Confirm that at least one independent ADS processor can validate the reference examples.
 - [x] Confirm that breaking changes after v1.0 require a new major version unless a field has been explicitly deprecated first.
 
 ## v1.0 Required Surface Review
@@ -134,6 +134,23 @@ purposes.
 processor should demonstrate for v1.0. The Ruby reference processor can help
 other implementations compare fixture behavior, but it does not satisfy the
 independent processor release criterion by itself.
+
+## v1.0 Independent Processor Review
+
+The Go fixture validator in [cmd/ads-fixture-validator](cmd/ads-fixture-validator)
+is a second implementation path for v1.0 fixture validation. It reads
+[conformance/expectations.yaml](conformance/expectations.yaml), parses the ADS
+and target-context fixture YAML, applies v1.0 structural and semantic checks,
+evaluates strict-warning behavior and target-context compatibility, and compares
+diagnostics against expected fixture substrings without invoking the Ruby
+reference processor or `check-jsonschema`.
+
+`go run ./cmd/ads-fixture-validator` passed locally against the current
+reference examples, schema-negative fixtures, conformance-negative fixtures,
+strict-warning fixtures, and target-context matrix. This satisfies the v1.0
+release criterion for at least one independent ADS processor validating the
+reference fixtures. External processors remain valuable follow-up evidence after
+the v1.0 release.
 
 ## v1.0 Breaking Change Review
 
