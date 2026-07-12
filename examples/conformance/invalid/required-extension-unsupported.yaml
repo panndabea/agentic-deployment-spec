@@ -1,0 +1,40 @@
+apiVersion: ads.dev/v1
+kind: AgenticDeployment
+metadata:
+  name: required-extension-unsupported
+  owner: platform-team
+
+runtime:
+  components:
+    - name: api
+      type: agent-runtime
+      image: ghcr.io/example/support-agent:1.0.0
+      execution:
+        mode: request-response
+
+capabilities:
+  required:
+    - audit-log-export
+
+secrets:
+  required: []
+
+security:
+  defaultSandbox: restricted
+  toolPolicy:
+    default: deny
+
+approvals:
+  required: []
+
+observability:
+  metrics:
+    required: []
+  auditEvents:
+    required:
+      - tool_call_denied
+
+extensions:
+  example.com/needs-special-planner:
+    required: true
+    reason: exercises required extension rejection

@@ -29,7 +29,7 @@ Before publishing v1.0, complete this stabilization pass:
 - [x] Remove or resolve stale draft-only language that conflicts with v1.0 stability.
 - [x] Confirm that recognized profile names without current target context fixtures are intentionally retained.
 - [x] Confirm that all required fields and conformance requirements are intentional.
-- [ ] Confirm that every diagnostic category in [SPEC.md](SPEC.md#diagnostic-categories) is stable enough for processors to depend on.
+- [x] Confirm that every diagnostic category in [SPEC.md](SPEC.md#diagnostic-categories) is stable enough for processors to depend on.
 - [ ] Confirm that every standard audit event in [SPEC.md](SPEC.md#audit-event-taxonomy) is stable enough for processors and operators.
 - [ ] Confirm that at least two deployment targets are covered by reference examples and target-context fixtures.
 - [ ] Confirm that [IMPLEMENTERS.md](IMPLEMENTERS.md) explains how independent processors should validate those fixtures.
@@ -58,6 +58,25 @@ The Ruby reference processor remains a fixture reference rather than a complete
 deployment planner. Its documented limitations are acceptable for v1.0 because
 independent processors must still preserve or reject required ADS behavior
 against their concrete target contexts.
+
+## v1.0 Diagnostic Category Review
+
+The diagnostic categories in [SPEC.md](SPEC.md#diagnostic-categories) are
+stable for v1.0. The Ruby reference processor emits only standard categories,
+and rejecting or strict-warning fixtures assert representative diagnostic
+substrings for document-level errors, warning categories, target-context
+compatibility failures, unknown root-field compatibility warnings, and required
+extension rejection.
+
+`schema-invalid` is covered by schema-negative fixtures and parser or minimal
+structure failures rather than by a conformance-negative fixture with
+`expectedDiagnostics`, because structurally invalid ADS documents must fail
+before deployment planning.
+
+`processor-limitation` is intentionally reserved for processors and target
+platforms that cannot preserve a required runtime model during planning. The
+in-repository Ruby reference processor does not currently emit it because it
+does not emit deployment plans.
 
 ## Pre-Release Checklist
 

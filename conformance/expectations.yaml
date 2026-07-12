@@ -10,10 +10,12 @@ schema:
     - examples/conformance/invalid/missing-policy-decision-point.yaml
     - examples/conformance/invalid/scoped-capability-missing-component.yaml
     - examples/conformance/invalid/scoped-secret-missing-component.yaml
+    - examples/conformance/invalid/required-extension-unsupported.yaml
     - examples/conformance/invalid/supply-chain-image-missing-digest.yaml
     - examples/conformance/warnings/missing-audit-coverage.yaml
     - examples/conformance/warnings/missing-policy-decision-point-ref.yaml
     - examples/conformance/warnings/missing-threat-model.yaml
+    - examples/conformance/warnings/unknown-root-field.yaml
   rejects:
     - examples/invalid/conflicting-egress-default.yaml
     - examples/invalid/invalid-kind.yaml
@@ -54,6 +56,11 @@ conformance:
         - reference-invalid
         - $.secrets.required[0].for[0]
         - model-api-key
+    - file: examples/conformance/invalid/required-extension-unsupported.yaml
+      expectedDiagnostics:
+        - extension-unsupported
+        - $.extensions.example.com/needs-special-planner
+        - Required extension
     - file: examples/conformance/invalid/supply-chain-image-missing-digest.yaml
       expectedDiagnostics:
         - supply-chain-unverified
@@ -77,6 +84,11 @@ conformance:
         - threat-model-incomplete
         - $.security.trustBoundaries
         - $.security.threatModel
+    - file: examples/conformance/warnings/unknown-root-field.yaml
+      expectedDiagnostics:
+        - compatibility-warning
+        - $.unexpectedTopLevel
+        - Unknown non-extension root field
 
 targetContexts:
   - context: contexts/compose-single-host.yaml
