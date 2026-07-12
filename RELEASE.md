@@ -19,7 +19,7 @@ A release is ready only when all of these gates are satisfied:
 - [x] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
 - [x] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
 - [x] `ruby scripts/test-examples.rb` passes locally.
-- [ ] The Conformance GitHub Actions workflow passes for the release branch or tag.
+- [x] The Conformance GitHub Actions workflow passes for the release branch or tag.
 
 ## v1.0 Readiness Checklist
 
@@ -252,6 +252,13 @@ references only, not real credentials, tokens, private keys, or
 production-only endpoint details. The Ruby reference processor and Go fixture
 validator diagnostics were checked for secret-payload exposure paths.
 
+## v1.0 Release Branch CI Review
+
+The `release/v1.0-rc1` branch was created from commit `eaa825c`. The
+Conformance GitHub Actions workflow passed for that branch on July 12, 2026 in
+run `29207643956`, covering the Ruby fixture suite, Go tests, and the
+independent Go fixture validator.
+
 ## Version And Change Log
 
 Every release should make version intent explicit:
@@ -286,8 +293,8 @@ Before accepting a breaking change:
 
 For a release candidate:
 
-- [ ] Create a release branch or release-candidate tag.
-- [ ] Verify the Conformance workflow passes.
+- [x] Create a release branch or release-candidate tag.
+- [x] Verify the Conformance workflow passes.
 - [ ] Freeze normative field additions except for release-blocking fixes.
 - [ ] Review [SPEC.md](SPEC.md), [README.md](README.md), [COMPATIBILITY.md](COMPATIBILITY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and this file together.
 - [ ] Collect release-blocking issues in [ROADMAP.md](ROADMAP.md) or the project tracker.
