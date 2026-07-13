@@ -14,6 +14,7 @@ processor before deployment planning.
 
 | Target context | Profile | Intended coverage |
 |---|---|---|
+| [contexts/air-gapped.yaml](contexts/air-gapped.yaml) | `air-gapped` | Restricted production deployment with internal artifacts, internal secrets, offline policy, local observability, and no public egress. |
 | [contexts/compose-single-host.yaml](contexts/compose-single-host.yaml) | `compose-single-host` | Single-host container deployment with basic approvals, secrets, telemetry, and outbound controls. |
 | [contexts/managed-container-runtime.yaml](contexts/managed-container-runtime.yaml) | `managed-container-runtime` | Managed runtime deployment with stateful session support, approvals, secrets, telemetry, and outbound controls. |
 | [contexts/kubernetes-production.yaml](contexts/kubernetes-production.yaml) | `kubernetes-production` | Production-oriented Kubernetes deployment with multi-agent, policy, stateful, observability, and supply-chain support. |
@@ -21,22 +22,23 @@ processor before deployment planning.
 
 ## Recognized Profiles Without Fixtures
 
-ADS v1.0 intentionally recognizes `air-gapped` and `gpu-serving` as profile
-names without publishing reference target context fixtures for them. These names
-reserve stable vocabulary for common deployment targets, but they do not imply
-compatibility by themselves. A processor must still validate against a concrete
-target context before planning for one of these profiles.
+ADS v1.0 intentionally recognizes `gpu-serving` as a profile name without
+publishing a reference target context fixture for it. This name reserves stable
+vocabulary for a common deployment target, but it does not imply compatibility
+by itself. A processor must still validate against a concrete target context
+before planning for this profile.
 
 ## Example Compatibility
 
-| Example | compose-single-host | managed-container-runtime | kubernetes-production | serverless-auxiliary |
-|---|---|---|---|---|
-| [examples/minimal.yaml](examples/minimal.yaml) | pass | pass | pass | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved` |
-| [examples/approval-policy.yaml](examples/approval-policy.yaml) | pass | pass | pass | fail: `capability-unsupported`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved` |
-| [examples/serverless-auxiliary.yaml](examples/serverless-auxiliary.yaml) | fail: `capability-unsupported` | fail: `capability-unsupported` | pass | pass |
-| [examples/stateful-agent.yaml](examples/stateful-agent.yaml) | fail: `capability-unsupported` | pass | pass | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved` |
-| [examples/multi-agent.yaml](examples/multi-agent.yaml) | fail: `capability-unsupported`, `secret-unbound`, `network-unresolved` | fail: `capability-unsupported`, `secret-unbound`, `network-unresolved` | pass | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved` |
-| [examples/supply-chain.yaml](examples/supply-chain.yaml) | fail: `capability-unsupported`, `supply-chain-unverified` | fail: `capability-unsupported`, `supply-chain-unverified` | pass | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved`, `supply-chain-unverified` |
+| Example | air-gapped | compose-single-host | managed-container-runtime | kubernetes-production | serverless-auxiliary |
+|---|---|---|---|---|---|
+| [examples/minimal.yaml](examples/minimal.yaml) | fail: `network-unresolved` | pass | pass | pass | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved` |
+| [examples/approval-policy.yaml](examples/approval-policy.yaml) | fail: `network-unresolved` | pass | pass | pass | fail: `capability-unsupported`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved` |
+| [examples/air-gapped.yaml](examples/air-gapped.yaml) | pass | fail: `capability-unsupported`, `policy-decision-point-missing`, `supply-chain-unverified` | fail: `capability-unsupported`, `policy-decision-point-missing`, `supply-chain-unverified` | fail: `capability-unsupported`, `policy-decision-point-missing`, `supply-chain-unverified` | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `supply-chain-unverified` |
+| [examples/serverless-auxiliary.yaml](examples/serverless-auxiliary.yaml) | fail: `capability-unsupported`, `network-unresolved` | fail: `capability-unsupported` | fail: `capability-unsupported` | pass | pass |
+| [examples/stateful-agent.yaml](examples/stateful-agent.yaml) | fail: `network-unresolved` | fail: `capability-unsupported` | pass | pass | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved` |
+| [examples/multi-agent.yaml](examples/multi-agent.yaml) | fail: `network-unresolved` | fail: `capability-unsupported`, `secret-unbound`, `network-unresolved` | fail: `capability-unsupported`, `secret-unbound`, `network-unresolved` | pass | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved` |
+| [examples/supply-chain.yaml](examples/supply-chain.yaml) | fail: `network-unresolved` | fail: `capability-unsupported`, `supply-chain-unverified` | fail: `capability-unsupported`, `supply-chain-unverified` | pass | fail: `capability-unsupported`, `secret-unbound`, `approval-handler-missing`, `policy-decision-point-missing`, `network-unresolved`, `supply-chain-unverified` |
 
 ## Negative Target Context Fixture
 

@@ -42,7 +42,7 @@ For ADS authors:
 
 - [SPEC.md](SPEC.md) is the normative v1.0 specification.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
-- [examples/approval-policy.yaml](examples/approval-policy.yaml), [examples/serverless-auxiliary.yaml](examples/serverless-auxiliary.yaml), [examples/multi-agent.yaml](examples/multi-agent.yaml), [examples/stateful-agent.yaml](examples/stateful-agent.yaml), and [examples/supply-chain.yaml](examples/supply-chain.yaml) show production-oriented patterns.
+- [examples/approval-policy.yaml](examples/approval-policy.yaml), [examples/air-gapped.yaml](examples/air-gapped.yaml), [examples/serverless-auxiliary.yaml](examples/serverless-auxiliary.yaml), [examples/multi-agent.yaml](examples/multi-agent.yaml), [examples/stateful-agent.yaml](examples/stateful-agent.yaml), and [examples/supply-chain.yaml](examples/supply-chain.yaml) show production-oriented patterns.
 - [COMPATIBILITY.md](COMPATIBILITY.md) summarizes which examples are expected to pass against the current target contexts.
 - [SPEC.md#production-readiness-checklist](SPEC.md#production-readiness-checklist), [SPEC.md#audit-event-taxonomy](SPEC.md#audit-event-taxonomy), and [SPEC.md#example-architecture-diagrams](SPEC.md#example-architecture-diagrams) collect the main review aids inside the spec.
 
@@ -107,7 +107,7 @@ Validate an ADS document against a target context with:
 ruby scripts/ads-conformance-check.rb --context contexts/kubernetes-production.yaml examples/minimal.yaml
 ```
 
-The fixture suite also checks profile compatibility expectations: [examples/approval-policy.yaml](examples/approval-policy.yaml) is accepted by the compose, managed runtime, and Kubernetes target contexts; [examples/serverless-auxiliary.yaml](examples/serverless-auxiliary.yaml) is accepted by the serverless auxiliary and Kubernetes target contexts; [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is accepted by Kubernetes production and managed container runtime target contexts; and [examples/multi-agent.yaml](examples/multi-agent.yaml) and [examples/supply-chain.yaml](examples/supply-chain.yaml) are accepted only by the Kubernetes production target context.
+The fixture suite also checks profile compatibility expectations: [examples/air-gapped.yaml](examples/air-gapped.yaml) is accepted by the air-gapped target context; [examples/serverless-auxiliary.yaml](examples/serverless-auxiliary.yaml) is accepted by the serverless auxiliary and Kubernetes target contexts; [examples/stateful-agent.yaml](examples/stateful-agent.yaml) is accepted by Kubernetes production and managed container runtime target contexts; and [examples/multi-agent.yaml](examples/multi-agent.yaml) and [examples/supply-chain.yaml](examples/supply-chain.yaml) are accepted only by the Kubernetes production target context.
 
 The top-level files in `examples/*.yaml` are positive examples and should pass schema validation and document-level conformance checks. The files in `examples/invalid/` are negative schema fixtures and should fail schema validation. The files in `examples/conformance/invalid/` should pass schema validation but fail ADS conformance checks, including cross-reference and supply-chain consistency failures. The files in `examples/conformance/warnings/` exercise strict warning behavior for audit coverage, production threat-model coverage, and policy decision point coverage.
 

@@ -1,0 +1,102 @@
+targetProfile: air-gapped
+
+capabilities:
+  supported:
+    - container-runtime
+    - secret-injection
+    - persistent-storage
+    - queue
+    - vector-store
+    - network-policy
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+    - horizontal-scaling
+    - rollback
+    - dead-letter-queue
+    - image-signature-verification
+    - example.com/internal-artifact-source
+    - example.com/internal-model-serving
+
+secrets:
+  bindings:
+    model-api-key:
+      source: internal-secret-store
+      ref: vault:airgap/offline-model/token
+    database-url:
+      source: internal-secret-store
+      ref: vault:airgap/offline-review/database-url
+    crm-api-token:
+      source: internal-secret-store
+      ref: vault:airgap/customer-ops/crm-api-token
+
+approvals:
+  handlers:
+    human:
+      ref: offline-change-board
+    policy:
+      ref: opa/airgap-policy
+  policyDecisionPoints:
+    crm-mutation-policy:
+      ref: opa/airgap/customer-operations
+    risk-classification-policy:
+      ref: opa/airgap/customer-risk
+    financial-action-policy:
+      ref: opa/airgap/billing-actions
+    data-export-policy:
+      ref: opa/airgap/data-export
+    session-restore-policy:
+      ref: opa/airgap/session-state
+    billing-update-policy:
+      ref: opa/airgap/billing-actions
+    release-evidence-policy:
+      ref: opa/airgap/release-evidence
+
+observability:
+  traces:
+    sinks:
+      - airgap-otel-collector
+  metrics:
+    sinks:
+      - airgap-prometheus
+  auditEvents:
+    sinks:
+      - airgap-security-audit-log
+
+network:
+  egress:
+    defaultDeny: true
+    allow:
+      - internal.crm.example
+      - crm.internal.example
+      - billing.internal.example
+
+security:
+  sandbox:
+    levels:
+      - restricted
+      - baseline
+  toolPolicy:
+    defaults:
+      - deny
+      - allow
+    ruleLists: true
+
+supplyChain:
+  signatures:
+    available: true
+    verifiers:
+      - offline-cosign
+      - sigstore-cosign
+  sbom:
+    available: true
+    formats:
+      - spdx-json
+      - cyclonedx-json
+  provenance:
+    available: true
+    predicateTypes:
+      - slsa-provenance

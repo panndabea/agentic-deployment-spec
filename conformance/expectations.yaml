@@ -1,6 +1,7 @@
 schema:
   accepts:
     - examples/approval-policy.yaml
+    - examples/air-gapped.yaml
     - examples/minimal.yaml
     - examples/multi-agent.yaml
     - examples/serverless-auxiliary.yaml
@@ -27,6 +28,7 @@ schema:
 conformance:
   accepts:
     - examples/approval-policy.yaml
+    - examples/air-gapped.yaml
     - examples/minimal.yaml
     - examples/multi-agent.yaml
     - examples/serverless-auxiliary.yaml
@@ -93,6 +95,9 @@ conformance:
         - Unknown non-extension root field
 
 targetContexts:
+  - context: contexts/air-gapped.yaml
+    example: examples/air-gapped.yaml
+    result: accepts
   - context: contexts/compose-single-host.yaml
     example: examples/approval-policy.yaml
     result: accepts
@@ -129,6 +134,44 @@ targetContexts:
   - context: contexts/serverless-auxiliary.yaml
     example: examples/serverless-auxiliary.yaml
     result: accepts
+  - context: contexts/air-gapped.yaml
+    example: examples/approval-policy.yaml
+    result: rejects
+    expectedDiagnostics:
+      - network-unresolved
+      - api.openai.com
+  - context: contexts/air-gapped.yaml
+    example: examples/minimal.yaml
+    result: rejects
+    expectedDiagnostics:
+      - network-unresolved
+      - api.openai.com
+  - context: contexts/air-gapped.yaml
+    example: examples/multi-agent.yaml
+    result: rejects
+    expectedDiagnostics:
+      - network-unresolved
+      - api.openai.com
+  - context: contexts/air-gapped.yaml
+    example: examples/serverless-auxiliary.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - event-driven-scaling
+      - network-unresolved
+      - api.openai.com
+  - context: contexts/air-gapped.yaml
+    example: examples/stateful-agent.yaml
+    result: rejects
+    expectedDiagnostics:
+      - network-unresolved
+      - api.openai.com
+  - context: contexts/air-gapped.yaml
+    example: examples/supply-chain.yaml
+    result: rejects
+    expectedDiagnostics:
+      - network-unresolved
+      - api.openai.com
   - context: contexts/invalid/incomplete-target.yaml
     example: examples/minimal.yaml
     result: rejects
@@ -140,6 +183,13 @@ targetContexts:
       - observability-sink-missing
       - network-unresolved
       - security-policy-unenforceable
+  - context: contexts/compose-single-host.yaml
+    example: examples/air-gapped.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - policy-decision-point-missing
+      - supply-chain-unverified
   - context: contexts/compose-single-host.yaml
     example: examples/serverless-auxiliary.yaml
     result: rejects
@@ -165,6 +215,21 @@ targetContexts:
       - capability-unsupported
       - secret-unbound
       - network-unresolved
+  - context: contexts/kubernetes-production.yaml
+    example: examples/air-gapped.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - policy-decision-point-missing
+      - supply-chain-unverified
+      - offline-cosign
+  - context: contexts/managed-container-runtime.yaml
+    example: examples/air-gapped.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - policy-decision-point-missing
+      - supply-chain-unverified
   - context: contexts/managed-container-runtime.yaml
     example: examples/serverless-auxiliary.yaml
     result: rejects
@@ -182,6 +247,15 @@ targetContexts:
     result: rejects
     expectedDiagnostics:
       - capability-unsupported
+      - supply-chain-unverified
+  - context: contexts/serverless-auxiliary.yaml
+    example: examples/air-gapped.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - secret-unbound
+      - approval-handler-missing
+      - policy-decision-point-missing
       - supply-chain-unverified
   - context: contexts/serverless-auxiliary.yaml
     example: examples/approval-policy.yaml

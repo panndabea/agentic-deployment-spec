@@ -1,0 +1,259 @@
+apiVersion: ads.dev/v1
+kind: AgenticDeployment
+metadata:
+  name: offline-review-agent
+  owner: platform-team
+  description: Air-gapped review agent that uses internal artifacts, local model serving, and no external egress.
+  labels:
+    tier: production
+    workload: air-gapped
+
+profiles:
+  - air-gapped
+
+runtime:
+  components:
+    - name: review-api
+      type: agent-runtime
+      image: registry.airgap.local/example/offline-review-agent@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      execution:
+        mode: request-response
+        concurrency: 6
+      ports:
+        - name: http
+          containerPort: 8080
+          exposure: internal
+      dependsOn:
+        - offline-model
+        - evidence-store
+      state:
+        mode: durable-session
+        store: evidence-store
+      health:
+        readiness:
+          path: /ready
+          port: http
+        liveness:
+          path: /healthz
+          port: http
+    - name: offline-model
+      type: custom
+      externalRef: platform://models/local-review-llm
+      execution:
+        mode: external
+    - name: evidence-store
+      type: state-store
+      externalRef: platform://postgres/offline-review
+      execution:
+        mode: external
+
+capabilities:
+  required:
+    - container-runtime
+    - secret-injection
+    - persistent-storage
+    - network-policy
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - human-approval
+    - policy-decision
+    - image-signature-verification
+    - example.com/internal-artifact-source
+    - example.com/internal-model-serving
+
+secrets:
+  required:
+    - name: model-api-key
+      purpose: internal-model-auth
+      rotation: required
+      source: internal-secret-store
+      injection: env
+      reload: restart-required
+      for:
+        - review-api
+    - name: database-url
+      purpose: evidence-store
+      rotation: required
+      source: internal-secret-store
+      injection: env
+      reload: restart-required
+      for:
+        - review-api
+        - evidence-store
+
+security:
+  defaultSandbox: restricted
+  outbound:
+    default: deny
+    allow: []
+  toolPolicy:
+    default: deny
+    allow:
+      - read-evidence
+      - summarize-case
+      - prepare-review-record
+    deny:
+      - export-review-record
+  trustBoundaries:
+    - name: operator-to-review-api
+      from: internal-operator
+      to: review-api
+    - name: review-api-to-model
+      from: review-api
+      to: offline-model
+    - name: review-api-to-evidence-store
+      from: review-api
+      to: evidence-store
+  threatModel:
+    assets:
+      - restricted-case-data
+      - model-api-key
+      - evidence-store
+      - offline-release-artifacts
+    actors:
+      - internal-operator
+      - review-api
+      - offline-model
+      - platform-security
+    threats:
+      - id: unauthorized-export
+        category: data-exfiltration
+        assets:
+          - restricted-case-data
+        mitigations:
+          - deny-external-egress
+          - export-approval-gate
+      - id: stale-artifact-deploy
+        category: supply-chain-compromise
+        assets:
+          - offline-release-artifacts
+        mitigations:
+          - digest-pinning
+          - offline-signature-verification
+      - id: model-secret-exposure
+        category: secret-exfiltration
+        assets:
+          - model-api-key
+        mitigations:
+          - internal-secret-store
+          - restricted-egress
+    mitigations:
+      - id: deny-external-egress
+        fields:
+          - security.outbound
+          - networking.egress
+      - id: export-approval-gate
+        fields:
+          - approvals.required
+      - id: digest-pinning
+        fields:
+          - supplyChain.images.requireDigest
+      - id: offline-signature-verification
+        fields:
+          - supplyChain.images.signature
+      - id: internal-secret-store
+        fields:
+          - secrets.required
+      - id: restricted-egress
+        fields:
+          - security.outbound
+    review:
+      status: reviewed
+      reviewedBy: platform-security
+      cadence: release
+
+supplyChain:
+  images:
+    requireDigest: true
+    signature:
+      required: true
+      verifier: offline-cosign
+      identities:
+        - file://airgap/release/offline-review-agent.pem
+    sbom:
+      required: true
+      formats:
+        - spdx-json
+        - cyclonedx-json
+    provenance:
+      required: true
+      predicateTypes:
+        - slsa-provenance
+
+approvals:
+  policyDecisionPoints:
+    - name: release-evidence-policy
+      engineRef: opa/airgap-release-evidence
+      appliesTo:
+        - export-review-record
+      decisionInputs:
+        - actor
+        - action
+        - dataClass
+        - artifactDigest
+      failureMode: closed
+      auditEvents:
+        - policy_decision_recorded
+  required:
+    - action: export-review-record
+      mode: policy-and-human
+      reason: records leaving the restricted review workflow require offline policy evidence and human approval
+      policyDecisionPointRef: release-evidence-policy
+      scope:
+        component: review-api
+        dataClass: restricted-case-data
+      auditEvents:
+        - approval_requested
+        - policy_decision_recorded
+        - approval_granted
+        - approval_denied
+
+observability:
+  traces:
+    required: true
+    format: opentelemetry
+  metrics:
+    required:
+      - request_latency
+      - model_inference_latency
+      - approval_wait_time
+      - denied_export_count
+  auditEvents:
+    required:
+      - deployment_planned
+      - secret_resolved
+      - approval_requested
+      - policy_decision_recorded
+      - approval_granted
+      - approval_denied
+      - tool_call_denied
+  logs:
+    streams:
+      - review-api
+    redaction:
+      required: true
+
+networking:
+  internal:
+    - from: review-api
+      to:
+        - offline-model
+        - evidence-store
+  egress:
+    default: deny
+    allow: []
+
+reliability:
+  rollout:
+    strategy: rolling
+    maxUnavailable: 1
+  rollback:
+    automatic: false
+    reason: air-gapped rollback requires offline release operator review
+  retries:
+    default:
+      attempts: 2
+      backoff: exponential
+      jitter: true
