@@ -1,0 +1,57 @@
+targetProfile: serverless-auxiliary
+
+capabilities:
+  supported:
+    - container-runtime
+    - secret-injection
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - event-driven-scaling
+
+secrets:
+  bindings:
+    model-api-key:
+      source: platform-secret
+      ref: serverless:MODEL_API_KEY
+
+approvals:
+  handlers: {}
+  policyDecisionPoints: {}
+
+observability:
+  traces:
+    sinks:
+      - serverless-otel-export
+  metrics:
+    sinks:
+      - serverless-metrics
+  auditEvents:
+    sinks:
+      - serverless-audit-log
+
+network:
+  egress:
+    defaultDeny: true
+    allow:
+      - api.openai.com
+
+security:
+  sandbox:
+    levels:
+      - restricted
+      - baseline
+  toolPolicy:
+    defaults:
+      - deny
+      - allow
+    ruleLists: true
+
+supplyChain:
+  signatures:
+    available: false
+  sbom:
+    available: false
+  provenance:
+    available: false

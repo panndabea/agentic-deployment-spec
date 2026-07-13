@@ -3,6 +3,7 @@ schema:
     - examples/approval-policy.yaml
     - examples/minimal.yaml
     - examples/multi-agent.yaml
+    - examples/serverless-auxiliary.yaml
     - examples/stateful-agent.yaml
     - examples/supply-chain.yaml
     - examples/conformance/invalid/duplicate-component.yaml
@@ -28,6 +29,7 @@ conformance:
     - examples/approval-policy.yaml
     - examples/minimal.yaml
     - examples/multi-agent.yaml
+    - examples/serverless-auxiliary.yaml
     - examples/stateful-agent.yaml
     - examples/supply-chain.yaml
   rejects:
@@ -107,6 +109,9 @@ targetContexts:
     example: examples/multi-agent.yaml
     result: accepts
   - context: contexts/kubernetes-production.yaml
+    example: examples/serverless-auxiliary.yaml
+    result: accepts
+  - context: contexts/kubernetes-production.yaml
     example: examples/stateful-agent.yaml
     result: accepts
   - context: contexts/kubernetes-production.yaml
@@ -121,6 +126,9 @@ targetContexts:
   - context: contexts/managed-container-runtime.yaml
     example: examples/stateful-agent.yaml
     result: accepts
+  - context: contexts/serverless-auxiliary.yaml
+    example: examples/serverless-auxiliary.yaml
+    result: accepts
   - context: contexts/invalid/incomplete-target.yaml
     example: examples/minimal.yaml
     result: rejects
@@ -132,6 +140,12 @@ targetContexts:
       - observability-sink-missing
       - network-unresolved
       - security-policy-unenforceable
+  - context: contexts/compose-single-host.yaml
+    example: examples/serverless-auxiliary.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - event-driven-scaling
   - context: contexts/compose-single-host.yaml
     example: examples/multi-agent.yaml
     result: rejects
@@ -151,6 +165,12 @@ targetContexts:
       - capability-unsupported
       - secret-unbound
       - network-unresolved
+  - context: contexts/managed-container-runtime.yaml
+    example: examples/serverless-auxiliary.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - event-driven-scaling
   - context: contexts/compose-single-host.yaml
     example: examples/supply-chain.yaml
     result: rejects
@@ -162,4 +182,49 @@ targetContexts:
     result: rejects
     expectedDiagnostics:
       - capability-unsupported
+      - supply-chain-unverified
+  - context: contexts/serverless-auxiliary.yaml
+    example: examples/approval-policy.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - approval-handler-missing
+      - policy-decision-point-missing
+      - network-unresolved
+  - context: contexts/serverless-auxiliary.yaml
+    example: examples/minimal.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - secret-unbound
+      - approval-handler-missing
+      - policy-decision-point-missing
+      - network-unresolved
+  - context: contexts/serverless-auxiliary.yaml
+    example: examples/multi-agent.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - secret-unbound
+      - approval-handler-missing
+      - policy-decision-point-missing
+      - network-unresolved
+  - context: contexts/serverless-auxiliary.yaml
+    example: examples/stateful-agent.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - secret-unbound
+      - approval-handler-missing
+      - policy-decision-point-missing
+      - network-unresolved
+  - context: contexts/serverless-auxiliary.yaml
+    example: examples/supply-chain.yaml
+    result: rejects
+    expectedDiagnostics:
+      - capability-unsupported
+      - secret-unbound
+      - approval-handler-missing
+      - policy-decision-point-missing
+      - network-unresolved
       - supply-chain-unverified

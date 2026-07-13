@@ -1,0 +1,156 @@
+apiVersion: ads.dev/v1
+kind: AgenticDeployment
+metadata:
+  name: ticket-triage-worker
+  owner: platform-team
+  description: Serverless event handler for short-lived ticket triage and queue enrichment.
+  labels:
+    tier: production
+    workload: serverless-auxiliary
+
+profiles:
+  - serverless-auxiliary
+  - kubernetes-production
+
+runtime:
+  components:
+    - name: triage-worker
+      type: worker
+      image: ghcr.io/example/ticket-triage-worker:1.0.0
+      execution:
+        mode: event-driven
+        concurrency: 32
+      triggers:
+        - name: ticket-created
+          type: event
+          source: support.ticket.created
+      state:
+        mode: ephemeral
+      resources:
+        timeout: 60s
+        memory: 512Mi
+
+capabilities:
+  required:
+    - container-runtime
+    - secret-injection
+    - outbound-egress-policy
+    - trace-export
+    - metrics-export
+    - audit-log-export
+    - event-driven-scaling
+  optional:
+    - name: rollback
+      reason: replay event batches from the source queue when supported
+
+secrets:
+  required:
+    - name: model-api-key
+      purpose: model-provider-auth
+      rotation: required
+      source: platform-secret
+      injection: env
+      reload: restart-required
+      for:
+        - triage-worker
+
+security:
+  defaultSandbox: restricted
+  outbound:
+    default: deny
+    allow:
+      - api.openai.com
+  toolPolicy:
+    default: deny
+    allow:
+      - classify-ticket
+      - enrich-routing-labels
+  trustBoundaries:
+    - name: event-source-to-worker
+      from: event-bus
+      to: triage-worker
+    - name: worker-to-model-provider
+      from: triage-worker
+      to: model-provider
+  threatModel:
+    assets:
+      - support-ticket-metadata
+      - model-api-key
+      - routing-labels
+    actors:
+      - event-publisher
+      - triage-worker
+      - platform-operator
+    threats:
+      - id: forged-event
+        category: event-spoofing
+        assets:
+          - support-ticket-metadata
+        mitigations:
+          - authenticated-event-source
+          - bounded-event-processing
+      - id: model-secret-exfiltration
+        category: secret-exfiltration
+        assets:
+          - model-api-key
+        mitigations:
+          - secret-injection
+          - restricted-egress
+    mitigations:
+      - id: authenticated-event-source
+        fields:
+          - runtime.components[0].triggers
+      - id: bounded-event-processing
+        fields:
+          - runtime.components[0].resources
+      - id: secret-injection
+        fields:
+          - secrets.required
+      - id: restricted-egress
+        fields:
+          - security.outbound
+    review:
+      status: reviewed
+      reviewedBy: platform-security
+      cadence: release
+
+approvals:
+  required: []
+
+observability:
+  traces:
+    required: true
+    format: opentelemetry
+  metrics:
+    required:
+      - event_processing_latency
+      - event_retry_count
+      - tool_call_count
+      - model_cost
+  auditEvents:
+    required:
+      - deployment_planned
+      - secret_resolved
+      - tool_call_denied
+      - tool_call_executed
+      - action_executed
+  logs:
+    streams:
+      - triage-worker
+    redaction:
+      required: true
+
+networking:
+  egress:
+    default: deny
+    allow:
+      - api.openai.com
+
+reliability:
+  retries:
+    default:
+      attempts: 3
+      backoff: exponential
+      jitter: true
+  timeouts:
+    eventProcessing: 60s
