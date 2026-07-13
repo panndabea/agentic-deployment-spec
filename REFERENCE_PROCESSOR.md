@@ -58,6 +58,12 @@ Emit SARIF diagnostics:
 ruby scripts/ads-conformance-check.rb --format sarif examples/minimal.yaml
 ```
 
+Write formatted diagnostics to a file:
+
+```sh
+ruby scripts/ads-conformance-check.rb --format sarif --output ads-conformance.sarif examples/minimal.yaml
+```
+
 Treat warnings as failures:
 
 ```sh

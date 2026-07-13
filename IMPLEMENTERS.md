@@ -235,8 +235,8 @@ For a single document:
 ruby scripts/ads-conformance-check.rb --format json --context contexts/kubernetes-production.yaml examples/minimal.yaml
 ```
 
-Use `--format sarif` when publishing reference-processor diagnostics into CI or
-code scanning systems.
+Use `--format sarif --output FILE` when publishing reference-processor
+diagnostics into CI or code scanning systems.
 
 ## v1.0 Readiness For Independent Processors
 

@@ -42,7 +42,7 @@ jobs:
         run: ruby scripts/test-examples.rb
 
       - name: Generate SARIF diagnostics
-        run: ruby scripts/ads-conformance-check.rb --format sarif examples/*.yaml > ads-conformance.sarif
+        run: ruby scripts/ads-conformance-check.rb --format sarif --output ads-conformance.sarif examples/*.yaml
 
       - name: Upload SARIF diagnostics
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}

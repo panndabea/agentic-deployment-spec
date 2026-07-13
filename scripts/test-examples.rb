@@ -3,6 +3,7 @@
 
 require "open3"
 require "rbconfig"
+require "tmpdir"
 require "yaml"
 
 REPO_ROOT = File.expand_path("..", __dir__)
@@ -189,6 +190,30 @@ Dir.chdir(REPO_ROOT) do
       "\"adsPath\": \"$.runtime.components[1].name\""
     ]
   )
+
+  Dir.mktmpdir("ads-conformance") do |directory|
+    sarif_file = File.join(directory, "diagnostics.sarif")
+    check = run_command(
+      "conformance writes SARIF diagnostics",
+      [
+        RUBY,
+        "scripts/ads-conformance-check.rb",
+        "--format",
+        "sarif",
+        "--output",
+        sarif_file,
+        "examples/conformance/invalid/duplicate-component.yaml"
+      ],
+      expected_exit: 1
+    )
+    contents = File.file?(sarif_file) ? File.read(sarif_file) : ""
+    check &&= contents.include?("\"version\": \"2.1.0\"")
+    check &&= contents.include?("\"ruleId\": \"reference-invalid\"")
+    check &&= contents.include?("\"adsPath\": \"$.runtime.components[1].name\"")
+
+    puts "#{check ? "PASS" : "FAIL"} conformance SARIF output file content"
+    checks << check
+  end
 
   expectation_list(expectations, "targetContexts").each do |entry|
     unless entry.is_a?(Hash)

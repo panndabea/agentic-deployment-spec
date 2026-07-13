@@ -1474,10 +1474,36 @@ def sarif_document(results)
   }
 end
 
+def formatted_output(results, format)
+  case format
+  when "json"
+    JSON.pretty_generate(results)
+  when "sarif"
+    JSON.pretty_generate(sarif_document(results))
+  else
+    results.flat_map do |result|
+      if result["diagnostics"].empty?
+        ["#{result["file"]}: ok"]
+      else
+        result["diagnostics"].map do |diagnostic|
+          [
+            result["file"],
+            diagnostic["severity"],
+            diagnostic["category"],
+            diagnostic["path"],
+            diagnostic["message"]
+          ].join(": ")
+        end
+      end
+    end.join("\n")
+  end
+end
+
 options = {
   format: "text",
   strict_warnings: false,
-  context_path: nil
+  context_path: nil,
+  output_path: nil
 }
 
 parser = OptionParser.new do |opts|
@@ -1489,6 +1515,10 @@ parser = OptionParser.new do |opts|
 
   opts.on("--context FILE", "Target context YAML file") do |path|
     options[:context_path] = path
+  end
+
+  opts.on("--output FILE", "Write formatted diagnostics to FILE") do |path|
+    options[:output_path] = path
   end
 
   opts.on("--strict-warnings", "Exit non-zero when warnings are present") do
@@ -1541,28 +1571,17 @@ ARGV.each do |path|
   }
 end
 
-case options[:format]
-when "json"
-  puts JSON.pretty_generate(results)
-when "sarif"
-  puts JSON.pretty_generate(sarif_document(results))
-else
-  results.each do |result|
-    if result["diagnostics"].empty?
-      puts "#{result["file"]}: ok"
-      next
-    end
+output = formatted_output(results, options[:format])
 
-    result["diagnostics"].each do |diagnostic|
-      puts [
-        result["file"],
-        diagnostic["severity"],
-        diagnostic["category"],
-        diagnostic["path"],
-        diagnostic["message"]
-      ].join(": ")
-    end
+if options[:output_path]
+  begin
+    File.write(options[:output_path], "#{output}\n")
+  rescue StandardError => e
+    warn "cannot write #{options[:output_path]}: #{e.message}"
+    exit 2
   end
+else
+  puts output
 end
 
 has_errors = results.any? do |result|
