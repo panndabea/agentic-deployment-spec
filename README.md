@@ -98,6 +98,8 @@ Run the reference processor directly with:
 ruby scripts/ads-conformance-check.rb examples/minimal.yaml
 ```
 
+Use `--format json` or `--format sarif` for machine-readable diagnostics.
+
 Validate an ADS document against a target context with:
 
 ```sh

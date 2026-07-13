@@ -52,6 +52,12 @@ Emit JSON diagnostics:
 ruby scripts/ads-conformance-check.rb --format json examples/minimal.yaml
 ```
 
+Emit SARIF diagnostics:
+
+```sh
+ruby scripts/ads-conformance-check.rb --format sarif examples/minimal.yaml
+```
+
 Treat warnings as failures:
 
 ```sh
@@ -91,6 +97,11 @@ JSON output emits a list of file results:
   }
 ]
 ```
+
+SARIF output emits a SARIF 2.1.0 document suitable for CI systems and code
+scanning integrations. ADS diagnostic categories are emitted as SARIF
+`ruleId` values, diagnostic severity maps to SARIF `level`, and the ADS document
+path is included in each result's `properties.adsPath` value.
 
 Diagnostics use the categories documented in
 [SPEC.md](SPEC.md#diagnostic-categories). They must not include secret values,

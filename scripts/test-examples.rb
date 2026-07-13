@@ -178,6 +178,18 @@ Dir.chdir(REPO_ROOT) do
     )
   end
 
+  checks << run_command(
+    "conformance emits SARIF diagnostics",
+    [RUBY, "scripts/ads-conformance-check.rb", "--format", "sarif", "examples/conformance/invalid/duplicate-component.yaml"],
+    expected_exit: 1,
+    stdout_includes: [
+      "\"version\": \"2.1.0\"",
+      "\"name\": \"ADS Reference Processor\"",
+      "\"ruleId\": \"reference-invalid\"",
+      "\"adsPath\": \"$.runtime.components[1].name\""
+    ]
+  )
+
   expectation_list(expectations, "targetContexts").each do |entry|
     unless entry.is_a?(Hash)
       warn "Expected targetContexts entries in #{EXPECTATIONS_FILE} to be mappings."

@@ -65,6 +65,24 @@ STANDARD_AUDIT_EVENTS = %w[
   state_restore_failed
 ].freeze
 
+DIAGNOSTIC_CATEGORY_DESCRIPTIONS = {
+  "schema-invalid" => "The document violates structural schema requirements.",
+  "reference-invalid" => "A component name, dependsOn, for, or scoped reference cannot be resolved.",
+  "capability-unsupported" => "A required capability is not supported by the selected target context.",
+  "secret-unbound" => "A required secret has no binding in the target context.",
+  "approval-handler-missing" => "A required human or policy approval handler is unavailable.",
+  "policy-decision-point-missing" => "A policy-based approval is missing, undeclared, or unavailable.",
+  "network-unresolved" => "A required network route, destination, exposure, or egress rule cannot be resolved or enforced.",
+  "security-policy-unenforceable" => "A security, sandbox, identity, hardening, outbound, or tool-policy requirement cannot be enforced.",
+  "supply-chain-unverified" => "A required image digest, signature, SBOM, or provenance requirement cannot be verified or satisfied.",
+  "observability-sink-missing" => "A required trace, metric, log, or audit sink is unavailable.",
+  "audit-event-missing" => "A recommended audit event is missing.",
+  "threat-model-incomplete" => "A production document is missing recommended threat-model coverage.",
+  "extension-unsupported" => "A required extension is unknown or unsupported by the processor.",
+  "processor-limitation" => "The processor or target platform cannot preserve the declared runtime model.",
+  "compatibility-warning" => "A non-blocking compatibility issue was detected."
+}.freeze
+
 def add_diagnostic(diagnostics, category:, severity:, path:, message:, extra: {})
   diagnostics << {
     "category" => category,
@@ -1376,6 +1394,86 @@ def check_document(document, context)
   diagnostics
 end
 
+def sarif_level(severity)
+  case severity
+  when "error"
+    "error"
+  when "warning"
+    "warning"
+  else
+    "note"
+  end
+end
+
+def sarif_rule(category)
+  description = DIAGNOSTIC_CATEGORY_DESCRIPTIONS.fetch(category, "ADS conformance diagnostic.")
+
+  {
+    "id" => category,
+    "name" => category,
+    "shortDescription" => {
+      "text" => description
+    }
+  }
+end
+
+def sarif_result(file, diagnostic)
+  category = diagnostic.fetch("category")
+  path = diagnostic.fetch("path", "$")
+  properties = diagnostic.reject do |key, _value|
+    %w[category severity path message].include?(key)
+  end
+  properties["adsPath"] = path
+
+  {
+    "ruleId" => category,
+    "level" => sarif_level(diagnostic["severity"]),
+    "message" => {
+      "text" => "#{path}: #{diagnostic["message"]}"
+    },
+    "locations" => [
+      {
+        "physicalLocation" => {
+          "artifactLocation" => {
+            "uri" => file
+          },
+          "region" => {
+            "startLine" => 1
+          }
+        }
+      }
+    ],
+    "properties" => properties
+  }
+end
+
+def sarif_document(results)
+  diagnostics = results.flat_map { |result| result["diagnostics"] }
+  rules = diagnostics
+          .map { |diagnostic| diagnostic["category"] }
+          .uniq
+          .sort
+          .map { |category| sarif_rule(category) }
+
+  {
+    "$schema" => "https://json.schemastore.org/sarif-2.1.0.json",
+    "version" => "2.1.0",
+    "runs" => [
+      {
+        "tool" => {
+          "driver" => {
+            "name" => "ADS Reference Processor",
+            "rules" => rules
+          }
+        },
+        "results" => results.flat_map do |result|
+          result["diagnostics"].map { |diagnostic| sarif_result(result["file"], diagnostic) }
+        end
+      }
+    ]
+  }
+end
+
 options = {
   format: "text",
   strict_warnings: false,
@@ -1385,7 +1483,7 @@ options = {
 parser = OptionParser.new do |opts|
   opts.banner = "Usage: ruby scripts/ads-conformance-check.rb [options] FILE..."
 
-  opts.on("--format FORMAT", "Output format: text or json") do |format|
+  opts.on("--format FORMAT", "Output format: text, json, or sarif") do |format|
     options[:format] = format
   end
 
@@ -1405,8 +1503,8 @@ if ARGV.empty?
   exit 2
 end
 
-unless %w[text json].include?(options[:format])
-  warn "Unsupported format #{options[:format].inspect}; expected text or json."
+unless %w[text json sarif].include?(options[:format])
+  warn "Unsupported format #{options[:format].inspect}; expected text, json, or sarif."
   exit 2
 end
 
@@ -1446,6 +1544,8 @@ end
 case options[:format]
 when "json"
   puts JSON.pretty_generate(results)
+when "sarif"
+  puts JSON.pretty_generate(sarif_document(results))
 else
   results.each do |result|
     if result["diagnostics"].empty?
