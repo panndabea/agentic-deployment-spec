@@ -11,6 +11,7 @@ name: Conformance
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   test-examples:
@@ -39,6 +40,16 @@ jobs:
 
       - name: Run Ruby fixture suite
         run: ruby scripts/test-examples.rb
+
+      - name: Generate SARIF diagnostics
+        run: ruby scripts/ads-conformance-check.rb --format sarif examples/*.yaml > ads-conformance.sarif
+
+      - name: Upload SARIF diagnostics
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ads-conformance.sarif
+          category: ads-reference-processor
 
       - name: Run Go tests
         run: go test ./...

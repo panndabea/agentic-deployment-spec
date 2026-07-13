@@ -84,7 +84,7 @@ does not call the Ruby reference processor or `check-jsonschema`; it reads the
 same fixture expectations and checks schema-negative, conformance-negative,
 strict-warning, and target-context outcomes independently.
 
-The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml) runs the Ruby fixture suite, Go tests, and independent Go fixture validator on pull requests, pushes to `main`, release branches, and version tags.
+The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml) runs the Ruby fixture suite, Go tests, and independent Go fixture validator on pull requests, pushes to `main`, release branches, and version tags. It also publishes reference-processor SARIF diagnostics to GitHub Code Scanning when the workflow token has permission.
 
 Validate the canonical example against only the JSON Schema with:
 
