@@ -11,40 +11,39 @@ evidence for `v1.0.0` remains in the sections below.
 
 A release is ready only when all of these gates are satisfied:
 
-- [ ] [SPEC.md](SPEC.md) reflects the intended normative behavior for the release.
-- [ ] [schemas/ads.schema.json](schemas/ads.schema.json) matches the structural requirements in the spec.
-- [ ] Reference examples in [examples/](examples/) match the current authoring guidance.
-- [ ] Target contexts in [contexts/](contexts/) match the supported compatibility profiles.
-- [ ] [conformance/expectations.yaml](conformance/expectations.yaml) captures all expected schema, conformance, warning, and target-context outcomes.
-- [ ] [COMPATIBILITY.md](COMPATIBILITY.md) matches the public example-to-target-context expectations.
-- [ ] [IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current conformance model for independent processors.
-- [ ] [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the behavior and limitations of the Ruby reference processor.
-- [ ] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
-- [ ] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
-- [ ] `ruby scripts/test-examples.rb` passes locally.
-- [ ] The Conformance GitHub Actions workflow passes for the release branch or tag.
+- [x] [SPEC.md](SPEC.md) reflects the intended normative behavior for the release.
+- [x] [schemas/ads.schema.json](schemas/ads.schema.json) matches the structural requirements in the spec.
+- [x] Reference examples in [examples/](examples/) match the current authoring guidance.
+- [x] Target contexts in [contexts/](contexts/) match the supported compatibility profiles.
+- [x] [conformance/expectations.yaml](conformance/expectations.yaml) captures all expected schema, conformance, warning, and target-context outcomes.
+- [x] [COMPATIBILITY.md](COMPATIBILITY.md) matches the public example-to-target-context expectations.
+- [x] [IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current conformance model for independent processors.
+- [x] [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the behavior and limitations of the Ruby reference processor.
+- [x] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
+- [x] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
+- [x] `ruby scripts/test-examples.rb` passes locally.
+- [x] The Conformance GitHub Actions workflow passes for the release branch or tag.
 
 ## v1.1 Release Readiness
 
-This is the active checklist for the `v1.1.0` release target. Keep `ads.dev/v1`
-as the stable API version unless the compatibility audit discovers a breaking
-change.
+The `v1.1.0` release checklist is complete. `ads.dev/v1` remains the stable API
+version.
 
-- [ ] Spec, status text, and change log updated for `v1.1.0`.
-- [ ] README, roadmap, and compatibility matrix updated for `v1.1.0`.
-- [ ] Compatibility audit against `v1.0.0` completed.
-- [ ] [COMPATIBILITY.md](COMPATIBILITY.md) checked against [conformance/expectations.yaml](conformance/expectations.yaml).
-- [ ] Plan snapshot coverage checked.
-- [ ] Artifact snapshot coverage checked.
-- [ ] CLI envelope coverage checked, including `explain`.
-- [ ] Unsupported emit-profile behavior documented.
-- [ ] Secret redaction evidence checked.
-- [ ] Local release commands passed.
-- [ ] GitHub Actions Conformance passed on the exact release branch or tag commit.
+- [x] Spec, status text, and change log updated for `v1.1.0`.
+- [x] README, roadmap, and compatibility matrix updated for `v1.1.0`.
+- [x] Compatibility audit against `v1.0.0` completed.
+- [x] [COMPATIBILITY.md](COMPATIBILITY.md) checked against [conformance/expectations.yaml](conformance/expectations.yaml).
+- [x] Plan snapshot coverage checked.
+- [x] Artifact snapshot coverage checked.
+- [x] CLI envelope coverage checked, including `explain`.
+- [x] Unsupported emit-profile behavior documented.
+- [x] Secret redaction evidence checked.
+- [x] Local release commands passed.
+- [x] GitHub Actions Conformance passed on the exact release branch or tag commit.
 
 ### v1.1 Compatibility Review
 
-`ads.dev/v1` remains the stable ADS API version for the `v1.1.0` release target.
+`ads.dev/v1` remains the stable ADS API version for the `v1.1.0` release.
 The release adds compatible processor, fixture, CLI, artifact, and
 target-context surface area: `bin/ads`, deterministic `ADSDeploymentPlan`
 output, local Compose and Kubernetes artifact emission, plan and artifact
@@ -53,8 +52,8 @@ fixtures, and secret payload redaction checks.
 
 Compatibility audit notes:
 
-- Working-tree audit performed on 2026-07-18 against local changes based on
-  commit `33a83b9a062181e324d317e4f5d356688d1cb278`.
+- Compatibility audit performed on 2026-07-18 for release commit
+  `998098b797d7a7f59cb6518f4ea83eb222b5fd0a`.
 - Reviewed `git diff --name-status v1.0.0..HEAD`, the scoped
   `v1.0.0..HEAD` diff for the spec, schema, expectations, examples, contexts,
   processor, CLI, and Go validator, and the current uncommitted scoped diff.
@@ -79,10 +78,8 @@ Compatibility audit notes:
 
 ### v1.1 Verification Evidence
 
-- Release-candidate commit SHA: pending final release-candidate commit. Current
-  working tree is based on `33a83b9a062181e324d317e4f5d356688d1cb278`.
-- Verification date: 2026-07-18 for the current working tree; rerun after the
-  final release-candidate commit is created.
+- Release commit SHA: `998098b797d7a7f59cb6518f4ea83eb222b5fd0a`.
+- Verification date: 2026-07-18.
 - Local command results on 2026-07-18:
   - `git diff --check`: passed.
   - `ruby scripts/test-examples.rb`: passed, including `bin/ads explain`
@@ -108,13 +105,29 @@ Compatibility audit notes:
     output found no matches for `secretValue:`, `privateKey:`, `password:`,
     `token:`, `super-secret`, private-key headers, or `credential`.
 - GitHub Actions workflow name: `Conformance`.
-- GitHub Actions run ID and URL: pending exact release branch or tag commit.
-- Release tag: pending.
-- Baseline main evidence only: Conformance run `29646050898` passed for
+- GitHub Actions release tag run: `29657378848`, completed successfully for
+  `v1.1.0` on commit `998098b797d7a7f59cb6518f4ea83eb222b5fd0a` at
+  <https://github.com/panndabea/agentic-deployment-spec/actions/runs/29657378848>.
+- GitHub Actions main baseline for the same commit: run `29657339788`,
+  completed successfully at
+  <https://github.com/panndabea/agentic-deployment-spec/actions/runs/29657339788>.
+- Release tag: `v1.1.0`.
+- GitHub release: <https://github.com/panndabea/agentic-deployment-spec/releases/tag/v1.1.0>.
+- Historical baseline main evidence: Conformance run `29646050898` passed for
   `33a83b9a062181e324d317e4f5d356688d1cb278` on `main` at
-  <https://github.com/panndabea/agentic-deployment-spec/actions/runs/29646050898>;
-  do not use this as final release evidence unless the release-candidate commit
-  is exactly `33a83b9a062181e324d317e4f5d356688d1cb278`.
+  <https://github.com/panndabea/agentic-deployment-spec/actions/runs/29646050898>.
+
+## v1.1 Release Publication
+
+The final `v1.1.0` tag was pushed on July 18, 2026 for commit
+`998098b797d7a7f59cb6518f4ea83eb222b5fd0a`.
+
+The Conformance GitHub Actions workflow passed for the tag in run
+`29657378848`, covering the Ruby fixture suite, SARIF diagnostics, Go tests, and
+the independent Go fixture validator.
+
+The GitHub release was published at
+<https://github.com/panndabea/agentic-deployment-spec/releases/tag/v1.1.0>.
 
 ## v1.0 Readiness Checklist
 
