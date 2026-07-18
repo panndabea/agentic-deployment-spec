@@ -1,0 +1,215 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: planner-agent
+  namespace: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    app.kubernetes.io/component: planner-agent
+  annotations:
+    ads.dev/component: planner-agent
+    ads.dev/source-path: "$.runtime.components[2]"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer-ops-agent-suite
+      app.kubernetes.io/component: planner-agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: customer-ops-agent-suite
+        app.kubernetes.io/component: planner-agent
+      annotations:
+        ads.dev/source-path: "$.runtime.components[2]"
+    spec:
+      containers:
+      - name: planner-agent
+        image: ghcr.io/example/customer-ops-planner:1.0.0
+        env:
+        - name: MODEL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: planner-agent-model-api-key
+              key: value
+              optional: false
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: planner-agent-database-url
+              key: value
+              optional: false
+      serviceAccountName: customer-ops-agents
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tool-server
+  namespace: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    app.kubernetes.io/component: tool-server
+  annotations:
+    ads.dev/component: tool-server
+    ads.dev/source-path: "$.runtime.components[4]"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer-ops-agent-suite
+      app.kubernetes.io/component: tool-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: customer-ops-agent-suite
+        app.kubernetes.io/component: tool-server
+      annotations:
+        ads.dev/source-path: "$.runtime.components[4]"
+    spec:
+      containers:
+      - name: tool-server
+        image: ghcr.io/example/customer-ops-tools:1.0.0
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: tool-server-database-url
+              key: value
+              optional: false
+        - name: CRM_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tool-server-crm-api-token
+              key: value
+              optional: false
+      serviceAccountName: customer-ops-agents
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: support-agent
+  namespace: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    app.kubernetes.io/component: support-agent
+  annotations:
+    ads.dev/component: support-agent
+    ads.dev/source-path: "$.runtime.components[3]"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer-ops-agent-suite
+      app.kubernetes.io/component: support-agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: customer-ops-agent-suite
+        app.kubernetes.io/component: support-agent
+      annotations:
+        ads.dev/source-path: "$.runtime.components[3]"
+    spec:
+      containers:
+      - name: support-agent
+        image: ghcr.io/example/customer-support-agent:1.0.0
+        env:
+        - name: MODEL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: support-agent-model-api-key
+              key: value
+              optional: false
+      serviceAccountName: customer-ops-agents
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+  namespace: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    app.kubernetes.io/component: orchestrator
+  annotations:
+    ads.dev/component: orchestrator
+    ads.dev/source-path: "$.runtime.components[1]"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer-ops-agent-suite
+      app.kubernetes.io/component: orchestrator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: customer-ops-agent-suite
+        app.kubernetes.io/component: orchestrator
+      annotations:
+        ads.dev/source-path: "$.runtime.components[1]"
+    spec:
+      containers:
+      - name: orchestrator
+        image: ghcr.io/example/customer-ops-orchestrator:1.0.0
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: orchestrator-database-url
+              key: value
+              optional: false
+      serviceAccountName: customer-ops-agents
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    app.kubernetes.io/component: api
+  annotations:
+    ads.dev/component: api
+    ads.dev/source-path: "$.runtime.components[0]"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer-ops-agent-suite
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: customer-ops-agent-suite
+        app.kubernetes.io/component: api
+      annotations:
+        ads.dev/source-path: "$.runtime.components[0]"
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/example/customer-ops-api:1.0.0
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: "/ready"
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: "/healthz"
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      serviceAccountName: customer-ops-agents

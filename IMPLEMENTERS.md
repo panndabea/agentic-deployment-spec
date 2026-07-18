@@ -187,6 +187,16 @@ must not reread the ADS YAML or target context YAML. The repository includes:
 - `compose`, for `compose-single-host`
 - `kubernetes`, for `kubernetes-production`
 
+Target contexts such as `serverless-auxiliary`, `air-gapped`,
+`managed-container-runtime`, and future `gpu-serving` contexts may validate or
+plan when their required support exists, but this repository does not currently
+include local emit adapters for those profiles. An unsupported profile for a
+known adapter is a processor or adapter limitation, not an ADS document-format
+error. For example, a `serverless-auxiliary` plan passed to the `kubernetes`
+adapter should be rejected with a JSON envelope containing a
+`processor-limitation` diagnostic rather than silently emitted as Kubernetes
+resources.
+
 Adapters must verify plan kind, API version, target profile, and blocking
 diagnostics before writing. They write deterministically into an empty output
 directory and refuse output-directory conflicts. Generated artifacts preserve
@@ -294,7 +304,7 @@ go run ./cmd/ads-fixture-validator
 ```
 
 The Go fixture validator is intentionally small and dependency-free. It parses
-the repository fixture YAML, applies ADS v1.0 structural and semantic checks,
+the repository fixture YAML, applies stable ADS v1 structural and semantic checks,
 evaluates target contexts, and compares diagnostics against
 [conformance/expectations.yaml](conformance/expectations.yaml) without invoking
 the Ruby reference processor.
@@ -308,9 +318,9 @@ ruby scripts/ads-conformance-check.rb --format json --context contexts/kubernete
 Use `--format sarif --output FILE` when publishing reference-processor
 diagnostics into CI or code scanning systems.
 
-## v1.0 Readiness For Independent Processors
+## Stable ADS v1 Readiness For Independent Processors
 
-For v1.0, an independent processor should demonstrate that it can:
+For stable ADS v1, an independent processor should demonstrate that it can:
 
 - validate the current reference examples
 - reject the schema-negative fixtures

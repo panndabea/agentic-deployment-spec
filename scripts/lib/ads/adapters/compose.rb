@@ -160,7 +160,6 @@ module Ads
         lines << "- `ads-plan.json`: The exact ADS deployment plan used by this adapter."
         lines << ""
         lines << "Secret bindings are emitted as environment references only; no secret payloads are included."
-        lines << ""
         "#{lines.join("\n")}\n"
       end
     end

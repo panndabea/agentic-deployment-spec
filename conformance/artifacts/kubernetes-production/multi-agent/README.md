@@ -1,9 +1,9 @@
 # ADS Kubernetes Bundle
 
-- ADS deployment: support-agent
+- ADS deployment: customer-ops-agent-suite
 - Target profile: kubernetes-production
-- Namespace: support-agent
-- Source: examples/minimal.yaml
+- Namespace: customer-ops-agent-suite
+- Source: examples/multi-agent.yaml
 
 Generated files:
 

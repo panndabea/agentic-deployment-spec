@@ -10,4 +10,3 @@ Generated files:
 - `ads-plan.json`: The exact ADS deployment plan used by this adapter.
 
 Secret bindings are emitted as environment references only; no secret payloads are included.
-

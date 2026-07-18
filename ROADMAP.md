@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap tracks released ADS milestones and future maintenance for the stable Agentic Deployment Specification. The normative v1.0 specification lives in [SPEC.md](SPEC.md), and the technical research reference lives in [deployment-research.md](deployment-research.md).
+This roadmap tracks released ADS milestones and future maintenance for the stable Agentic Deployment Specification. The normative stable ADS v1 specification lives in [SPEC.md](SPEC.md), and the technical research reference lives in [deployment-research.md](deployment-research.md).
 
 ## Release Principles
 
@@ -144,3 +144,42 @@ v1.0 maintenance focus:
 - keep the conformance workflow green for changes to examples, schema, contexts, and processor rules
 - keep [COMPATIBILITY.md](COMPATIBILITY.md) and [conformance/expectations.yaml](conformance/expectations.yaml) synchronized as examples and target contexts evolve
 - grow the conformance expectation manifest before adding new profile-specific examples
+
+## v1.1 - Agent-Facing Planning And Target Expansion
+
+Goal: ship a compatible `ads.dev/v1` release that makes ADS more useful to
+automation agents without claiming live deployment behavior.
+
+Completed in `main` at `33a83b9`:
+
+- agent-facing `bin/ads` CLI with `validate`, `explain`, `plan`, and `emit`
+- stable JSON envelopes for automation fields such as `ok`, `phase`, `errors`,
+  `warnings`, `plan`, `artifacts`, and `nextActions`
+- deterministic `ADSDeploymentPlan` output
+- local artifact bundle emission for `compose-single-host` through `compose`
+  and `kubernetes-production` through `kubernetes`
+- plan snapshots and minimal artifact snapshots in conformance fixtures
+- SARIF output file support for reference diagnostics
+- `serverless-auxiliary` and `air-gapped` examples, target contexts, and
+  compatibility matrix coverage
+- planning and artifact redaction checks for secret payloads
+
+Release-hardening tasks:
+
+- update current status, documentation map, roadmap, compatibility, and release
+  readiness language for the `v1.1.0` release target
+- audit compatibility against `v1.0.0` and record the result in [RELEASE.md](RELEASE.md)
+- add CLI `explain` envelope coverage to the Ruby fixture suite
+- clarify that only Compose and Kubernetes local emit adapters exist in this
+  repository
+- re-run local release gates and record fresh evidence for the release-candidate
+  commit
+- verify the Conformance GitHub Actions workflow for the exact branch or tag
+  commit before tagging
+
+Optional post-`v1.1` follow-ups:
+
+- add a dedicated serverless artifact adapter with fixtures and documentation
+- add a concrete GPU target context and GPU example when compatibility can be
+  tested honestly
+- add release-notes automation after the manual `v1.1.0` process is proven

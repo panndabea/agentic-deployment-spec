@@ -1,22 +1,22 @@
 # Agentic Deployment Specification
 
-This document is the normative specification for ADS v1.0. The supporting research notes live in [deployment-research.md](deployment-research.md); they are informative, not normative.
+This document is the normative specification for the stable ADS v1 API. The current release target is `v1.1.0`, a compatible release of `ads.dev/v1`. The supporting research notes live in [deployment-research.md](deployment-research.md); they are informative, not normative.
 
 ## Status
 
-ADS v1.0 is stable. The stable ADS v1 API version is `ads.dev/v1`; the reference examples and JSON Schema target that version. v0.1 defined the problem, scope, vocabulary, and the first conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
+ADS v1 is stable. The stable ADS v1 API version is `ads.dev/v1`; the current release target is `v1.1.0`, a compatible v1.x release. The reference examples and JSON Schema target that API version. v0.1 defined the problem, scope, vocabulary, and the first conceptual document model. v0.2 defined the concrete YAML authoring format. v0.3 added machine-validatable schema and processor conformance work. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
 
 ## Versioning Policy
 
 ADS documents MUST declare the ADS API version they target.
 
-The stable v1.0 API version is `ads.dev/v1`.
+The stable ADS v1 API version is `ads.dev/v1`.
 
 Draft API versions use the `ads.dev/v0alphaN` form. Drafts MAY increment the API version when the authoring format changes incompatibly.
 
 Draft versions MAY introduce breaking changes. Stable versions MUST preserve backward compatibility within the same major version unless a field is explicitly marked as deprecated and removed in a later major version.
 
-After v1.0, breaking changes to `ads.dev/v1` documents require a new stable major API version unless the affected field or behavior was deprecated first and removed in a later major version.
+For v1.x releases, breaking changes to `ads.dev/v1` documents require a new stable major API version unless the affected field or behavior was deprecated first and removed in a later major version.
 
 ## Conformance Language
 
@@ -113,7 +113,7 @@ An ADS YAML document MUST be a mapping with these root fields:
 
 | Field | Required | Type | Description |
 |---|---:|---|---|
-| `apiVersion` | yes | string | ADS API version. The v1.0 examples use `ads.dev/v1`. |
+| `apiVersion` | yes | string | ADS API version. Stable ADS v1 examples use `ads.dev/v1`. |
 | `kind` | yes | string | Document kind. This specification defines `AgenticDeployment`. |
 | `metadata` | yes | object | Human and machine metadata for the deployment contract. |
 | `profiles` | no | list of strings | Target compatibility profiles the author expects to support. |
@@ -732,7 +732,7 @@ The profile matrix is informative guidance for authors and processor implementer
 | `kubernetes-production` | `container-runtime`, `secret-injection`, `persistent-storage`, `queue`, `vector-store`, `network-policy`, `outbound-egress-policy`, `trace-export`, `metrics-export`, `audit-log-export`, `human-approval`, `policy-decision`, `horizontal-scaling`, `event-driven-scaling`, `rollback`, `image-signature-verification` | Requires configured add-ons and integrations for external secrets, policy decisions, approval workflows, egress control, telemetry export, image verification, GPU scheduling, and event-driven scaling. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, `examples/serverless-auxiliary.yaml`, `examples/stateful-agent.yaml`, `examples/multi-agent.yaml`, and `examples/supply-chain.yaml` are expected to pass against `contexts/kubernetes-production.yaml`. |
 | `managed-container-runtime` | `container-runtime`, `secret-injection`, `persistent-storage`, `outbound-egress-policy`, basic service identity, observability export, managed rollout, and managed horizontal scaling | May have limited control over sidecars, native network policy, queues, vector stores, dead-letter queues, custom admission policy, signed artifact enforcement, event-driven scaling, background workers, and local tool-server isolation. | `examples/minimal.yaml`, `examples/approval-policy.yaml`, and `examples/stateful-agent.yaml` are expected to pass against `contexts/managed-container-runtime.yaml`; `examples/serverless-auxiliary.yaml`, `examples/multi-agent.yaml`, and `examples/supply-chain.yaml` are expected to fail until the target context declares additional external integrations. |
 | `serverless-auxiliary` | `container-runtime`, `secret-injection`, `outbound-egress-policy`, `trace-export`, `metrics-export`, `audit-log-export`, and `event-driven-scaling` for short-lived event handlers and burst workers | May not preserve long-running sessions, durable in-process memory, approval workflows, policy decision points, custom networking, local tool servers, signed-artifact enforcement, or low-latency agent handoffs. | `examples/serverless-auxiliary.yaml` is expected to pass against `contexts/serverless-auxiliary.yaml`; stateful, approval-heavy, multi-agent, and signed-artifact examples are expected to fail with compatibility diagnostics. |
-| `gpu-serving` | `gpu-scheduling`, accelerator-aware resources, container runtime, model artifact access, metrics, traces, and workload isolation | Requires target-specific node pools, device plugins, model cache policy, quota controls, and cost governance. | Recognized profile name without a v1.0 target context fixture. |
+| `gpu-serving` | `gpu-scheduling`, accelerator-aware resources, container runtime, model artifact access, metrics, traces, and workload isolation | Requires target-specific node pools, device plugins, model cache policy, quota controls, and cost governance. | Recognized profile name without a current target context fixture. |
 
 Conformance fixtures SHOULD encode both positive and negative profile expectations. A richer example SHOULD pass against at least one production-capable target context and fail against at least one smaller target context when it requires capabilities that the smaller context does not claim to provide.
 
@@ -973,10 +973,11 @@ The files in [examples/conformance/invalid/](examples/conformance/invalid/) are 
 
 Extensions MUST use a namespaced key to avoid collisions. Vendor-specific extensions MUST NOT redefine normative ADS fields.
 
-The v1.0 extension registry is decentralized: ADS documents, processors, and vendors declare support for namespaced extension keys outside the standard field set. A centralized extension registry is outside the v1.0 release scope and would require a later compatible extension process.
+The ADS v1 extension registry is decentralized: ADS documents, processors, and vendors declare support for namespaced extension keys outside the standard field set. A centralized extension registry is outside the current stable API scope and would require a later compatible extension process.
 
 ## Change Log
 
+- v1.1.0 release target: adds the agent-facing `bin/ads` CLI for `validate`, `explain`, `plan`, and `emit`; stable automation envelope fields; deterministic `ADSDeploymentPlan` output; local Compose and Kubernetes artifact emission; plan and artifact conformance snapshots; SARIF output file support; `serverless-auxiliary` and `air-gapped` target contexts and examples; and secret payload redaction checks for planning and artifacts.
 - v1.0: selected `ads.dev/v1` as the stable ADS v1 API version, updated reference examples and schema, stabilized diagnostic categories and the audit event taxonomy, clarified profile fixture coverage, processor conformance terminology, extension registry expectations, and independent fixture validation guidance.
 - v0.5 draft: added initial threat-model coverage, supply-chain requirements for digest-pinned images, image signatures, SBOMs, and provenance, and policy decision points for policy-based approvals.
 - v0.3 draft: added the initial JSON Schema, negative schema fixtures, processor conformance requirements, diagnostic categories, and a reference conformance-check fixture harness.

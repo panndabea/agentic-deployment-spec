@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/name: customer-ops-agent-suite
+  annotations:
+    ads.dev/source-file: examples/multi-agent.yaml

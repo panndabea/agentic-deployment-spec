@@ -6,8 +6,8 @@ intended to make ADS processor behavior concrete enough for authors, reviewers,
 and independent implementers to compare results.
 
 The normative processor requirements remain in [SPEC.md](SPEC.md#processor-conformance).
-This reference processor is not an independent implementation for v1.0 release
-purposes; it is the in-repository executable reference for conformance fixtures.
+This reference processor is not an independent implementation for release
+readiness purposes; it is the in-repository executable reference for conformance fixtures.
 Guidance for independent implementations lives in [IMPLEMENTERS.md](IMPLEMENTERS.md).
 
 ## Scope
@@ -81,13 +81,27 @@ Use the agent-facing CLI for planning and artifact emission:
 
 ```sh
 bin/ads validate --file examples/minimal.yaml --format json
+bin/ads explain --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --format json
 bin/ads plan --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --format json
-bin/ads emit --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --target kubernetes --output-dir /tmp/ads-k8s --format json
+bin/ads emit --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --target kubernetes --output-dir "$(mktemp -d /private/tmp/ads-k8s.XXXXXX)" --format json
 ```
 
 Every `bin/ads` command emits a single JSON envelope with `ok`, `phase`,
 `diagnostics`, `errors`, `warnings`, and `nextActions`. `plan` and successful
-`emit` include the deterministic `ADSDeploymentPlan`.
+`emit` include the deterministic `ADSDeploymentPlan`; `explain` includes a
+top-level `summary` and leaves `plan` as `null`.
+
+The current local emit adapters are only:
+
+- `compose`, for `compose-single-host`
+- `kubernetes`, for `kubernetes-production`
+
+Other profiles may validate or plan when their target context satisfies the ADS
+requirements, but this repository does not yet include local emit adapters for
+`serverless-auxiliary`, `air-gapped`, `managed-container-runtime`, or future
+`gpu-serving` contexts. If a plan for one of those profiles is passed to a known
+adapter, `bin/ads emit` exits `1` with a JSON envelope and a
+`processor-limitation` diagnostic instead of writing mismatched artifacts.
 
 ## Exit Codes
 

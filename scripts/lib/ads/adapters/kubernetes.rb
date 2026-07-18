@@ -397,7 +397,6 @@ module Ads
         end
         lines << ""
         lines << "Secret bindings are references only; no secret payloads are included."
-        lines << ""
         "#{lines.join("\n")}\n"
       end
     end

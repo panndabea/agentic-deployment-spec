@@ -1,0 +1,1015 @@
+{
+  "apiVersion": "ads.dev/v1",
+  "kind": "ADSDeploymentPlan",
+  "planVersion": 1,
+  "metadata": {
+    "name": "customer-ops-agent-suite",
+    "owner": "platform-team",
+    "labels": {
+      "tier": "production",
+      "workload": "agentic"
+    },
+    "annotations": {
+    }
+  },
+  "source": {
+    "file": "examples/multi-agent.yaml",
+    "contextFile": "contexts/kubernetes-production.yaml",
+    "documentKind": "AgenticDeployment",
+    "documentApiVersion": "ads.dev/v1"
+  },
+  "target": {
+    "profile": "kubernetes-production",
+    "capabilities": {
+      "supported": [
+        "audit-log-export",
+        "container-runtime",
+        "dead-letter-queue",
+        "event-driven-scaling",
+        "horizontal-scaling",
+        "human-approval",
+        "image-signature-verification",
+        "metrics-export",
+        "network-policy",
+        "outbound-egress-policy",
+        "persistent-storage",
+        "policy-decision",
+        "queue",
+        "rollback",
+        "secret-injection",
+        "trace-export",
+        "vector-store"
+      ],
+      "secretBindings": [
+        "crm-api-token",
+        "database-url",
+        "model-api-key"
+      ],
+      "egressDestinations": [
+        "api.openai.com",
+        "billing.internal.example",
+        "crm.internal.example",
+        "internal.crm.example"
+      ],
+      "defaultDenyEgress": true
+    }
+  },
+  "components": [
+    {
+      "name": "session-store",
+      "resourceName": "session-store",
+      "type": "state-store",
+      "externalRef": "platform://postgres/customer-ops",
+      "execution": {
+        "mode": "external"
+      },
+      "ports": [
+
+      ],
+      "dependsOn": [
+
+      ],
+      "state": {
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[6]"
+    },
+    {
+      "name": "planner-agent",
+      "resourceName": "planner-agent",
+      "type": "agent-runtime",
+      "image": "ghcr.io/example/customer-ops-planner:1.0.0",
+      "execution": {
+        "mode": "internal-service",
+        "concurrency": 8
+      },
+      "ports": [
+
+      ],
+      "dependsOn": [
+        "session-store"
+      ],
+      "state": {
+        "mode": "checkpointed",
+        "store": "session-store"
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[2]"
+    },
+    {
+      "name": "event-queue",
+      "resourceName": "event-queue",
+      "type": "queue-consumer",
+      "externalRef": "platform://queue/customer-ops-events",
+      "execution": {
+        "mode": "external"
+      },
+      "ports": [
+
+      ],
+      "dependsOn": [
+
+      ],
+      "state": {
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[5]"
+    },
+    {
+      "name": "tool-server",
+      "resourceName": "tool-server",
+      "type": "tool-server",
+      "image": "ghcr.io/example/customer-ops-tools:1.0.0",
+      "execution": {
+        "mode": "internal-service"
+      },
+      "ports": [
+
+      ],
+      "dependsOn": [
+        "session-store"
+      ],
+      "state": {
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[4]"
+    },
+    {
+      "name": "vector-store",
+      "resourceName": "vector-store",
+      "type": "vector-store",
+      "externalRef": "platform://vector/customer-ops-knowledge",
+      "execution": {
+        "mode": "external"
+      },
+      "ports": [
+
+      ],
+      "dependsOn": [
+
+      ],
+      "state": {
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[7]"
+    },
+    {
+      "name": "support-agent",
+      "resourceName": "support-agent",
+      "type": "agent-runtime",
+      "image": "ghcr.io/example/customer-support-agent:1.0.0",
+      "execution": {
+        "mode": "async-worker",
+        "concurrency": 12
+      },
+      "ports": [
+
+      ],
+      "dependsOn": [
+        "event-queue",
+        "tool-server",
+        "vector-store"
+      ],
+      "state": {
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[3]"
+    },
+    {
+      "name": "orchestrator",
+      "resourceName": "orchestrator",
+      "type": "workflow-orchestrator",
+      "image": "ghcr.io/example/customer-ops-orchestrator:1.0.0",
+      "execution": {
+        "mode": "internal-service",
+        "concurrency": 32
+      },
+      "ports": [
+
+      ],
+      "dependsOn": [
+        "planner-agent",
+        "support-agent",
+        "tool-server",
+        "session-store",
+        "event-queue"
+      ],
+      "state": {
+        "mode": "durable-session",
+        "store": "session-store"
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+        "minReplicas": 2,
+        "maxReplicas": 8
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[1]"
+    },
+    {
+      "name": "api",
+      "resourceName": "api",
+      "type": "gateway",
+      "image": "ghcr.io/example/customer-ops-api:1.0.0",
+      "execution": {
+        "mode": "request-response",
+        "concurrency": 16
+      },
+      "ports": [
+        {
+          "name": "http",
+          "containerPort": 8080,
+          "exposure": "external"
+        }
+      ],
+      "dependsOn": [
+        "orchestrator"
+      ],
+      "state": {
+      },
+      "resources": {
+      },
+      "health": {
+        "readiness": {
+          "path": "/ready",
+          "port": "http"
+        },
+        "liveness": {
+          "path": "/healthz",
+          "port": "http"
+        }
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[0]"
+    }
+  ],
+  "capabilities": {
+    "required": [
+      {
+        "name": "container-runtime",
+        "sourcePath": "$.capabilities.required[0]"
+      },
+      {
+        "name": "secret-injection",
+        "sourcePath": "$.capabilities.required[1]"
+      },
+      {
+        "name": "persistent-storage",
+        "sourcePath": "$.capabilities.required[2]"
+      },
+      {
+        "name": "queue",
+        "sourcePath": "$.capabilities.required[3]"
+      },
+      {
+        "name": "vector-store",
+        "sourcePath": "$.capabilities.required[4]"
+      },
+      {
+        "name": "network-policy",
+        "sourcePath": "$.capabilities.required[5]"
+      },
+      {
+        "name": "outbound-egress-policy",
+        "sourcePath": "$.capabilities.required[6]"
+      },
+      {
+        "name": "trace-export",
+        "sourcePath": "$.capabilities.required[7]"
+      },
+      {
+        "name": "metrics-export",
+        "sourcePath": "$.capabilities.required[8]"
+      },
+      {
+        "name": "audit-log-export",
+        "sourcePath": "$.capabilities.required[9]"
+      },
+      {
+        "name": "human-approval",
+        "sourcePath": "$.capabilities.required[10]"
+      },
+      {
+        "name": "policy-decision",
+        "sourcePath": "$.capabilities.required[11]"
+      },
+      {
+        "name": "horizontal-scaling",
+        "sourcePath": "$.capabilities.required[12]"
+      },
+      {
+        "name": "rollback",
+        "sourcePath": "$.capabilities.required[13]"
+      },
+      {
+        "name": "dead-letter-queue",
+        "sourcePath": "$.capabilities.required[14]"
+      }
+    ],
+    "optional": [
+      {
+        "name": "event-driven-scaling",
+        "for": [
+          "support-agent"
+        ],
+        "reason": "scale workers from queue depth when available",
+        "sourcePath": "$.capabilities.optional[0]"
+      },
+      {
+        "name": "image-signature-verification",
+        "reason": "verify production artifacts before rollout",
+        "sourcePath": "$.capabilities.optional[1]"
+      }
+    ]
+  },
+  "secrets": [
+    {
+      "name": "model-api-key",
+      "purpose": "model-provider-auth",
+      "rotation": "required",
+      "source": "external-secret-store",
+      "injection": "env",
+      "reload": "restart-required",
+      "for": [
+        "planner-agent",
+        "support-agent"
+      ],
+      "binding": {
+        "source": "external-secret-store",
+        "ref": "prod/support-agent/model-api-key"
+      },
+      "bindingAvailable": true,
+      "sourcePath": "$.secrets.required[0]",
+      "bindingSourcePath": "$.secrets.bindings.model-api-key"
+    },
+    {
+      "name": "database-url",
+      "purpose": "session-state",
+      "rotation": "required",
+      "source": "external-secret-store",
+      "injection": "env",
+      "reload": "restart-required",
+      "for": [
+        "orchestrator",
+        "planner-agent",
+        "tool-server"
+      ],
+      "binding": {
+        "source": "external-secret-store",
+        "ref": "prod/support-agent/database-url"
+      },
+      "bindingAvailable": true,
+      "sourcePath": "$.secrets.required[1]",
+      "bindingSourcePath": "$.secrets.bindings.database-url"
+    },
+    {
+      "name": "crm-api-token",
+      "purpose": "crm-tool-access",
+      "rotation": "required",
+      "source": "external-secret-store",
+      "injection": "runtime-fetch",
+      "reload": "hot-reload",
+      "for": [
+        "tool-server"
+      ],
+      "binding": {
+        "source": "external-secret-store",
+        "ref": "prod/customer-ops/crm-api-token"
+      },
+      "bindingAvailable": true,
+      "sourcePath": "$.secrets.required[2]",
+      "bindingSourcePath": "$.secrets.bindings.crm-api-token"
+    }
+  ],
+  "networking": {
+    "ingress": [
+      {
+        "name": "public-api",
+        "component": "api",
+        "port": "http",
+        "tls": "required",
+        "auth": "required"
+      }
+    ],
+    "internalTraffic": {
+    },
+    "egress": {
+      "default": "deny",
+      "allow": [
+        "api.openai.com",
+        "crm.internal.example",
+        "billing.internal.example"
+      ]
+    },
+    "outbound": {
+      "default": "deny",
+      "allow": [
+        "api.openai.com",
+        "crm.internal.example",
+        "billing.internal.example"
+      ]
+    },
+    "defaultDeny": true,
+    "target": {
+      "defaultDenyEgress": true,
+      "allowedDestinations": [
+        "api.openai.com",
+        "billing.internal.example",
+        "crm.internal.example",
+        "internal.crm.example"
+      ]
+    }
+  },
+  "security": {
+    "sandbox": "restricted",
+    "outbound": {
+      "default": "deny",
+      "allow": [
+        "api.openai.com",
+        "crm.internal.example",
+        "billing.internal.example"
+      ]
+    },
+    "toolPolicy": {
+      "default": "deny",
+      "allow": [
+        "read-ticket",
+        "search-knowledge-base",
+        "draft-reply",
+        "queue-follow-up"
+      ],
+      "deny": [
+        "send-customer-email",
+        "update-billing-record"
+      ]
+    },
+    "identity": {
+      "serviceAccount": "customer-ops-agents",
+      "operatorGroup": "platform-operators"
+    },
+    "trustBoundaries": [
+      {
+        "name": "external-users",
+        "from": "api",
+        "to": "orchestrator"
+      },
+      {
+        "name": "privileged-tools",
+        "from": "orchestrator",
+        "to": "tool-server"
+      }
+    ],
+    "threatModel": {
+      "assets": [
+        "customer-support-data",
+        "billing-data",
+        "session-state",
+        "crm-api-token"
+      ],
+      "actors": [
+        "end-user",
+        "orchestrator",
+        "support-agent",
+        "tool-server",
+        "platform-operator"
+      ],
+      "threats": [
+        {
+          "id": "agent-handoff-confusion",
+          "category": "cross-agent-confusion",
+          "assets": [
+            "customer-support-data",
+            "session-state"
+          ],
+          "mitigations": [
+            "explicit-trust-boundaries",
+            "orchestration-tracing"
+          ]
+        },
+        {
+          "id": "privileged-tool-abuse",
+          "category": "unsafe-external-side-effect",
+          "assets": [
+            "billing-data",
+            "crm-api-token"
+          ],
+          "mitigations": [
+            "deny-by-default-tools",
+            "approval-gates"
+          ]
+        }
+      ],
+      "mitigations": [
+        {
+          "id": "explicit-trust-boundaries",
+          "fields": [
+            "security.trustBoundaries"
+          ]
+        },
+        {
+          "id": "orchestration-tracing",
+          "fields": [
+            "observability.traces"
+          ]
+        },
+        {
+          "id": "deny-by-default-tools",
+          "fields": [
+            "security.toolPolicy"
+          ]
+        },
+        {
+          "id": "approval-gates",
+          "fields": [
+            "approvals.required"
+          ]
+        }
+      ],
+      "review": {
+        "status": "reviewed",
+        "reviewedBy": "platform-security",
+        "cadence": "release"
+      }
+    },
+    "hardening": {
+      "runAsNonRoot": true,
+      "readOnlyRootFilesystem": true,
+      "seccompProfile": "runtime-default"
+    },
+    "target": {
+      "sandbox": {
+        "levels": [
+          "restricted",
+          "baseline"
+        ]
+      },
+      "toolPolicy": {
+        "defaults": [
+          "deny",
+          "allow"
+        ],
+        "ruleLists": true
+      }
+    }
+  },
+  "approvals": {
+    "required": [
+      {
+        "action": "send-customer-email",
+        "mode": "human",
+        "reason": "external side effect",
+        "scope": {
+          "component": "tool-server",
+          "dataClass": "customer-communication"
+        },
+        "auditEvents": [
+          "approval_requested",
+          "approval_granted",
+          "approval_denied"
+        ]
+      },
+      {
+        "action": "update-billing-record",
+        "mode": "policy-and-human",
+        "reason": "privileged financial data mutation",
+        "policyDecisionPointRef": "billing-update-policy",
+        "scope": {
+          "component": "tool-server",
+          "dataClass": "billing"
+        },
+        "auditEvents": [
+          "approval_requested",
+          "policy_decision_recorded",
+          "approval_granted",
+          "approval_denied"
+        ]
+      }
+    ],
+    "policyDecisionPoints": [
+      {
+        "name": "billing-update-policy",
+        "engineRef": "opa/billing-actions",
+        "appliesTo": [
+          "update-billing-record"
+        ],
+        "decisionInputs": [
+          "actor",
+          "action",
+          "dataClass",
+          "tenant",
+          "amount"
+        ],
+        "failureMode": "closed",
+        "auditEvents": [
+          "policy_decision_recorded"
+        ]
+      }
+    ],
+    "targetHandlers": {
+      "human": {
+        "ref": "ticketing/platform-approval"
+      },
+      "policy": {
+        "ref": "opa/agentic-deployment"
+      }
+    },
+    "targetPolicyDecisionPoints": {
+      "crm-mutation-policy": {
+        "ref": "opa/customer-operations"
+      },
+      "risk-classification-policy": {
+        "ref": "opa/customer-risk"
+      },
+      "financial-action-policy": {
+        "ref": "opa/billing-actions"
+      },
+      "data-export-policy": {
+        "ref": "opa/data-export"
+      },
+      "session-restore-policy": {
+        "ref": "opa/session-state"
+      },
+      "billing-update-policy": {
+        "ref": "opa/billing-actions"
+      }
+    }
+  },
+  "observability": {
+    "traces": {
+      "required": true,
+      "format": "opentelemetry"
+    },
+    "metrics": {
+      "required": [
+        "request_latency",
+        "orchestration_duration",
+        "agent_handoff_count",
+        "queue_depth",
+        "tool_call_count",
+        "approval_wait_time",
+        "model_cost"
+      ]
+    },
+    "logs": {
+      "streams": [
+        "api",
+        "orchestrator",
+        "planner-agent",
+        "support-agent",
+        "tool-server"
+      ],
+      "redaction": {
+        "required": true
+      }
+    },
+    "auditEvents": {
+      "required": [
+        "deployment_planned",
+        "deployment_applied",
+        "tool_call_denied",
+        "approval_requested",
+        "approval_granted",
+        "approval_denied",
+        "policy_decision_recorded",
+        "secret_resolved"
+      ]
+    },
+    "targetSinks": {
+      "traces": {
+        "sinks": [
+          "opentelemetry-collector"
+        ]
+      },
+      "metrics": {
+        "sinks": [
+          "prometheus"
+        ]
+      },
+      "auditEvents": {
+        "sinks": [
+          "security-audit-log"
+        ]
+      }
+    }
+  },
+  "supplyChain": {
+    "requirements": {
+    },
+    "targetControls": {
+      "signatures": {
+        "available": true,
+        "verifiers": [
+          "sigstore-cosign"
+        ]
+      },
+      "sbom": {
+        "available": true,
+        "formats": [
+          "spdx-json",
+          "cyclonedx-json"
+        ]
+      },
+      "provenance": {
+        "available": true,
+        "predicateTypes": [
+          "slsa-provenance"
+        ]
+      }
+    }
+  },
+  "reliability": {
+    "rollout": {
+      "strategy": "canary",
+      "maxUnavailable": 1
+    },
+    "rollback": {
+      "automatic": true,
+      "triggers": [
+        "elevated_error_rate",
+        "failed_readiness"
+      ]
+    },
+    "retries": {
+      "default": {
+        "attempts": 3,
+        "backoff": "exponential",
+        "jitter": true
+      }
+    },
+    "deadLetters": {
+      "required": true,
+      "queue": "customer-ops-dead-letter"
+    }
+  },
+  "actions": [
+    {
+      "type": "validate-schema",
+      "status": "planned",
+      "requirement": "ADS document satisfies structural and conformance validation.",
+      "sourcePath": "$",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "resolve-target-context",
+      "status": "planned",
+      "requirement": "Target context kubernetes-production is compatible.",
+      "sourcePath": "$",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "api",
+      "sourcePath": "$.runtime.components[0]",
+      "targetProfile": "kubernetes-production",
+      "component": "api"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "event-queue",
+      "sourcePath": "$.runtime.components[5]",
+      "targetProfile": "kubernetes-production",
+      "component": "event-queue"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "orchestrator",
+      "sourcePath": "$.runtime.components[1]",
+      "targetProfile": "kubernetes-production",
+      "component": "orchestrator"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "planner-agent",
+      "sourcePath": "$.runtime.components[2]",
+      "targetProfile": "kubernetes-production",
+      "component": "planner-agent"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "session-store",
+      "sourcePath": "$.runtime.components[6]",
+      "targetProfile": "kubernetes-production",
+      "component": "session-store"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "support-agent",
+      "sourcePath": "$.runtime.components[3]",
+      "targetProfile": "kubernetes-production",
+      "component": "support-agent"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "tool-server",
+      "sourcePath": "$.runtime.components[4]",
+      "targetProfile": "kubernetes-production",
+      "component": "tool-server"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "vector-store",
+      "sourcePath": "$.runtime.components[7]",
+      "targetProfile": "kubernetes-production",
+      "component": "vector-store"
+    },
+    {
+      "type": "resolve-secret-binding",
+      "status": "planned",
+      "requirement": "crm-api-token",
+      "sourcePath": "$.secrets.required[2]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "resolve-secret-binding",
+      "status": "planned",
+      "requirement": "database-url",
+      "sourcePath": "$.secrets.required[1]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "resolve-secret-binding",
+      "status": "planned",
+      "requirement": "model-api-key",
+      "sourcePath": "$.secrets.required[0]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "prepare-runtime-component",
+      "status": "planned",
+      "requirement": "gateway",
+      "sourcePath": "$.runtime.components[0]",
+      "targetProfile": "kubernetes-production",
+      "component": "api"
+    },
+    {
+      "type": "prepare-runtime-component",
+      "status": "planned",
+      "requirement": "workflow-orchestrator",
+      "sourcePath": "$.runtime.components[1]",
+      "targetProfile": "kubernetes-production",
+      "component": "orchestrator"
+    },
+    {
+      "type": "prepare-runtime-component",
+      "status": "planned",
+      "requirement": "agent-runtime",
+      "sourcePath": "$.runtime.components[2]",
+      "targetProfile": "kubernetes-production",
+      "component": "planner-agent"
+    },
+    {
+      "type": "prepare-runtime-component",
+      "status": "planned",
+      "requirement": "agent-runtime",
+      "sourcePath": "$.runtime.components[3]",
+      "targetProfile": "kubernetes-production",
+      "component": "support-agent"
+    },
+    {
+      "type": "prepare-runtime-component",
+      "status": "planned",
+      "requirement": "tool-server",
+      "sourcePath": "$.runtime.components[4]",
+      "targetProfile": "kubernetes-production",
+      "component": "tool-server"
+    },
+    {
+      "type": "configure-service",
+      "status": "planned",
+      "requirement": "ports",
+      "sourcePath": "$.runtime.components[0].ports",
+      "targetProfile": "kubernetes-production",
+      "component": "api"
+    },
+    {
+      "type": "configure-ingress",
+      "status": "planned",
+      "requirement": "ingress",
+      "sourcePath": "$.networking.ingress",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-egress-policy",
+      "status": "planned",
+      "requirement": "egress",
+      "sourcePath": "$.security.outbound.default",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-security-policy",
+      "status": "planned",
+      "requirement": "security",
+      "sourcePath": "$.security",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "auditEvents",
+      "sourcePath": "$.observability.auditEvents",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "logs",
+      "sourcePath": "$.observability.logs",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "metrics",
+      "sourcePath": "$.observability.metrics",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "traces",
+      "sourcePath": "$.observability.traces",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-approval-gate",
+      "status": "planned",
+      "requirement": "send-customer-email",
+      "sourcePath": "$.approvals.required[0]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-approval-gate",
+      "status": "planned",
+      "requirement": "update-billing-record",
+      "sourcePath": "$.approvals.required[1]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "apply-reliability-policy",
+      "status": "planned",
+      "requirement": "reliability",
+      "sourcePath": "$.reliability",
+      "targetProfile": "kubernetes-production"
+    }
+  ],
+  "diagnostics": [
+
+  ]
+}

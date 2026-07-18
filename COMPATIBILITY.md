@@ -22,11 +22,11 @@ processor before deployment planning.
 
 ## Recognized Profiles Without Fixtures
 
-ADS v1.0 intentionally recognizes `gpu-serving` as a profile name without
-publishing a reference target context fixture for it. This name reserves stable
-vocabulary for a common deployment target, but it does not imply compatibility
-by itself. A processor must still validate against a concrete target context
-before planning for this profile.
+Stable ADS v1 intentionally recognizes `gpu-serving` as a profile name without
+publishing a current reference target context fixture for it. This name reserves
+stable vocabulary for a common deployment target, but it does not imply
+compatibility by itself. A processor must still validate against a concrete
+target context before planning for this profile.
 
 ## Example Compatibility
 

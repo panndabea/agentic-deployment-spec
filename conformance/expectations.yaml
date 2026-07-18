@@ -364,6 +364,10 @@ artifacts:
       example: examples/minimal.yaml
       context: contexts/kubernetes-production.yaml
       fixtureDir: conformance/artifacts/kubernetes-production/minimal
+    - target: kubernetes
+      example: examples/multi-agent.yaml
+      context: contexts/kubernetes-production.yaml
+      fixtureDir: conformance/artifacts/kubernetes-production/multi-agent
   rejects:
     - target: compose
       example: examples/multi-agent.yaml
@@ -372,3 +376,10 @@ artifacts:
         - capability-unsupported
         - secret-unbound
         - network-unresolved
+    - target: kubernetes
+      example: examples/serverless-auxiliary.yaml
+      context: contexts/serverless-auxiliary.yaml
+      expectedDiagnostics:
+        - processor-limitation
+        - serverless-auxiliary
+        - kubernetes-production

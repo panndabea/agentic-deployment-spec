@@ -10,7 +10,7 @@ The Agentic Deployment Specification (ADS) lets an application describe how it s
 
 ## Status
 
-ADS v1.0 is stable. The stable ADS v1 API version is `ads.dev/v1`; the reference examples and JSON Schema target that version. v0.3 made the model machine-validatable with JSON Schema, fixtures, and processor conformance rules. v0.4 added profile-oriented examples. v0.5 hardened security, supply-chain, policy, and operational readiness requirements.
+ADS v1 is stable. The current release target is `v1.1.0`, a compatible release of the stable `ads.dev/v1` API. The reference examples and JSON Schema target that API version. v1.1-sized additions on `main` include the agent-facing CLI, deterministic planning, local artifact bundle emission, additional target contexts, and expanded conformance snapshots.
 
 ## What ADS is
 
@@ -40,7 +40,7 @@ ADS is not a replacement for Kubernetes manifests, Helm charts, CI/CD pipelines,
 
 For ADS authors:
 
-- [SPEC.md](SPEC.md) is the normative v1.0 specification.
+- [SPEC.md](SPEC.md) is the normative stable ADS v1 specification.
 - [examples/minimal.yaml](examples/minimal.yaml) is the standalone canonical minimal ADS example.
 - [examples/approval-policy.yaml](examples/approval-policy.yaml), [examples/air-gapped.yaml](examples/air-gapped.yaml), [examples/serverless-auxiliary.yaml](examples/serverless-auxiliary.yaml), [examples/multi-agent.yaml](examples/multi-agent.yaml), [examples/stateful-agent.yaml](examples/stateful-agent.yaml), and [examples/supply-chain.yaml](examples/supply-chain.yaml) show production-oriented patterns.
 - [COMPATIBILITY.md](COMPATIBILITY.md) summarizes which examples are expected to pass against the current target contexts.
@@ -58,7 +58,7 @@ For maintainers:
 
 - [ROADMAP.md](ROADMAP.md) tracks planned versions and exit criteria.
 - [CONTRIBUTING.md](CONTRIBUTING.md) describes the contribution workflow, fixture expectations, and governance rules.
-- [RELEASE.md](RELEASE.md) defines release readiness gates and the v1.0 release record.
+- [RELEASE.md](RELEASE.md) defines release readiness gates, active `v1.1.0` readiness tracking, and the historical `v1.0.0` release record.
 - [deployment-research.md](deployment-research.md) is the non-normative technical research reference used to shape the specification.
 
 ## Validation
@@ -91,15 +91,45 @@ diagnostic prose:
 
 ```sh
 bin/ads validate --file examples/minimal.yaml --format json
+bin/ads explain --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --format json
 bin/ads plan --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --format json
-bin/ads emit --file examples/minimal.yaml --context contexts/compose-single-host.yaml --target compose --output-dir /tmp/ads-compose --format json
-bin/ads emit --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --target kubernetes --output-dir /tmp/ads-k8s --format json
+bin/ads emit --file examples/minimal.yaml --context contexts/compose-single-host.yaml --target compose --output-dir "$(mktemp -d /private/tmp/ads-compose.XXXXXX)" --format json
+bin/ads emit --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --target kubernetes --output-dir "$(mktemp -d /private/tmp/ads-k8s.XXXXXX)" --format json
 ```
 
 `plan` emits a deterministic `ADSDeploymentPlan` only after schema,
 document-level, target-context, and profile compatibility checks pass. `emit`
 consumes that plan and writes artifact bundles only; it never applies changes to
 Docker, Kubernetes, clouds, policy engines, registries, or secret stores.
+
+Current local emit adapters are intentionally narrow:
+
+- `compose`, for `compose-single-host`
+- `kubernetes`, for `kubernetes-production`
+
+Other target contexts, including `serverless-auxiliary`, `air-gapped`,
+`managed-container-runtime`, and future `gpu-serving` contexts, may validate or
+plan when their required target-context support exists. This repository does
+not yet include local emit adapters for those profiles. Unsupported emit
+profiles are processor or adapter limitations, not ADS document-format errors.
+
+For example, this command validates the serverless plan but asks the Kubernetes
+adapter to emit a `serverless-auxiliary` target profile:
+
+```sh
+tmpdir="$(mktemp -d /private/tmp/ads-serverless.XXXXXX)"
+bin/ads emit \
+  --file examples/serverless-auxiliary.yaml \
+  --context contexts/serverless-auxiliary.yaml \
+  --target kubernetes \
+  --output-dir "$tmpdir" \
+  --format json
+```
+
+It exits `1` with a JSON envelope where `ok` is `false`, `phase` is `emit`,
+`targetProfile` is `serverless-auxiliary`, `plan` is `null`, `artifacts` is
+empty, and `errors` includes a `processor-limitation` diagnostic for the target
+adapter mismatch.
 
 The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml) runs the Ruby fixture suite, Go tests, and independent Go fixture validator on pull requests, pushes to `main`, release branches, and version tags. It also publishes reference-processor SARIF diagnostics to GitHub Code Scanning when the workflow token has permission.
 
@@ -130,7 +160,7 @@ The top-level files in `examples/*.yaml` are positive examples and should pass s
 
 The `contexts/*.yaml` files are non-normative target-context fixtures for the reference processor. They describe available target profile capabilities, secret bindings, approval handlers, observability sinks, network controls, security policy enforcement, and supply-chain controls. The files in `contexts/invalid/` intentionally omit required target context support.
 
-## v1.0 Direction
+## Current Direction
 
 ADS is intended to be a deployment and governance standard for production agentic systems, not another wrapper around `docker-compose.yml`. A conforming ADS document should describe:
 

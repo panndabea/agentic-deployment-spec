@@ -6,20 +6,115 @@ and governance process lives in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Release Gates
 
+These recurring gates apply to the active release checklist. Historical checked
+evidence for `v1.0.0` remains in the sections below.
+
 A release is ready only when all of these gates are satisfied:
 
-- [x] [SPEC.md](SPEC.md) reflects the intended normative behavior for the release.
-- [x] [schemas/ads.schema.json](schemas/ads.schema.json) matches the structural requirements in the spec.
-- [x] Reference examples in [examples/](examples/) match the current authoring guidance.
-- [x] Target contexts in [contexts/](contexts/) match the supported compatibility profiles.
-- [x] [conformance/expectations.yaml](conformance/expectations.yaml) captures all expected schema, conformance, warning, and target-context outcomes.
-- [x] [COMPATIBILITY.md](COMPATIBILITY.md) matches the public example-to-target-context expectations.
-- [x] [IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current conformance model for independent processors.
-- [x] [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the behavior and limitations of the Ruby reference processor.
-- [x] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
-- [x] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
-- [x] `ruby scripts/test-examples.rb` passes locally.
-- [x] The Conformance GitHub Actions workflow passes for the release branch or tag.
+- [ ] [SPEC.md](SPEC.md) reflects the intended normative behavior for the release.
+- [ ] [schemas/ads.schema.json](schemas/ads.schema.json) matches the structural requirements in the spec.
+- [ ] Reference examples in [examples/](examples/) match the current authoring guidance.
+- [ ] Target contexts in [contexts/](contexts/) match the supported compatibility profiles.
+- [ ] [conformance/expectations.yaml](conformance/expectations.yaml) captures all expected schema, conformance, warning, and target-context outcomes.
+- [ ] [COMPATIBILITY.md](COMPATIBILITY.md) matches the public example-to-target-context expectations.
+- [ ] [IMPLEMENTERS.md](IMPLEMENTERS.md) matches the current conformance model for independent processors.
+- [ ] [REFERENCE_PROCESSOR.md](REFERENCE_PROCESSOR.md) matches the behavior and limitations of the Ruby reference processor.
+- [ ] [CONTRIBUTING.md](CONTRIBUTING.md) describes the current contribution and governance process.
+- [ ] The change log in [SPEC.md](SPEC.md#change-log) summarizes release-impacting changes.
+- [ ] `ruby scripts/test-examples.rb` passes locally.
+- [ ] The Conformance GitHub Actions workflow passes for the release branch or tag.
+
+## v1.1 Release Readiness
+
+This is the active checklist for the `v1.1.0` release target. Keep `ads.dev/v1`
+as the stable API version unless the compatibility audit discovers a breaking
+change.
+
+- [ ] Spec, status text, and change log updated for `v1.1.0`.
+- [ ] README, roadmap, and compatibility matrix updated for `v1.1.0`.
+- [ ] Compatibility audit against `v1.0.0` completed.
+- [ ] [COMPATIBILITY.md](COMPATIBILITY.md) checked against [conformance/expectations.yaml](conformance/expectations.yaml).
+- [ ] Plan snapshot coverage checked.
+- [ ] Artifact snapshot coverage checked.
+- [ ] CLI envelope coverage checked, including `explain`.
+- [ ] Unsupported emit-profile behavior documented.
+- [ ] Secret redaction evidence checked.
+- [ ] Local release commands passed.
+- [ ] GitHub Actions Conformance passed on the exact release branch or tag commit.
+
+### v1.1 Compatibility Review
+
+`ads.dev/v1` remains the stable ADS API version for the `v1.1.0` release target.
+The release adds compatible processor, fixture, CLI, artifact, and
+target-context surface area: `bin/ads`, deterministic `ADSDeploymentPlan`
+output, local Compose and Kubernetes artifact emission, plan and artifact
+snapshots, SARIF output file support, `serverless-auxiliary` and `air-gapped`
+fixtures, and secret payload redaction checks.
+
+Compatibility audit notes:
+
+- Working-tree audit performed on 2026-07-18 against local changes based on
+  commit `33a83b9a062181e324d317e4f5d356688d1cb278`.
+- Reviewed `git diff --name-status v1.0.0..HEAD`, the scoped
+  `v1.0.0..HEAD` diff for the spec, schema, expectations, examples, contexts,
+  processor, CLI, and Go validator, and the current uncommitted scoped diff.
+- `v1.0.0..HEAD` adds implementation and fixture surface without changing the
+  ADS source document API version.
+- No required root field was added to `AgenticDeployment`.
+- No optional ADS field was made required by the schema or processor.
+- Existing standard capability, audit event, profile, diagnostic category, and
+  required-field vocabulary is retained.
+- `ADSDeploymentPlan` remains a processor artifact, not a required ADS source
+  document kind.
+- The current schema still requires only `apiVersion`, `kind`, `metadata`,
+  `runtime`, `capabilities`, `secrets`, `security`, `approvals`, and
+  `observability`; `apiVersion` remains `ads.dev/v1` and `kind` remains
+  `AgenticDeployment`.
+- [conformance/expectations.yaml](conformance/expectations.yaml) now records 21
+  schema-positive fixtures, 5 schema-negative fixtures, 36 target-context
+  expectations, 4 plan snapshots, 3 artifact snapshots, and 2 artifact rejects.
+- Local emit support is intentionally limited to the `compose` adapter for
+  `compose-single-host` and the `kubernetes` adapter for
+  `kubernetes-production`; other profiles may still validate or plan.
+
+### v1.1 Verification Evidence
+
+- Release-candidate commit SHA: pending final release-candidate commit. Current
+  working tree is based on `33a83b9a062181e324d317e4f5d356688d1cb278`.
+- Verification date: 2026-07-18 for the current working tree; rerun after the
+  final release-candidate commit is created.
+- Local command results on 2026-07-18:
+  - `git diff --check`: passed.
+  - `ruby scripts/test-examples.rb`: passed, including `bin/ads explain`
+    envelope coverage, artifact snapshots, artifact rejects, and redaction
+    checks.
+  - `go test ./...`: passed.
+  - `go run ./cmd/ads-fixture-validator`: passed.
+  - `bin/ads validate --file examples/minimal.yaml --format json`: passed with
+    `ok: true`, `phase: validate`, no errors, and `plan: null`.
+  - `bin/ads explain --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --format json`:
+    passed with `ok: true`, `target: kubernetes`,
+    `targetProfile: kubernetes-production`, non-empty `summary`, `plan: null`,
+    and empty `artifacts`.
+  - `bin/ads plan --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --format json`:
+    passed with `ok: true` and an `ADSDeploymentPlan`.
+  - `bin/ads emit --file examples/minimal.yaml --context contexts/compose-single-host.yaml --target compose --output-dir /private/tmp/ads-v1.1-compose-smoke.jDIXZQ --format json`:
+    passed with `ok: true` and wrote only local files.
+  - Compose smoke output directory:
+    `/private/tmp/ads-v1.1-compose-smoke.jDIXZQ`.
+  - Compose smoke output files: `compose.yaml`, `ads-plan.json`, and
+    `README.md`.
+  - Secret payload scan over `conformance/artifacts` and the Compose smoke
+    output found no matches for `secretValue:`, `privateKey:`, `password:`,
+    `token:`, `super-secret`, private-key headers, or `credential`.
+- GitHub Actions workflow name: `Conformance`.
+- GitHub Actions run ID and URL: pending exact release branch or tag commit.
+- Release tag: pending.
+- Baseline main evidence only: Conformance run `29646050898` passed for
+  `33a83b9a062181e324d317e4f5d356688d1cb278` on `main` at
+  <https://github.com/panndabea/agentic-deployment-spec/actions/runs/29646050898>;
+  do not use this as final release evidence unless the release-candidate commit
+  is exactly `33a83b9a062181e324d317e4f5d356688d1cb278`.
 
 ## v1.0 Readiness Checklist
 

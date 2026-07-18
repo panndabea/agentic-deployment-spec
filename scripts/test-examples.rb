@@ -532,6 +532,25 @@ Dir.chdir(REPO_ROOT) do
   checks << print_assertion("cli validate envelope ok", success && body["ok"] == true && body["phase"] == "validate")
 
   success, body, = run_json_command(
+    "cli explain success",
+    ["bin/ads", "explain", "--file", "examples/minimal.yaml", "--context", "contexts/kubernetes-production.yaml", "--format", "json"],
+    expected_exit: 0
+  )
+  checks << print_assertion(
+    "cli explain envelope ok",
+    success &&
+      body["ok"] == true &&
+      body["phase"] == "explain" &&
+      body["summary"].is_a?(String) &&
+      !body["summary"].empty? &&
+      body["target"] == "kubernetes" &&
+      body["targetProfile"] == "kubernetes-production" &&
+      body["plan"].nil? &&
+      body["artifacts"] == [] &&
+      body["errors"] == []
+  )
+
+  success, body, = run_json_command(
     "cli plan success",
     ["bin/ads", "plan", "--file", "examples/minimal.yaml", "--context", "contexts/kubernetes-production.yaml", "--format", "json"],
     expected_exit: 0
@@ -574,6 +593,27 @@ Dir.chdir(REPO_ROOT) do
     expected_exit: 1
   )
   checks << print_assertion("cli incompatible plan envelope", success && body["ok"] == false && body["errors"].any? { |diagnostic| diagnostic["category"] == "network-unresolved" })
+
+  success, body, = run_json_command(
+    "cli explain incompatible target",
+    ["bin/ads", "explain", "--file", "examples/minimal.yaml", "--context", "contexts/air-gapped.yaml", "--format", "json"],
+    expected_exit: 1
+  )
+  explain_categories = body.fetch("errors", []).map { |diagnostic| diagnostic["category"] }
+  checks << print_assertion(
+    "cli incompatible explain envelope",
+    success &&
+      body["ok"] == false &&
+      body["phase"] == "explain" &&
+      body["targetProfile"] == "air-gapped" &&
+      explain_categories.include?("processor-limitation") &&
+      explain_categories.include?("network-unresolved") &&
+      body["nextActions"].is_a?(Array) &&
+      !body["nextActions"].empty? &&
+      body["summary"].is_a?(String) &&
+      !body["summary"].empty? &&
+      body["plan"].nil?
+  )
 
   success, body, = run_json_command(
     "cli emit unsupported target",

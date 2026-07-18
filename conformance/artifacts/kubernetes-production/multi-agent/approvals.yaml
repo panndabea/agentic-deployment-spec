@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: customer-ops-agent-suite-approval-send-customer-email
+  namespace: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: approval
+  annotations:
+    ads.dev/source-path: "$.approvals.required[0]"
+data:
+  action: send-customer-email
+  mode: human
+  policyDecisionPointRef: ''
+  failureMode: closed
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: customer-ops-agent-suite-approval-update-billing-record
+  namespace: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: approval
+  annotations:
+    ads.dev/source-path: "$.approvals.required[1]"
+data:
+  action: update-billing-record
+  mode: policy-and-human
+  policyDecisionPointRef: billing-update-policy
+  failureMode: closed
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: customer-ops-agent-suite-pdp-billing-update-policy
+  namespace: customer-ops-agent-suite
+  labels:
+    app.kubernetes.io/name: customer-ops-agent-suite
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: policy-decision-point
+  annotations:
+    ads.dev/source-path: "$.approvals.policyDecisionPoints[0]"
+data:
+  name: billing-update-policy
+  engineRef: opa/billing-actions
+  failureMode: closed
