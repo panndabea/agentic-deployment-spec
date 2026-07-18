@@ -54,6 +54,8 @@ Use this checklist when changing ADS behavior:
 - Update [examples/](examples/) when the change affects authoring guidance or expected usage.
 - Update [contexts/](contexts/) when target-profile support or target fixtures change.
 - Update [conformance/expectations.yaml](conformance/expectations.yaml) when schema, conformance, warning, or target-context outcomes change.
+- Update plan snapshots in `conformance/plans/` when planning output changes intentionally.
+- Update artifact snapshots in `conformance/artifacts/` when adapter output changes intentionally.
 - Update [COMPATIBILITY.md](COMPATIBILITY.md) when example-to-target-context compatibility changes in a user-visible way.
 - Run `ruby scripts/test-examples.rb`.
 - Run `go test ./...` and `go run ./cmd/ads-fixture-validator` when processor conformance behavior, fixture expectations, or release-readiness evidence changes.
@@ -110,6 +112,21 @@ the failure.
 
 Diagnostics must never include secret values, credentials, tokens, private keys,
 or decrypted secret payloads.
+
+## Plan And Artifact Fixtures
+
+Plan fixtures in `conformance/plans/` are exact pretty-printed JSON snapshots of
+successful `ADSDeploymentPlan` output. They should contain no timestamps or
+environment-specific data.
+
+Artifact fixtures in `conformance/artifacts/` are exact directory snapshots for
+adapter output. Keep filenames, resource ordering, YAML key order, and README
+content deterministic. Artifact fixtures must not contain secret payloads; use
+secret references and redacted binding metadata only.
+
+When updating these fixtures, regenerate them from the same ADS example and
+target context registered in [conformance/expectations.yaml](conformance/expectations.yaml),
+then run `ruby scripts/test-examples.rb`.
 
 ## Governance
 

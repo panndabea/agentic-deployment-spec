@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: support-agent-default-deny-egress
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+  annotations:
+    ads.dev/source-path: "$.security.outbound"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress: []
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-agent-egress-policy
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: networking
+  annotations:
+    ads.dev/source-path: "$.security.outbound.allow"
+data:
+  defaultDeny: 'true'
+  allowedDestinations: api.openai.com,internal.crm.example

@@ -1,0 +1,39 @@
+apiVersion: ads.dev/v1
+kind: AgenticDeployment
+metadata:
+  name: profile-mismatch
+  owner: platform-team
+
+profiles:
+  - compose-single-host
+
+runtime:
+  components:
+    - name: api
+      type: agent-runtime
+      image: ghcr.io/example/api:1.0.0
+      execution:
+        mode: request-response
+
+capabilities:
+  required:
+    - container-runtime
+
+secrets:
+  required: []
+
+security:
+  defaultSandbox: restricted
+  toolPolicy:
+    default: deny
+
+approvals:
+  required: []
+
+observability:
+  metrics:
+    required: []
+  auditEvents:
+    required:
+      - deployment_planned
+      - tool_call_denied

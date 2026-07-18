@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-agent-observability-traces
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: observability
+  annotations:
+    ads.dev/source-path: "$.observability.traces"
+data:
+  signal: traces
+  requirement: '{"required":true,"format":"opentelemetry"}'
+  targetSinks: '{"sinks":["opentelemetry-collector"]}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-agent-observability-metrics
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: observability
+  annotations:
+    ads.dev/source-path: "$.observability.metrics"
+data:
+  signal: metrics
+  requirement: '{"required":["request_latency","tool_call_count","approval_wait_time","model_cost"]}'
+  targetSinks: '{"sinks":["prometheus"]}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-agent-observability-auditevents
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: observability
+  annotations:
+    ads.dev/source-path: "$.observability.auditEvents"
+data:
+  signal: auditEvents
+  requirement: '{"required":["deployment_planned","policy_decision_recorded","approval_requested","tool_call_denied","approval_granted","approval_denied","secret_resolved"]}'
+  targetSinks: '{"sinks":["security-audit-log"]}'

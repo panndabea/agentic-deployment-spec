@@ -1,0 +1,547 @@
+{
+  "apiVersion": "ads.dev/v1",
+  "kind": "ADSDeploymentPlan",
+  "planVersion": 1,
+  "metadata": {
+    "name": "support-agent",
+    "owner": "platform-team",
+    "labels": {
+      "tier": "production"
+    },
+    "annotations": {
+    }
+  },
+  "source": {
+    "file": "examples/minimal.yaml",
+    "contextFile": "contexts/compose-single-host.yaml",
+    "documentKind": "AgenticDeployment",
+    "documentApiVersion": "ads.dev/v1"
+  },
+  "target": {
+    "profile": "compose-single-host",
+    "capabilities": {
+      "supported": [
+        "audit-log-export",
+        "container-runtime",
+        "human-approval",
+        "metrics-export",
+        "outbound-egress-policy",
+        "persistent-storage",
+        "policy-decision",
+        "secret-injection",
+        "trace-export"
+      ],
+      "secretBindings": [
+        "database-url",
+        "model-api-key"
+      ],
+      "egressDestinations": [
+        "api.openai.com",
+        "internal.crm.example"
+      ],
+      "defaultDenyEgress": true
+    }
+  },
+  "components": [
+    {
+      "name": "api",
+      "resourceName": "api",
+      "type": "agent-runtime",
+      "image": "ghcr.io/example/support-agent:1.0.0",
+      "execution": {
+        "mode": "request-response",
+        "concurrency": 8
+      },
+      "ports": [
+        {
+          "name": "http",
+          "containerPort": 8080
+        }
+      ],
+      "dependsOn": [
+
+      ],
+      "state": {
+        "mode": "durable-session",
+        "store": "postgres"
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[0]"
+    },
+    {
+      "name": "tool-server",
+      "resourceName": "tool-server",
+      "type": "tool-server",
+      "image": "ghcr.io/example/support-tools:1.0.0",
+      "execution": {
+        "mode": "internal-service"
+      },
+      "ports": [
+
+      ],
+      "dependsOn": [
+
+      ],
+      "state": {
+      },
+      "resources": {
+      },
+      "health": {
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[1]"
+    }
+  ],
+  "capabilities": {
+    "required": [
+      {
+        "name": "secret-injection",
+        "sourcePath": "$.capabilities.required[0]"
+      },
+      {
+        "name": "persistent-storage",
+        "sourcePath": "$.capabilities.required[1]"
+      },
+      {
+        "name": "outbound-egress-policy",
+        "sourcePath": "$.capabilities.required[2]"
+      },
+      {
+        "name": "trace-export",
+        "sourcePath": "$.capabilities.required[3]"
+      },
+      {
+        "name": "metrics-export",
+        "sourcePath": "$.capabilities.required[4]"
+      },
+      {
+        "name": "audit-log-export",
+        "sourcePath": "$.capabilities.required[5]"
+      },
+      {
+        "name": "human-approval",
+        "sourcePath": "$.capabilities.required[6]"
+      },
+      {
+        "name": "policy-decision",
+        "sourcePath": "$.capabilities.required[7]"
+      }
+    ],
+    "optional": [
+
+    ]
+  },
+  "secrets": [
+    {
+      "name": "model-api-key",
+      "purpose": "model-provider-auth",
+      "rotation": "required",
+      "binding": {
+        "source": "platform-secret",
+        "ref": "env:MODEL_API_KEY"
+      },
+      "bindingAvailable": true,
+      "sourcePath": "$.secrets.required[0]",
+      "bindingSourcePath": "$.secrets.bindings.model-api-key"
+    },
+    {
+      "name": "database-url",
+      "purpose": "session-state",
+      "rotation": "required",
+      "binding": {
+        "source": "platform-secret",
+        "ref": "env:DATABASE_URL"
+      },
+      "bindingAvailable": true,
+      "sourcePath": "$.secrets.required[1]",
+      "bindingSourcePath": "$.secrets.bindings.database-url"
+    }
+  ],
+  "networking": {
+    "ingress": {
+    },
+    "internalTraffic": {
+    },
+    "egress": {
+    },
+    "outbound": {
+      "default": "deny",
+      "allow": [
+        "api.openai.com",
+        "internal.crm.example"
+      ]
+    },
+    "defaultDeny": true,
+    "target": {
+      "defaultDenyEgress": true,
+      "allowedDestinations": [
+        "api.openai.com",
+        "internal.crm.example"
+      ]
+    }
+  },
+  "security": {
+    "sandbox": "restricted",
+    "outbound": {
+      "default": "deny",
+      "allow": [
+        "api.openai.com",
+        "internal.crm.example"
+      ]
+    },
+    "toolPolicy": {
+      "default": "deny",
+      "allow": [
+        "read-ticket",
+        "draft-reply"
+      ]
+    },
+    "identity": {
+    },
+    "trustBoundaries": [
+      {
+        "name": "user-to-agent",
+        "from": "user",
+        "to": "api"
+      },
+      {
+        "name": "agent-to-tools",
+        "from": "api",
+        "to": "tool-server"
+      }
+    ],
+    "threatModel": {
+      "assets": [
+        "customer-support-data",
+        "model-api-key",
+        "session-state"
+      ],
+      "actors": [
+        "end-user",
+        "agent-runtime",
+        "platform-operator"
+      ],
+      "threats": [
+        {
+          "id": "prompt-injection",
+          "category": "prompt-injection",
+          "assets": [
+            "customer-support-data"
+          ],
+          "mitigations": [
+            "deny-by-default-tools",
+            "human-approval"
+          ]
+        },
+        {
+          "id": "secret-exfiltration",
+          "category": "secret-exfiltration",
+          "assets": [
+            "model-api-key"
+          ],
+          "mitigations": [
+            "secret-injection",
+            "restricted-egress"
+          ]
+        }
+      ],
+      "mitigations": [
+        {
+          "id": "deny-by-default-tools",
+          "fields": [
+            "security.toolPolicy"
+          ]
+        },
+        {
+          "id": "human-approval",
+          "fields": [
+            "approvals.required"
+          ]
+        },
+        {
+          "id": "secret-injection",
+          "fields": [
+            "secrets.required"
+          ]
+        },
+        {
+          "id": "restricted-egress",
+          "fields": [
+            "security.outbound"
+          ]
+        }
+      ],
+      "review": {
+        "status": "reviewed",
+        "reviewedBy": "platform-security",
+        "cadence": "release"
+      }
+    },
+    "hardening": {
+    },
+    "target": {
+      "sandbox": {
+        "levels": [
+          "restricted",
+          "baseline"
+        ]
+      },
+      "toolPolicy": {
+        "defaults": [
+          "deny",
+          "allow"
+        ],
+        "ruleLists": true
+      }
+    }
+  },
+  "approvals": {
+    "required": [
+      {
+        "action": "send-customer-email",
+        "mode": "human",
+        "reason": "external side effect"
+      },
+      {
+        "action": "mutate-crm-record",
+        "mode": "policy-and-human",
+        "reason": "privileged business data",
+        "policyDecisionPointRef": "crm-mutation-policy"
+      }
+    ],
+    "policyDecisionPoints": [
+      {
+        "name": "crm-mutation-policy",
+        "engineRef": "opa/customer-operations",
+        "appliesTo": [
+          "mutate-crm-record"
+        ],
+        "decisionInputs": [
+          "actor",
+          "action",
+          "dataClass",
+          "environment"
+        ],
+        "failureMode": "closed",
+        "auditEvents": [
+          "policy_decision_recorded"
+        ]
+      }
+    ],
+    "targetHandlers": {
+      "human": {
+        "ref": "local-approval-runbook"
+      },
+      "policy": {
+        "ref": "local-policy-check"
+      }
+    },
+    "targetPolicyDecisionPoints": {
+      "crm-mutation-policy": {
+        "ref": "local/customer-operations-policy"
+      },
+      "risk-classification-policy": {
+        "ref": "local/customer-risk-policy"
+      },
+      "financial-action-policy": {
+        "ref": "local/billing-actions-policy"
+      },
+      "data-export-policy": {
+        "ref": "local/data-export-policy"
+      }
+    }
+  },
+  "observability": {
+    "traces": {
+      "required": true,
+      "format": "opentelemetry"
+    },
+    "metrics": {
+      "required": [
+        "request_latency",
+        "tool_call_count",
+        "approval_wait_time",
+        "model_cost"
+      ]
+    },
+    "logs": {
+    },
+    "auditEvents": {
+      "required": [
+        "deployment_planned",
+        "policy_decision_recorded",
+        "approval_requested",
+        "tool_call_denied",
+        "approval_granted",
+        "approval_denied",
+        "secret_resolved"
+      ]
+    },
+    "targetSinks": {
+      "traces": {
+        "sinks": [
+          "local-otel-collector"
+        ]
+      },
+      "metrics": {
+        "sinks": [
+          "local-prometheus"
+        ]
+      },
+      "auditEvents": {
+        "sinks": [
+          "local-audit-log"
+        ]
+      }
+    }
+  },
+  "supplyChain": {
+    "requirements": {
+    },
+    "targetControls": {
+      "signatures": {
+        "available": false
+      },
+      "sbom": {
+        "available": false
+      },
+      "provenance": {
+        "available": false
+      }
+    }
+  },
+  "reliability": {
+  },
+  "actions": [
+    {
+      "type": "validate-schema",
+      "status": "planned",
+      "requirement": "ADS document satisfies structural and conformance validation.",
+      "sourcePath": "$",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "resolve-target-context",
+      "status": "planned",
+      "requirement": "Target context compose-single-host is compatible.",
+      "sourcePath": "$",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "api",
+      "sourcePath": "$.runtime.components[0]",
+      "targetProfile": "compose-single-host",
+      "component": "api"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "tool-server",
+      "sourcePath": "$.runtime.components[1]",
+      "targetProfile": "compose-single-host",
+      "component": "tool-server"
+    },
+    {
+      "type": "resolve-secret-binding",
+      "status": "planned",
+      "requirement": "database-url",
+      "sourcePath": "$.secrets.required[1]",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "resolve-secret-binding",
+      "status": "planned",
+      "requirement": "model-api-key",
+      "sourcePath": "$.secrets.required[0]",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "prepare-runtime-component",
+      "status": "planned",
+      "requirement": "agent-runtime",
+      "sourcePath": "$.runtime.components[0]",
+      "targetProfile": "compose-single-host",
+      "component": "api"
+    },
+    {
+      "type": "prepare-runtime-component",
+      "status": "planned",
+      "requirement": "tool-server",
+      "sourcePath": "$.runtime.components[1]",
+      "targetProfile": "compose-single-host",
+      "component": "tool-server"
+    },
+    {
+      "type": "configure-service",
+      "status": "planned",
+      "requirement": "ports",
+      "sourcePath": "$.runtime.components[0].ports",
+      "targetProfile": "compose-single-host",
+      "component": "api"
+    },
+    {
+      "type": "configure-egress-policy",
+      "status": "planned",
+      "requirement": "egress",
+      "sourcePath": "$.security.outbound.default",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "configure-security-policy",
+      "status": "planned",
+      "requirement": "security",
+      "sourcePath": "$.security",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "auditEvents",
+      "sourcePath": "$.observability.auditEvents",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "metrics",
+      "sourcePath": "$.observability.metrics",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "traces",
+      "sourcePath": "$.observability.traces",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "configure-approval-gate",
+      "status": "planned",
+      "requirement": "mutate-crm-record",
+      "sourcePath": "$.approvals.required[1]",
+      "targetProfile": "compose-single-host"
+    },
+    {
+      "type": "configure-approval-gate",
+      "status": "planned",
+      "requirement": "send-customer-email",
+      "sourcePath": "$.approvals.required[0]",
+      "targetProfile": "compose-single-host"
+    }
+  ],
+  "diagnostics": [
+
+  ]
+}

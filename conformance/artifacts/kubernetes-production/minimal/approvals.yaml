@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-agent-approval-send-customer-email
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: approval
+  annotations:
+    ads.dev/source-path: "$.approvals.required[0]"
+data:
+  action: send-customer-email
+  mode: human
+  policyDecisionPointRef: ''
+  failureMode: closed
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-agent-approval-mutate-crm-record
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: approval
+  annotations:
+    ads.dev/source-path: "$.approvals.required[1]"
+data:
+  action: mutate-crm-record
+  mode: policy-and-human
+  policyDecisionPointRef: crm-mutation-policy
+  failureMode: closed
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-agent-pdp-crm-mutation-policy
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/requirement-type: policy-decision-point
+  annotations:
+    ads.dev/source-path: "$.approvals.policyDecisionPoints[0]"
+data:
+  name: crm-mutation-policy
+  engineRef: opa/customer-operations
+  failureMode: closed

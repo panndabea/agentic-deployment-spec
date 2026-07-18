@@ -84,6 +84,23 @@ does not call the Ruby reference processor or `check-jsonschema`; it reads the
 same fixture expectations and checks schema-negative, conformance-negative,
 strict-warning, and target-context outcomes independently.
 
+## Agent Quickstart
+
+Use `bin/ads` when an automation agent needs structured JSON instead of
+diagnostic prose:
+
+```sh
+bin/ads validate --file examples/minimal.yaml --format json
+bin/ads plan --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --format json
+bin/ads emit --file examples/minimal.yaml --context contexts/compose-single-host.yaml --target compose --output-dir /tmp/ads-compose --format json
+bin/ads emit --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --target kubernetes --output-dir /tmp/ads-k8s --format json
+```
+
+`plan` emits a deterministic `ADSDeploymentPlan` only after schema,
+document-level, target-context, and profile compatibility checks pass. `emit`
+consumes that plan and writes artifact bundles only; it never applies changes to
+Docker, Kubernetes, clouds, policy engines, registries, or secret stores.
+
 The [Conformance GitHub Actions workflow](.github/workflows/conformance.yml) runs the Ruby fixture suite, Go tests, and independent Go fixture validator on pull requests, pushes to `main`, release branches, and version tags. It also publishes reference-processor SARIF diagnostics to GitHub Code Scanning when the workflow token has permission.
 
 Validate the canonical example against only the JSON Schema with:

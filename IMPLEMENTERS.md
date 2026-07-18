@@ -129,6 +129,72 @@ A processor must not emit a deployment plan when:
 When planning is allowed, the plan must preserve the declared ADS behavior. It
 must not silently replace required behavior with a weaker platform behavior.
 
+For the repository reference implementation, planning is gated by
+`Ads::Processor.validate_for_planning(file:, context_file:, strict_warnings:)`.
+That gate requires exactly one ADS document and exactly one target context. The
+target context must declare `targetProfile`, and if the ADS document declares
+`profiles`, the selected target profile must be listed there. Profile mismatch
+is a blocking `processor-limitation` diagnostic at `$.profiles`.
+
+## Deployment Plan Artifact
+
+`bin/ads plan` emits an `ADSDeploymentPlan` processor artifact. It is not an ADS
+source document and should not be validated with `schemas/ads.schema.json`.
+
+The plan uses `apiVersion: ads.dev/v1`, `kind: ADSDeploymentPlan`, and
+`planVersion: 1`. It includes:
+
+- source document and target context paths
+- selected target profile and normalized target capabilities
+- runtime components in dependency-safe order, preserving original ADS names and generated resource names
+- required and optional capabilities with `sourcePath`
+- required secrets with redacted target binding metadata only
+- networking, security, approvals, observability, supply-chain, and reliability intent
+- deterministic planned actions with source paths
+- non-blocking warning diagnostics carried forward
+
+Plans must not include timestamps by default. They must not include secret
+values, tokens, credentials, private keys, decrypted payloads, or native secret
+data.
+
+## Agent JSON Envelope
+
+`bin/ads` is the stable agent-facing CLI for `validate`, `explain`, `plan`, and
+`emit`. Every command emits one JSON object with:
+
+- `ok`
+- `phase`
+- `file`
+- `context`
+- `target`
+- `targetProfile`
+- `diagnostics`
+- `errors`
+- `warnings`
+- `plan`
+- `artifacts`
+- `nextActions`
+
+Agents should branch on `ok`, `errors`, and `nextActions`, not on human prose.
+CLI invocation failures use `invocation-invalid` and exit `2`. ADS validation,
+compatibility, strict-warning, planning, and emit failures exit `1`.
+
+## Artifact Adapters
+
+Adapters consume only an `ADSDeploymentPlan` object or parsed plan JSON. They
+must not reread the ADS YAML or target context YAML. The repository includes:
+
+- `compose`, for `compose-single-host`
+- `kubernetes`, for `kubernetes-production`
+
+Adapters must verify plan kind, API version, target profile, and blocking
+diagnostics before writing. They write deterministically into an empty output
+directory and refuse output-directory conflicts. Generated artifacts preserve
+requirements as native resources when possible and as explicit built-in-resource
+or extension stubs otherwise. They never apply artifacts to Docker,
+Kubernetes, cloud runtimes, policy engines, registries, observability systems,
+or secret stores.
+
 ## Conformance Fixtures
 
 Use [conformance/expectations.yaml](conformance/expectations.yaml) as the
@@ -139,6 +205,8 @@ machine-readable fixture expectation manifest. It defines expected behavior for:
 - document-level conformance failures
 - warning fixtures under strict warning behavior
 - target-context compatibility outcomes
+- planning-gate rejects and exact plan snapshots
+- exact artifact bundle snapshots
 
 Independent processors should validate the fixture groups in the same order as
 the repository suite:
@@ -151,6 +219,8 @@ the repository suite:
    failures.
 6. Evaluate each `targetContexts` entry against its declared context and match
    the expected accept or reject outcome.
+7. Compare each plan fixture as exact deterministic pretty-printed JSON.
+8. Compare artifact fixture directories file-by-file.
 
 Independent processors should be able to reproduce equivalent pass/fail outcomes
 and compatible diagnostic categories for the reference fixtures. Exact wording

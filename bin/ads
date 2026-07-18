@@ -1,0 +1,317 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+
+require_relative "../scripts/lib/ads/planner"
+require_relative "../scripts/lib/ads/adapters/compose"
+require_relative "../scripts/lib/ads/adapters/kubernetes"
+
+TARGETS = {
+  "compose" => {
+    profile: "compose-single-host",
+    adapter: Ads::Adapters::Compose,
+    files: %w[compose.yaml ads-plan.json README.md]
+  },
+  "kubernetes" => {
+    profile: "kubernetes-production",
+    adapter: Ads::Adapters::Kubernetes,
+    files: %w[
+      namespace.yaml
+      deployments.yaml
+      services.yaml
+      network-policies.yaml
+      secret-bindings.yaml
+      observability.yaml
+      approvals.yaml
+      supply-chain-policy.yaml
+      ads-plan.json
+      README.md
+    ]
+  }
+}.freeze
+
+REMEDIATIONS = {
+  "invocation-invalid" => "Correct the command flags, target name, input path, or output directory.",
+  "schema-invalid" => "Fix the ADS field at the reported path.",
+  "reference-invalid" => "Declare or rename the referenced component or action.",
+  "capability-unsupported" => "Choose a target with the capability or remove the requirement.",
+  "secret-unbound" => "Add a target-context binding for the named secret.",
+  "approval-handler-missing" => "Configure a human or policy approval handler.",
+  "policy-decision-point-missing" => "Declare the decision point and make it available in the target context.",
+  "network-unresolved" => "Add an allowed destination or choose a target that can enforce the network rule.",
+  "security-policy-unenforceable" => "Add the missing platform control or choose a stronger target.",
+  "supply-chain-unverified" => "Add the required verifier, SBOM, or provenance control or use a compatible target.",
+  "observability-sink-missing" => "Bind the required signal to an available sink.",
+  "processor-limitation" => "Adjust names, target, or unsupported runtime shape."
+}.freeze
+
+def diagnostic(category, path, message)
+  {
+    "category" => category,
+    "severity" => "error",
+    "path" => path,
+    "message" => message,
+    "remediation" => REMEDIATIONS[category]
+  }
+end
+
+def decorate_diagnostics(diagnostics)
+  diagnostics.map do |entry|
+    decorated = Ads::Processor.redact_secret_values(entry)
+    remediation = REMEDIATIONS[decorated["category"]]
+    remediation ? decorated.merge("remediation" => remediation) : decorated
+  end
+end
+
+def next_actions(diagnostics)
+  diagnostics.map { |entry| REMEDIATIONS[entry["category"]] }.compact.uniq
+end
+
+def envelope(phase:, file:, context:, target:, target_profile:, diagnostics:, plan: nil, artifacts: [], summary: nil)
+  decorated = decorate_diagnostics(diagnostics)
+  errors = decorated.select { |entry| entry["severity"] == "error" }
+  warnings = decorated.select { |entry| entry["severity"] == "warning" }
+  body = {
+    "ok" => errors.empty?,
+    "phase" => phase,
+    "file" => file,
+    "context" => context,
+    "target" => target,
+    "targetProfile" => target_profile,
+    "diagnostics" => decorated,
+    "errors" => errors,
+    "warnings" => warnings,
+    "plan" => errors.empty? ? plan : nil,
+    "artifacts" => artifacts,
+    "nextActions" => errors.empty? ? [] : next_actions(errors)
+  }
+  body["summary"] = summary if summary
+  body
+end
+
+def emit_json(body)
+  puts JSON.pretty_generate(body)
+end
+
+def parse_options(command, argv)
+  options = {
+    format: "json",
+    strict_warnings: false
+  }
+  parser = OptionParser.new do |opts|
+    opts.banner = "Usage: bin/ads #{command} --file FILE [--context FILE] [--format json]"
+    opts.on("--file FILE", "ADS document") { |value| options[:file] = value }
+    opts.on("--context FILE", "Target context") { |value| options[:context] = value }
+    opts.on("--target TARGET", "Emit target") { |value| options[:target] = value }
+    opts.on("--output-dir DIR", "Artifact output directory") { |value| options[:output_dir] = value }
+    opts.on("--format FORMAT", "Output format, currently json") { |value| options[:format] = value }
+    opts.on("--strict-warnings", "Treat warnings as blocking") { options[:strict_warnings] = true }
+  end
+  parser.parse!(argv)
+  options
+rescue OptionParser::ParseError => e
+  options[:parse_error] = e.message
+  options
+end
+
+def invalid_invocation(phase, options, message, path = "$")
+  diagnostics = [diagnostic("invocation-invalid", path, message)]
+  emit_json(
+    envelope(
+      phase: phase,
+      file: options[:file],
+      context: options[:context],
+      target: options[:target],
+      target_profile: nil,
+      diagnostics: diagnostics
+    )
+  )
+  exit 2
+end
+
+def require_json_format!(phase, options)
+  return if options[:format] == "json"
+
+  invalid_invocation(phase, options, "Unsupported format #{options[:format].inspect}; expected json.", "$.format")
+end
+
+def require_file!(phase, options)
+  invalid_invocation(phase, options, "--file is required.", "$.file") unless options[:file]
+end
+
+def validation_exit_code(envelope)
+  return 2 if envelope["errors"].any? { |entry| entry["category"] == "invocation-invalid" }
+
+  envelope["ok"] ? 0 : 1
+end
+
+def validate_command(options)
+  require_json_format!("validate", options)
+  require_file!("validate", options)
+
+  result = Ads::Processor.validate_document(
+    file: options[:file],
+    context_file: options[:context],
+    strict_warnings: options[:strict_warnings]
+  )
+  body = envelope(
+    phase: "validate",
+    file: options[:file],
+    context: options[:context],
+    target: nil,
+    target_profile: result.target_profile,
+    diagnostics: result.diagnostics
+  )
+  emit_json(body)
+  exit(result.blocking? ? validation_exit_code(body) : 0)
+end
+
+def planning_result(command, options)
+  require_json_format!(command, options)
+  require_file!(command, options)
+  invalid_invocation(command, options, "--context is required.", "$.context") unless options[:context]
+
+  result = Ads::Processor.validate_for_planning(
+    file: options[:file],
+    context_file: options[:context],
+    strict_warnings: options[:strict_warnings]
+  )
+  [result, result.blocking? ? nil : Ads::Planner.plan(result)]
+end
+
+def plan_command(options)
+  result, plan = planning_result("plan", options)
+  body = envelope(
+    phase: "plan",
+    file: options[:file],
+    context: options[:context],
+    target: nil,
+    target_profile: result.target_profile,
+    diagnostics: result.diagnostics,
+    plan: plan&.to_h
+  )
+  emit_json(body)
+  exit(result.blocking? ? validation_exit_code(body) : 0)
+end
+
+def explain_summary(result, plan, target)
+  if result.blocking?
+    blockers = result.errors.map { |entry| "#{entry["category"]} at #{entry["path"]}" }.join(", ")
+    return "The document is not deployable to #{result.target_profile || "the selected target"} because #{blockers}."
+  end
+
+  capabilities = plan.dig("target", "capabilities", "supported").join(", ")
+  approvals = (plan.dig("approvals", "required") || []).map { |approval| approval["action"] }.compact.join(", ")
+  files = target ? TARGETS.dig(target, :files).join(", ") : "no emit target selected"
+  warnings = result.warnings.empty? ? "No warnings." : "#{result.warnings.length} warning(s) should be reviewed."
+  "The document is deployable to #{plan.dig("target", "profile")}. Target capabilities used: #{capabilities}. Approval gates: #{approvals.empty? ? "none" : approvals}. Emit would generate: #{files}. #{warnings}"
+end
+
+def explain_command(options)
+  result, plan = planning_result("explain", options)
+  target = options[:target]
+  target ||= TARGETS.find { |_name, config| config[:profile] == result.target_profile }&.first
+  body = envelope(
+    phase: "explain",
+    file: options[:file],
+    context: options[:context],
+    target: target,
+    target_profile: result.target_profile,
+    diagnostics: result.diagnostics,
+    summary: explain_summary(result, plan&.to_h || {}, target)
+  )
+  emit_json(body)
+  exit(result.blocking? ? validation_exit_code(body) : 0)
+end
+
+def emit_command(options)
+  require_json_format!("emit", options)
+  require_file!("emit", options)
+  invalid_invocation("emit", options, "--context is required.", "$.context") unless options[:context]
+  invalid_invocation("emit", options, "--target is required.", "$.target") unless options[:target]
+  invalid_invocation("emit", options, "--output-dir is required.", "$.outputDir") unless options[:output_dir]
+
+  target_config = TARGETS[options[:target]]
+  invalid_invocation("emit", options, "Unsupported target #{options[:target].inspect}.", "$.target") unless target_config
+
+  result = Ads::Processor.validate_for_planning(
+    file: options[:file],
+    context_file: options[:context],
+    strict_warnings: options[:strict_warnings]
+  )
+  unless result.blocking?
+    plan = Ads::Planner.plan(result)
+    begin
+      artifacts = target_config[:adapter].emit(plan, options[:output_dir])
+      body = envelope(
+        phase: "emit",
+        file: options[:file],
+        context: options[:context],
+        target: options[:target],
+        target_profile: result.target_profile,
+        diagnostics: result.diagnostics,
+        plan: plan.to_h,
+        artifacts: artifacts
+      )
+      emit_json(body)
+      exit 0
+    rescue Ads::Adapters::OutputConflict => e
+      invalid_invocation("emit", options, e.message, "$.outputDir")
+    rescue Ads::Adapters::Error => e
+      diagnostics = result.diagnostics + [diagnostic("processor-limitation", "$.target", e.message)]
+      body = envelope(
+        phase: "emit",
+        file: options[:file],
+        context: options[:context],
+        target: options[:target],
+        target_profile: result.target_profile,
+        diagnostics: diagnostics
+      )
+      emit_json(body)
+      exit 1
+    end
+  end
+
+  body = envelope(
+    phase: "emit",
+    file: options[:file],
+    context: options[:context],
+    target: options[:target],
+    target_profile: result.target_profile,
+    diagnostics: result.diagnostics
+  )
+  emit_json(body)
+  exit(validation_exit_code(body))
+end
+
+command = ARGV.shift
+unless %w[validate explain plan emit].include?(command)
+  diagnostics = [diagnostic("invocation-invalid", "$.command", "Command must be validate, explain, plan, or emit.")]
+  emit_json(
+    envelope(
+      phase: command || "unknown",
+      file: nil,
+      context: nil,
+      target: nil,
+      target_profile: nil,
+      diagnostics: diagnostics
+    )
+  )
+  exit 2
+end
+
+options = parse_options(command, ARGV)
+invalid_invocation(command, options, options[:parse_error]) if options[:parse_error]
+
+case command
+when "validate"
+  validate_command(options)
+when "plan"
+  plan_command(options)
+when "explain"
+  explain_command(options)
+when "emit"
+  emit_command(options)
+end

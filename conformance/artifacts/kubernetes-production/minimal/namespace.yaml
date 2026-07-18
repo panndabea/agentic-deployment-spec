@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    ads.dev/name: support-agent
+  annotations:
+    ads.dev/source-file: examples/minimal.yaml

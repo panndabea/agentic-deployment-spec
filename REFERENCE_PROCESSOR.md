@@ -24,13 +24,20 @@ or target-context-aware validation, including:
 - standard audit event names and recommended audit coverage
 - production threat-model coverage warnings
 - conflicting outbound and egress defaults
+- dependency-cycle detection for `runtime.components[].dependsOn`
+- deterministic generated resource-name normalization collision detection
 - digest pinning when `supplyChain.images.requireDigest` is required
 - target-context capability, secret, approval, policy, observability, network, security, and supply-chain feasibility
+- planning-gate profile checks when a target context declares `targetProfile`
 - extension namespace handling and required-extension rejection
 
 The reference processor does not replace JSON Schema validation. The fixture
 suite pairs it with [schemas/ads.schema.json](schemas/ads.schema.json) through
 [scripts/test-examples.rb](scripts/test-examples.rb).
+
+The legacy `scripts/ads-conformance-check.rb` command remains diagnostics-only.
+It does not emit deployment plans or artifact bundles, and its `--output` flag
+continues to mean "write formatted diagnostics to this file."
 
 ## Command Line
 
@@ -69,6 +76,18 @@ Treat warnings as failures:
 ```sh
 ruby scripts/ads-conformance-check.rb --strict-warnings examples/conformance/warnings/missing-audit-coverage.yaml
 ```
+
+Use the agent-facing CLI for planning and artifact emission:
+
+```sh
+bin/ads validate --file examples/minimal.yaml --format json
+bin/ads plan --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --format json
+bin/ads emit --file examples/minimal.yaml --context contexts/kubernetes-production.yaml --target kubernetes --output-dir /tmp/ads-k8s --format json
+```
+
+Every `bin/ads` command emits a single JSON envelope with `ok`, `phase`,
+`diagnostics`, `errors`, `warnings`, and `nextActions`. `plan` and successful
+`emit` include the deterministic `ADSDeploymentPlan`.
 
 ## Exit Codes
 
@@ -143,6 +162,7 @@ suite uses that manifest to verify:
 - document-level conformance-positive and conformance-negative fixtures
 - warning fixtures under `--strict-warnings`
 - target-context compatibility expectations
+- planning-gate behavior, plan snapshots, and artifact snapshots
 
 Rejecting conformance fixtures, strict-warning fixtures, and rejecting target
 context expectations must declare `expectedDiagnostics` substrings. The suite
@@ -157,7 +177,6 @@ their messages or internal implementation differ.
 
 The reference processor is intentionally small. It does not:
 
-- emit deployment plans
 - call Kubernetes, cloud, secrets, policy, observability, registry, or signature-verification APIs
 - verify real image signatures, SBOM documents, or provenance attestations
 - evaluate policy logic
@@ -165,10 +184,9 @@ The reference processor is intentionally small. It does not:
 - fully model ingress routes, internal service traffic, identity, hardening, or trust-boundary enforcement
 - replace a full production security review
 
-Those behaviors belong to deployment agents, platform controllers, or
-environment-specific processors. The reference processor checks whether an ADS
-document and target context declare enough information for such systems to make
-safe decisions.
+The agent-facing CLI can emit deterministic plans and local artifact bundles,
+but those artifacts are stubs or native manifests only. No command applies them
+to a live runtime.
 
 ## Updating The Reference Processor
 

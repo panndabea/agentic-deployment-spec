@@ -1,0 +1,677 @@
+{
+  "apiVersion": "ads.dev/v1",
+  "kind": "ADSDeploymentPlan",
+  "planVersion": 1,
+  "metadata": {
+    "name": "approval-policy-agent",
+    "owner": "platform-team",
+    "labels": {
+      "tier": "production",
+      "workload": "approval-policy"
+    },
+    "annotations": {
+    }
+  },
+  "source": {
+    "file": "examples/approval-policy.yaml",
+    "contextFile": "contexts/kubernetes-production.yaml",
+    "documentKind": "AgenticDeployment",
+    "documentApiVersion": "ads.dev/v1"
+  },
+  "target": {
+    "profile": "kubernetes-production",
+    "capabilities": {
+      "supported": [
+        "audit-log-export",
+        "container-runtime",
+        "dead-letter-queue",
+        "event-driven-scaling",
+        "horizontal-scaling",
+        "human-approval",
+        "image-signature-verification",
+        "metrics-export",
+        "network-policy",
+        "outbound-egress-policy",
+        "persistent-storage",
+        "policy-decision",
+        "queue",
+        "rollback",
+        "secret-injection",
+        "trace-export",
+        "vector-store"
+      ],
+      "secretBindings": [
+        "crm-api-token",
+        "database-url",
+        "model-api-key"
+      ],
+      "egressDestinations": [
+        "api.openai.com",
+        "billing.internal.example",
+        "crm.internal.example",
+        "internal.crm.example"
+      ],
+      "defaultDenyEgress": true
+    }
+  },
+  "components": [
+    {
+      "name": "api",
+      "resourceName": "api",
+      "type": "agent-runtime",
+      "image": "ghcr.io/example/approval-policy-agent:1.0.0",
+      "execution": {
+        "mode": "request-response",
+        "concurrency": 8
+      },
+      "ports": [
+        {
+          "name": "http",
+          "containerPort": 8080,
+          "exposure": "external"
+        }
+      ],
+      "dependsOn": [
+
+      ],
+      "state": {
+      },
+      "resources": {
+      },
+      "health": {
+        "readiness": {
+          "path": "/ready",
+          "port": "http"
+        },
+        "liveness": {
+          "path": "/healthz",
+          "port": "http"
+        }
+      },
+      "scaling": {
+      },
+      "config": {
+      },
+      "sourcePath": "$.runtime.components[0]"
+    }
+  ],
+  "capabilities": {
+    "required": [
+      {
+        "name": "container-runtime",
+        "sourcePath": "$.capabilities.required[0]"
+      },
+      {
+        "name": "secret-injection",
+        "sourcePath": "$.capabilities.required[1]"
+      },
+      {
+        "name": "outbound-egress-policy",
+        "sourcePath": "$.capabilities.required[2]"
+      },
+      {
+        "name": "trace-export",
+        "sourcePath": "$.capabilities.required[3]"
+      },
+      {
+        "name": "metrics-export",
+        "sourcePath": "$.capabilities.required[4]"
+      },
+      {
+        "name": "audit-log-export",
+        "sourcePath": "$.capabilities.required[5]"
+      },
+      {
+        "name": "human-approval",
+        "sourcePath": "$.capabilities.required[6]"
+      },
+      {
+        "name": "policy-decision",
+        "sourcePath": "$.capabilities.required[7]"
+      }
+    ],
+    "optional": [
+
+    ]
+  },
+  "secrets": [
+    {
+      "name": "model-api-key",
+      "purpose": "model-provider-auth",
+      "rotation": "required",
+      "source": "platform-secret",
+      "injection": "env",
+      "reload": "restart-required",
+      "for": [
+        "api"
+      ],
+      "binding": {
+        "source": "external-secret-store",
+        "ref": "prod/support-agent/model-api-key"
+      },
+      "bindingAvailable": true,
+      "sourcePath": "$.secrets.required[0]",
+      "bindingSourcePath": "$.secrets.bindings.model-api-key"
+    }
+  ],
+  "networking": {
+    "ingress": [
+      {
+        "name": "public-api",
+        "component": "api",
+        "port": "http",
+        "tls": "required",
+        "auth": "required"
+      }
+    ],
+    "internalTraffic": {
+    },
+    "egress": {
+      "default": "deny",
+      "allow": [
+        "api.openai.com",
+        "internal.crm.example"
+      ]
+    },
+    "outbound": {
+      "default": "deny",
+      "allow": [
+        "api.openai.com",
+        "internal.crm.example"
+      ]
+    },
+    "defaultDeny": true,
+    "target": {
+      "defaultDenyEgress": true,
+      "allowedDestinations": [
+        "api.openai.com",
+        "billing.internal.example",
+        "crm.internal.example",
+        "internal.crm.example"
+      ]
+    }
+  },
+  "security": {
+    "sandbox": "restricted",
+    "outbound": {
+      "default": "deny",
+      "allow": [
+        "api.openai.com",
+        "internal.crm.example"
+      ]
+    },
+    "toolPolicy": {
+      "default": "deny",
+      "allow": [
+        "read-ticket",
+        "classify-risk",
+        "draft-action-plan"
+      ],
+      "deny": [
+        "send-customer-email",
+        "issue-refund",
+        "export-customer-data"
+      ]
+    },
+    "identity": {
+    },
+    "trustBoundaries": [
+      {
+        "name": "user-to-agent",
+        "from": "user",
+        "to": "api"
+      },
+      {
+        "name": "agent-to-policy",
+        "from": "api",
+        "to": "policy-handler"
+      },
+      {
+        "name": "agent-to-external-actions",
+        "from": "api",
+        "to": "customer-and-billing-systems"
+      }
+    ],
+    "threatModel": {
+      "assets": [
+        "customer-support-data",
+        "customer-communication",
+        "billing-data",
+        "personal-data"
+      ],
+      "actors": [
+        "end-user",
+        "agent-runtime",
+        "policy-engine",
+        "human-approver"
+      ],
+      "threats": [
+        {
+          "id": "approval-bypass",
+          "category": "policy-bypass",
+          "assets": [
+            "billing-data",
+            "personal-data"
+          ],
+          "mitigations": [
+            "deny-by-default-tools",
+            "combined-approval-gates"
+          ]
+        },
+        {
+          "id": "unsafe-customer-action",
+          "category": "unsafe-external-side-effect",
+          "assets": [
+            "customer-communication"
+          ],
+          "mitigations": [
+            "human-approval",
+            "audit-events"
+          ]
+        }
+      ],
+      "mitigations": [
+        {
+          "id": "deny-by-default-tools",
+          "fields": [
+            "security.toolPolicy"
+          ]
+        },
+        {
+          "id": "combined-approval-gates",
+          "fields": [
+            "approvals.required"
+          ]
+        },
+        {
+          "id": "human-approval",
+          "fields": [
+            "approvals.required"
+          ]
+        },
+        {
+          "id": "audit-events",
+          "fields": [
+            "observability.auditEvents"
+          ]
+        }
+      ],
+      "review": {
+        "status": "reviewed",
+        "reviewedBy": "platform-security",
+        "cadence": "release"
+      }
+    },
+    "hardening": {
+    },
+    "target": {
+      "sandbox": {
+        "levels": [
+          "restricted",
+          "baseline"
+        ]
+      },
+      "toolPolicy": {
+        "defaults": [
+          "deny",
+          "allow"
+        ],
+        "ruleLists": true
+      }
+    }
+  },
+  "approvals": {
+    "required": [
+      {
+        "action": "classify-risk",
+        "mode": "policy",
+        "reason": "policy must classify customer and business risk before action planning",
+        "policyDecisionPointRef": "risk-classification-policy",
+        "scope": {
+          "component": "api",
+          "dataClass": "customer-support"
+        },
+        "auditEvents": [
+          "policy_decision_recorded",
+          "example.com/risk_classification_recorded"
+        ]
+      },
+      {
+        "action": "send-customer-email",
+        "mode": "human",
+        "reason": "external customer communication requires human review",
+        "scope": {
+          "component": "api",
+          "dataClass": "customer-communication"
+        },
+        "auditEvents": [
+          "approval_requested",
+          "approval_granted",
+          "approval_denied"
+        ]
+      },
+      {
+        "action": "issue-refund",
+        "mode": "policy-and-human",
+        "reason": "financial side effect requires policy eligibility and human approval",
+        "policyDecisionPointRef": "financial-action-policy",
+        "scope": {
+          "component": "api",
+          "dataClass": "billing"
+        },
+        "auditEvents": [
+          "approval_requested",
+          "policy_decision_recorded",
+          "approval_granted",
+          "approval_denied"
+        ]
+      },
+      {
+        "action": "export-customer-data",
+        "mode": "policy-and-human",
+        "reason": "customer data export requires legal basis and operator approval",
+        "policyDecisionPointRef": "data-export-policy",
+        "scope": {
+          "component": "api",
+          "dataClass": "personal-data"
+        },
+        "auditEvents": [
+          "approval_requested",
+          "policy_decision_recorded",
+          "approval_granted",
+          "approval_denied"
+        ]
+      }
+    ],
+    "policyDecisionPoints": [
+      {
+        "name": "risk-classification-policy",
+        "engineRef": "opa/customer-risk",
+        "appliesTo": [
+          "classify-risk"
+        ],
+        "decisionInputs": [
+          "actor",
+          "action",
+          "dataClass",
+          "ticketContext"
+        ],
+        "failureMode": "closed",
+        "auditEvents": [
+          "policy_decision_recorded",
+          "example.com/risk_classification_recorded"
+        ]
+      },
+      {
+        "name": "financial-action-policy",
+        "engineRef": "opa/billing-actions",
+        "appliesTo": [
+          "issue-refund"
+        ],
+        "decisionInputs": [
+          "actor",
+          "action",
+          "refundAmount",
+          "customerTier"
+        ],
+        "failureMode": "manual-review",
+        "auditEvents": [
+          "policy_decision_recorded"
+        ]
+      },
+      {
+        "name": "data-export-policy",
+        "engineRef": "opa/data-export",
+        "appliesTo": [
+          "export-customer-data"
+        ],
+        "decisionInputs": [
+          "actor",
+          "action",
+          "dataClass",
+          "legalBasis"
+        ],
+        "failureMode": "closed",
+        "auditEvents": [
+          "policy_decision_recorded"
+        ]
+      }
+    ],
+    "targetHandlers": {
+      "human": {
+        "ref": "ticketing/platform-approval"
+      },
+      "policy": {
+        "ref": "opa/agentic-deployment"
+      }
+    },
+    "targetPolicyDecisionPoints": {
+      "crm-mutation-policy": {
+        "ref": "opa/customer-operations"
+      },
+      "risk-classification-policy": {
+        "ref": "opa/customer-risk"
+      },
+      "financial-action-policy": {
+        "ref": "opa/billing-actions"
+      },
+      "data-export-policy": {
+        "ref": "opa/data-export"
+      },
+      "session-restore-policy": {
+        "ref": "opa/session-state"
+      },
+      "billing-update-policy": {
+        "ref": "opa/billing-actions"
+      }
+    }
+  },
+  "observability": {
+    "traces": {
+      "required": true,
+      "format": "opentelemetry"
+    },
+    "metrics": {
+      "required": [
+        "request_latency",
+        "approval_request_count",
+        "approval_wait_time",
+        "policy_decision_latency",
+        "denied_action_count",
+        "model_cost"
+      ]
+    },
+    "logs": {
+      "streams": [
+        "api"
+      ],
+      "redaction": {
+        "required": true
+      }
+    },
+    "auditEvents": {
+      "required": [
+        "deployment_planned",
+        "policy_decision_recorded",
+        "example.com/risk_classification_recorded",
+        "tool_call_denied",
+        "action_executed",
+        "approval_requested",
+        "approval_granted",
+        "approval_denied",
+        "secret_resolved"
+      ]
+    },
+    "targetSinks": {
+      "traces": {
+        "sinks": [
+          "opentelemetry-collector"
+        ]
+      },
+      "metrics": {
+        "sinks": [
+          "prometheus"
+        ]
+      },
+      "auditEvents": {
+        "sinks": [
+          "security-audit-log"
+        ]
+      }
+    }
+  },
+  "supplyChain": {
+    "requirements": {
+    },
+    "targetControls": {
+      "signatures": {
+        "available": true,
+        "verifiers": [
+          "sigstore-cosign"
+        ]
+      },
+      "sbom": {
+        "available": true,
+        "formats": [
+          "spdx-json",
+          "cyclonedx-json"
+        ]
+      },
+      "provenance": {
+        "available": true,
+        "predicateTypes": [
+          "slsa-provenance"
+        ]
+      }
+    }
+  },
+  "reliability": {
+  },
+  "actions": [
+    {
+      "type": "validate-schema",
+      "status": "planned",
+      "requirement": "ADS document satisfies structural and conformance validation.",
+      "sourcePath": "$",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "resolve-target-context",
+      "status": "planned",
+      "requirement": "Target context kubernetes-production is compatible.",
+      "sourcePath": "$",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "normalize-component",
+      "status": "planned",
+      "requirement": "api",
+      "sourcePath": "$.runtime.components[0]",
+      "targetProfile": "kubernetes-production",
+      "component": "api"
+    },
+    {
+      "type": "resolve-secret-binding",
+      "status": "planned",
+      "requirement": "model-api-key",
+      "sourcePath": "$.secrets.required[0]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "prepare-runtime-component",
+      "status": "planned",
+      "requirement": "agent-runtime",
+      "sourcePath": "$.runtime.components[0]",
+      "targetProfile": "kubernetes-production",
+      "component": "api"
+    },
+    {
+      "type": "configure-service",
+      "status": "planned",
+      "requirement": "ports",
+      "sourcePath": "$.runtime.components[0].ports",
+      "targetProfile": "kubernetes-production",
+      "component": "api"
+    },
+    {
+      "type": "configure-ingress",
+      "status": "planned",
+      "requirement": "ingress",
+      "sourcePath": "$.networking.ingress",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-egress-policy",
+      "status": "planned",
+      "requirement": "egress",
+      "sourcePath": "$.security.outbound.default",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-security-policy",
+      "status": "planned",
+      "requirement": "security",
+      "sourcePath": "$.security",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "auditEvents",
+      "sourcePath": "$.observability.auditEvents",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "logs",
+      "sourcePath": "$.observability.logs",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "metrics",
+      "sourcePath": "$.observability.metrics",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-observability-sink",
+      "status": "planned",
+      "requirement": "traces",
+      "sourcePath": "$.observability.traces",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-approval-gate",
+      "status": "planned",
+      "requirement": "classify-risk",
+      "sourcePath": "$.approvals.required[0]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-approval-gate",
+      "status": "planned",
+      "requirement": "export-customer-data",
+      "sourcePath": "$.approvals.required[3]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-approval-gate",
+      "status": "planned",
+      "requirement": "issue-refund",
+      "sourcePath": "$.approvals.required[2]",
+      "targetProfile": "kubernetes-production"
+    },
+    {
+      "type": "configure-approval-gate",
+      "status": "planned",
+      "requirement": "send-customer-email",
+      "sourcePath": "$.approvals.required[1]",
+      "targetProfile": "kubernetes-production"
+    }
+  ],
+  "diagnostics": [
+
+  ]
+}

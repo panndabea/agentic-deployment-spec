@@ -421,6 +421,9 @@ func validateConformance(value any) ([]diagnostic, []diagnostic) {
 		}
 	}
 
+	errors = append(errors, dependencyCycleDiagnostics(root)...)
+	errors = append(errors, nameNormalizationDiagnostics(root)...)
+
 	for index, capability := range requiredCapabilities(root) {
 		for targetIndex, target := range capability.For {
 			if !componentNames[target] {
@@ -529,6 +532,123 @@ func validateConformance(value any) ([]diagnostic, []diagnostic) {
 	}
 
 	return errors, warnings
+}
+
+func dependencyCycleDiagnostics(root map[string]any) []diagnostic {
+	components := listAt(root, "runtime", "components")
+	indexes := map[string]int{}
+	graph := map[string][]string{}
+	for index, entry := range components {
+		component, ok := entry.(map[string]any)
+		if !ok {
+			continue
+		}
+		name := stringAt(component, "name")
+		if name == "" {
+			continue
+		}
+		indexes[name] = index
+		graph[name] = stringsFromValue(component["dependsOn"])
+	}
+
+	var diagnostics []diagnostic
+	visiting := map[string]bool{}
+	visited := map[string]bool{}
+	reported := map[string]bool{}
+
+	var visit func(string, []string)
+	visit = func(name string, stack []string) {
+		if visited[name] {
+			return
+		}
+		if visiting[name] {
+			cycleStart := 0
+			for index, entry := range stack {
+				if entry == name {
+					cycleStart = index
+					break
+				}
+			}
+			cycle := append([]string{}, stack[cycleStart:]...)
+			cycle = append(cycle, name)
+			keyParts := append([]string{}, cycle...)
+			sort.Strings(keyParts)
+			key := strings.Join(keyParts, "\x00")
+			if !reported[key] {
+				reported[key] = true
+				path := fmt.Sprintf("$.runtime.components[%d].dependsOn", indexes[name])
+				diagnostics = append(diagnostics, errorDiagnostic("reference-invalid", path, "dependsOn cycle detected: "+strings.Join(cycle, " -> ")))
+			}
+			return
+		}
+
+		visiting[name] = true
+		for _, dependency := range graph[name] {
+			if _, ok := graph[dependency]; ok {
+				visit(dependency, append(stack, name))
+			}
+		}
+		visiting[name] = false
+		visited[name] = true
+	}
+
+	for name := range graph {
+		visit(name, nil)
+	}
+
+	return diagnostics
+}
+
+func nameNormalizationDiagnostics(root map[string]any) []diagnostic {
+	var diagnostics []diagnostic
+	seen := map[string]string{}
+	for index, entry := range listAt(root, "runtime", "components") {
+		component, ok := entry.(map[string]any)
+		if !ok {
+			continue
+		}
+		name := stringAt(component, "name")
+		if name == "" {
+			continue
+		}
+		resourceName := normalizeResourceName(name)
+		if previous, ok := seen[resourceName]; ok && previous != name {
+			path := fmt.Sprintf("$.runtime.components[%d].name", index)
+			diagnostics = append(diagnostics, errorDiagnostic("processor-limitation", path, fmt.Sprintf("component name %q normalizes to colliding resource name %q", name, resourceName)))
+			continue
+		}
+		seen[resourceName] = name
+	}
+	return diagnostics
+}
+
+func normalizeResourceName(name string) string {
+	lower := strings.ToLower(name)
+	var builder strings.Builder
+	lastDash := false
+	for _, char := range lower {
+		valid := (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9') || char == '-'
+		if valid {
+			builder.WriteRune(char)
+			lastDash = false
+			continue
+		}
+		if !lastDash {
+			builder.WriteRune('-')
+			lastDash = true
+		}
+	}
+	normalized := strings.Trim(builder.String(), "-")
+	if normalized == "" {
+		normalized = "ads-resource"
+	}
+	if len(normalized) > 63 {
+		normalized = strings.TrimRight(normalized[:63], "-")
+	}
+	if normalized == "" {
+		return "ads-resource"
+	}
+	return normalized
 }
 
 func validateTargetContext(document, context any) []diagnostic {

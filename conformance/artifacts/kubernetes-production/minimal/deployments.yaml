@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    app.kubernetes.io/component: api
+  annotations:
+    ads.dev/component: api
+    ads.dev/source-path: "$.runtime.components[0]"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: support-agent
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: support-agent
+        app.kubernetes.io/component: api
+      annotations:
+        ads.dev/source-path: "$.runtime.components[0]"
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/example/support-agent:1.0.0
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: MODEL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-model-api-key
+              key: value
+              optional: false
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: api-database-url
+              key: value
+              optional: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tool-server
+  namespace: support-agent
+  labels:
+    app.kubernetes.io/name: support-agent
+    app.kubernetes.io/managed-by: ads-reference-processor
+    ads.dev/target-profile: kubernetes-production
+    app.kubernetes.io/component: tool-server
+  annotations:
+    ads.dev/component: tool-server
+    ads.dev/source-path: "$.runtime.components[1]"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: support-agent
+      app.kubernetes.io/component: tool-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: support-agent
+        app.kubernetes.io/component: tool-server
+      annotations:
+        ads.dev/source-path: "$.runtime.components[1]"
+    spec:
+      containers:
+      - name: tool-server
+        image: ghcr.io/example/support-tools:1.0.0
+        env:
+        - name: MODEL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: tool-server-model-api-key
+              key: value
+              optional: false
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: tool-server-database-url
+              key: value
+              optional: false

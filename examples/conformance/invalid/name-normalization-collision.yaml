@@ -1,0 +1,41 @@
+apiVersion: ads.dev/v1
+kind: AgenticDeployment
+metadata:
+  name: name-collision
+  owner: platform-team
+
+runtime:
+  components:
+    - name: api_service
+      type: agent-runtime
+      image: ghcr.io/example/api:1.0.0
+      execution:
+        mode: request-response
+    - name: api-service
+      type: worker
+      image: ghcr.io/example/worker:1.0.0
+      execution:
+        mode: async-worker
+
+capabilities:
+  required:
+    - container-runtime
+
+secrets:
+  required: []
+
+security:
+  defaultSandbox: restricted
+  toolPolicy:
+    default: deny
+
+approvals:
+  required: []
+
+observability:
+  metrics:
+    required: []
+  auditEvents:
+    required:
+      - deployment_planned
+      - tool_call_denied
